@@ -31,7 +31,6 @@ The game evaluates system health using a simplified aquaponics model based on th
 +---------------------------+
 |         Backend           |
 |  Node.js + boardgame.io   |
-|  - Game Engine            |
 |  - Simulation Kernel      |
 |  - Moves: Feed, Toggle,   |
 |    AdvanceTime            |

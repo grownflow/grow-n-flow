@@ -1,12 +1,18 @@
 {
-  "name": "server",
+  "name": "grow-n-flow-backend",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Aquaponics simulation backend with boardgame.io",
+  "main": "src/index.js",
   "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
+  "keywords": [
+    "aquaponics",
+    "boardgame.io",
+    "simulation"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
