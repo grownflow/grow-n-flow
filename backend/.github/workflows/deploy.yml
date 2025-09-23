@@ -1,0 +1,29 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches: [ main ]
+  workflow_run:
+    workflows: ["Test Backend", "Build Backend"]
+    types:
+      - completed
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Deploy to production
+      run: |
+        echo "🚀 Deployment placeholder - Backend ready for deployment!"
+        echo "📋 TODO: Configure deployment target (Heroku, Railway, AWS, etc.)"
+        echo "✅ Tests passed, build successful - ready to deploy when configured"
+        echo "🔧 Update this workflow with actual deployment commands when ready"
+
+        # When ready to deploy, replace this echo block with:
+        # - Environment setup
+        # - Database migrations
+        # - Build commands

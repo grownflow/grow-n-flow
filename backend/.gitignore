@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+node_modules/*
+**/node_modules/
+
+# Test coverage
+coverage/
+coverage/*
+
+# Environment variables
+.env
+
+# macOS
+.DS_Store
