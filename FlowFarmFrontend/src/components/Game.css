@@ -138,8 +138,46 @@ section h2 {
   text-transform: capitalize;
 }
 
-.fish-count, .fish-health, .fish-age,
+.fish-count, .fish-health, .fish-age, .fish-weight,
 .plant-growth, .plant-health {
+  font-size: 14px;
+  color: #6c757d;
+}
+
+.fish-summary {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.fish-summary-tag {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.plants-summary {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.plants-summary-tag {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.plant-age {
   font-size: 14px;
   color: #6c757d;
 }
@@ -262,6 +300,93 @@ button:disabled {
 
 .stat-item span.good {
   color: #28a745;
+}
+
+.stat-ideal {
+  font-size: 11px;
+  color: #adb5bd;
+  font-weight: 400;
+  margin-top: 2px;
+}
+
+/* ───── Tank Volume Bar ───── */
+
+.tank-volume {
+  margin-bottom: 20px;
+}
+
+.tank-volume-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 6px;
+}
+
+.tank-volume-bar {
+  height: 14px;
+  background: #e9ecef;
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.tank-volume-fill {
+  height: 100%;
+  border-radius: 7px;
+  transition: width 0.4s ease;
+}
+
+.tank-volume-fill.good {
+  background: linear-gradient(90deg, #28a745, #20c997);
+}
+
+.tank-volume-fill.warning {
+  background: linear-gradient(90deg, #ffc107, #fd7e14);
+}
+
+.tank-volume-fill.danger {
+  background: linear-gradient(90deg, #dc3545, #e83e8c);
+}
+
+/* ───── Water Group Titles ───── */
+
+.water-group-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 18px 0 10px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+/* ───── WIP Notice ───── */
+
+.wip-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #fff3cd;
+  border: 1px solid #ffeeba;
+  border-left: 4px solid #ffc107;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 18px;
+}
+
+.wip-notice .wip-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.wip-notice p {
+  margin: 0;
+  font-size: 13px;
+  color: #856404;
+  line-height: 1.5;
 }
 
 .control-section {

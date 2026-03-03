@@ -56,6 +56,7 @@ function Game() {
 
   const handlePlantSeed = (plantType) => {
     const bedLocation = `bed_${Date.now()}`;
+    console.log('[Game] handlePlantSeed called:', plantType, bedLocation);
     gameAPI.plantSeed(plantType, bedLocation);
   };
 
@@ -71,15 +72,13 @@ function Game() {
   };
 
   const handleHarvestPlant = (plantId) => {
+    console.log('[Game] handleHarvestPlant called:', plantId);
     gameAPI.harvestPlant(plantId);
   };
 
   const handleRepairSystem = () => {
     gameAPI.repairSystem();
   };
-
-  const handleStatsButton = () => {
-  }
 
   // Gill popup controls.
   const activateGill = (text) => {
@@ -118,7 +117,7 @@ function Game() {
       <header className="game-header">
         <h1>🐟 Grow-n-Flow Aquaponics 🌱</h1>
         <div className="game-stats">
-          <span>💰 Money: ${G?.money || 0}</span>
+          <span>💰 Money: ${(Math.floor((G?.money || 0) * 100) / 100).toFixed(2)}</span>
           <span>⏰ Day: {G?.gameTime || 0}</span>
         </div>
       </header>
@@ -139,24 +138,6 @@ function Game() {
         {/* Control Panel */}
         <section className="control-section">
           <h2>🎮 Game Controls</h2>
-          <button
-            onClick={handleStatsButton}
-          >
-            📊 Stats 
-          </button>
-          <button>
-            🎒 Inventory
-          </button>
-          <button>
-            📋 Community
-          </button>
-          <button>
-            🛒 Shop
-          </button>
-          <button>
-            🏪 Market
-          </button>
-          <br />
           <button 
             onClick={handleProgressTurn} 
             disabled={loading}
@@ -178,7 +159,7 @@ function Game() {
 
         <GillPopup gillText={gillText} active={gillActive} onClose={deactivateGill} />
         <section className="popup-section">
-          <StatsSection gameState={gameState} loading={loading} handleAddFish={handleAddFish} handleFeedFish={handleFeedFish} handleSwitchPage={handleSwitchStatsPage}/>
+          <StatsSection gameState={gameState} loading={loading} handleAddFish={handleAddFish} handleFeedFish={handleFeedFish} handlePlantSeed={handlePlantSeed} handleHarvestPlant={handleHarvestPlant} handleSwitchPage={handleSwitchStatsPage}/>
         </section>
 
       </div>

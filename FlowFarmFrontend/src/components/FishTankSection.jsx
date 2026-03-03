@@ -5,21 +5,41 @@ const FishTankSection = ({gameState, loading, handleAddFish, handleFeedFish}) =>
     }
 
     const { G, ctx } = gameState;
+
+    // Group fish by type for the summary
+    const fishCounts = {};
+    if (G.fish) {
+        G.fish.forEach(f => {
+            if (!fishCounts[f.type]) fishCounts[f.type] = 0;
+            fishCounts[f.type]++;
+        });
+    }
     
     return (
         <div>
-            {/* Fish Tank Section */}
             <section className="fish-section">
-            <h2>🐟 Fish Tank</h2>
+            <h2>🐟 Fish Tank ({G.fish ? G.fish.length : 0})</h2>
+
+            {/* Summary counts */}
+            {Object.keys(fishCounts).length > 0 && (
+                <div className="fish-summary">
+                    {Object.entries(fishCounts).map(([type, count]) => (
+                        <span key={type} className="fish-summary-tag">
+                            {type}: {count}
+                        </span>
+                    ))}
+                </div>
+            )}
+
             <div className="tank-info">
                 {G.fish && G.fish.length > 0 ? (
                 <div className="fish-list">
-                    {G.fish.map((fishGroup, index) => (
-                    <div key={index} className="fish-item">
-                        <span className="fish-type">{fishGroup.type}</span>
-                        <span className="fish-count">x{fishGroup.count}</span>
-                        <span className="fish-health">❤️ {fishGroup.health}/10</span>
-                        <span className="fish-age">Age: {fishGroup.age} days</span>
+                    {G.fish.map((fish) => (
+                    <div key={fish.id} className="fish-item">
+                        <span className="fish-type">{fish.type}</span>
+                        <span className="fish-health">❤️ {fish.health}/10</span>
+                        <span className="fish-age">🕐 {fish.age}d</span>
+                        <span className="fish-weight">⚖️ {Math.round(fish.weight)}g / {fish.harvestWeight}g</span>
                     </div>
                     ))}
                 </div>
@@ -30,18 +50,18 @@ const FishTankSection = ({gameState, loading, handleAddFish, handleFeedFish}) =>
             
             <div className="action-buttons">
                 <button 
-                onClick={() => handleAddFish('tilapia', 5)} 
+                onClick={() => handleAddFish('tilapia', 1)} 
                 disabled={loading}
                 className="btn-primary"
                 >
-                Add 5 Tilapia 🐟
+                Add Tilapia ($2.50) 🐟
                 </button>
                 <button 
-                onClick={() => handleAddFish('goldfish', 3)} 
+                onClick={() => handleAddFish('barramundi', 1)} 
                 disabled={loading}
                 className="btn-primary"
                 >
-                Add 3 Goldfish 🐠
+                Add Barramundi ($6.00) 🐠
                 </button>
                 <button 
                 onClick={handleFeedFish} 
