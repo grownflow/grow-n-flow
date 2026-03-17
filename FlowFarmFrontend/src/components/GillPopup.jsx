@@ -1,7 +1,21 @@
 import {useState} from 'react';
 import './GillPopup.css';
 
-function GillPopup({ gillText, active, onClose }) {
+function GillPopup({ gillText, active, onClose, inline = false }) {
+
+    if (inline) {
+        return (
+            <div className="popup">
+                <h2>Gill's Advice</h2>
+                <p>{gillText}</p>
+                {onClose && (
+                    <button className="close-button" onClick={() => onClose()} type="button">
+                        Close
+                    </button>
+                )}
+            </div>
+        );
+    }
 
     return (
         <div>
@@ -12,7 +26,7 @@ function GillPopup({ gillText, active, onClose }) {
                         <p>
                             {gillText}
                         </p>
-                        <button className="close-button" onClick={() => onClose()}>
+                        <button className="close-button" onClick={() => onClose()} type="button">
                             Close
                         </button>
                     </div>

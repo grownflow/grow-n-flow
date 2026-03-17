@@ -34,7 +34,16 @@ const fishMoves = {
 
     // Create individual fish objects
     for (let i = 0; i < qty; i++) {
+      
+      // random position in tank slightly smaller than total size to avoid clipping
+      const renderPosition = {
+        x: -0.5 + (Math.random() * 1.0), 
+        y: -0.5 + (Math.random() * 0.8),
+        z: -0.5 + (Math.random() * 1.0) 
+      };
+      
       G.fish.push({
+
         id: `fish_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
         type: fishType,
         weight: 10,  // starting fingerling weight in grams
@@ -46,6 +55,7 @@ const fishMoves = {
         ammoniaProductionRate: species.ammoniaProductionRate,
         foodConsumptionRate: species.foodConsumptionRate,
         marketValue: species.marketValue,
+        renderPosition,
       });
     }
 

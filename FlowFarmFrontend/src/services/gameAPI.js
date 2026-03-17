@@ -22,6 +22,7 @@ const AquaponicsGame = {
     
     // Economy moves
     buyEquipment: () => {},
+    sellFish: () => {},
     sellProducts: () => {},
     skipTurn: () => {},
     
@@ -41,12 +42,31 @@ class GameAPI {
   // Create and connect to a new game
   async createMatch(onStateChange) {
     console.log('[gameAPI] Creating match, connecting to http://localhost:8000...');
+
+    // Cleanup existing client if any
+    if (this.unsubscribe) {
+      this.unsubscribe();
+      this.unsubscribe = null;
+    }
+
+    if (this.client) {
+      try {
+        this.client.stop();
+      } catch (e) {
+        console.warn('[gameAPI] Error stopping previous client:', e);
+      }
+      this.client = null;
+    }
+
+    const newMatchID = `match_${Date.now()}`;
     
     // Create the boardgame.io client connected to your backend
     this.client = Client({
       game: AquaponicsGame,
       multiplayer: SocketIO({ server: 'http://localhost:8000' }),
       playerID: '0',
+      matchID: newMatchID,
+      debug: false,
     });
 
     console.log('[gameAPI] Client created, matchID:', this.client.matchID || 'none');
@@ -107,6 +127,10 @@ class GameAPI {
   // Economy moves
   buyEquipment(equipmentType, quantity = 1) {
     if (this.client) this.client.moves.buyEquipment(equipmentType, quantity);
+  }
+
+  sellFish(fishId) {
+    if (this.client) this.client.moves.sellFish(fishId);
   }
 
   sellProducts(productType, quantity) {

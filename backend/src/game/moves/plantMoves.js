@@ -14,6 +14,13 @@ const plantMoves = {
       return;
     }
 
+    
+    if (G.plants.length >= 10) {
+      console.log('[plantSeed] Reached maximum capacity of 10 plants.');
+      G.lastAction = { type: 'plantSeed', success: false, reason: 'capacity_reached' };
+      return;
+    }
+
     const cost = species.seedCost || 0;
     if (G.money < cost) {
       console.log(`[plantSeed] Not enough money. Need $${cost}, have $${G.money}`);
@@ -24,12 +31,20 @@ const plantMoves = {
     G.money -= cost;
 
     // Total growth time in days (weeks * 7)
+    
+    const occupiedSlots = new Set(G.plants.map(p => p.slotIndex).filter(i => i !== undefined));
+    let slotIndex = 0;
+    while (occupiedSlots.has(slotIndex) && slotIndex < 10) {
+        slotIndex++;
+    }
+
     const totalGrowthDays = (species.totalGrowthTime || 6) * 7;
 
     G.plants.push({
       id: `plant_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
       type: plantType,
       category: species.category,
+      slotIndex,
       location: bedLocation,
       age: 0,                   // days since planting
       growthDays: totalGrowthDays, // days to reach maturity

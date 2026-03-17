@@ -61,10 +61,13 @@ const PlantsSection = ({gameState, loading, handleHarvestPlant, handlePlantSeed}
             <div className="action-buttons">
                 <button 
                 onClick={() => handlePlantSeed('ParrisIslandRomaine')} 
-                disabled={loading}
+                disabled={loading || (G.plants && G.plants.length >= 10)}
                 className="btn-primary"
                 >
-                Plant Romaine Lettuce ($0.30) 🥬
+                {G.plants && G.plants.length >= 10 
+                    ? "Bed Full (Max 10)" 
+                    : "Plant Romaine Lettuce ($0.30) 🥬"
+                }
                 </button>
             </div>
             </section>

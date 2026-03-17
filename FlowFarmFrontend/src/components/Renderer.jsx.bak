@@ -46,7 +46,7 @@ export default function Renderer({ gameState }) {
             const speed = 4 + (i % 3); 
             
             const baseX = f.renderPosition?.x || (0); 
-            const baseY = (f.renderPosition?.y || -0.1) * 3;
+            const baseY = f.renderPosition?.y || (-0.1);
             const baseZ = f.renderPosition?.z || (0);
             
             const rx = 0.4; 
@@ -60,16 +60,17 @@ export default function Renderer({ gameState }) {
               `${baseX - rx} ${baseY} ${baseZ}`     
             ].join(', ');
 
+            // To bypass React's complete deletion of the EXACT property <... key=""> we map everything as a dangerously raw SVG inject since React doesnt touch string values
             return (
               <transform key={`fishGroup_${id}`}>
                 <transform def={`FishTransform_${id}`} scale="0.003 0.003 0.003" rotation="0 1 0 0">
                   <inline url='"models/fishes/demo_fish.glb"' />
                 </transform>
 
-                <group dangerouslySetInnerHTML={{ __html: `
+                <g dangerouslySetInnerHTML={{ __html: `
                     <timeSensor DEF="FishTime_${id}" cycleInterval="${speed}" loop="true"></timeSensor>
                     <positionInterpolator DEF="FishMover_${id}" key="0 0.25 0.5 0.75 1" keyValue="${kv}"></positionInterpolator>
-                    <orientationInterpolator DEF="FishRot_${id}" key="0 0.25 0.5 0.75 1" keyValue="0 1 0 1.57, 0 1 0 3.14, 0 1 0 -1.57, 0 1 0 0, 0 1 0 1.57"></orientationInterpolator>
+                    <orientationInterpolator DEF="FishRot_${id}" key="0 0.25 0.5 0.75 1" keyValue="0 1 0 -1.57, 0 1 0 0, 0 1 0 1.57, 0 1 0 3.14, 0 1 0 -1.57"></orientationInterpolator>
                     <ROUTE fromNode="FishTime_${id}" fromField="fraction_changed" toNode="FishMover_${id}" toField="set_fraction"></ROUTE>
                     <ROUTE fromNode="FishTime_${id}" fromField="fraction_changed" toNode="FishRot_${id}" toField="set_fraction"></ROUTE>
                     <ROUTE fromNode="FishMover_${id}" fromField="value_changed" toNode="FishTransform_${id}" toField="set_translation"></ROUTE>

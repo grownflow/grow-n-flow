@@ -1,45 +1,43 @@
-# Grow n’ Flow — System Architecture
+# 🌱🌊 Grow n' Flow - System Setup 🐟🍅
 
-## Overview
-**Grow n’ Flow** is a turn-based aquaponics simulation game built with **boardgame.io**, **Node.js**, and **React + WebGL**.  
-Players manage a virtual aquaponics system by feeding fish, controlling aeration, and advancing time.  
-The game evaluates system health using a simplified aquaponics model based on the curriculum.
+Welcome to the **Grow n' Flow** aquaponics simulation! Here's the quick and easy way to get this project up and running on your glorious machine! 🚀✨
 
----
+## 🛠️ Prerequisites
+Make sure you have **Node.js** installed on your computer. 🖥️
 
-## Core Loop
-1. **Player Actions** — feed fish, toggle aeration, dose buffer, plant crops, advance time.  
-2. **Simulation Update** — backend engine applies nitrogen cycle, plant uptake, and oxygen dynamics.  
-3. **State Update** — boardgame.io syncs new system state to the frontend.  
-4. **Visualization** — React HUD + WebGL scene show system health.  
-5. **Repeat** until win/loss conditions are reached.
+## 📦 1. Install Dependencies
+You need to install the packages for **both** the backend and the frontend! 
 
----
+**Backend:**
+```bash
+cd backend
+npm install
+```
 
-## Architecture Diagram
-```plaintext
-+---------------------------+
-|        Frontend           |
-|  React + WebGL            |
-|  - HUD (pH, DO, TAN, NOx) |
-|  - Actions UI             |
-|  - Visualization Scene    |
-+-------------+-------------+
-              |
-              | Boardgame.io Client (WebSocket/HTTP)
-              v
-+---------------------------+
-|         Backend           |
-|  Node.js + boardgame.io   |
-|  - Simulation Kernel      |
-|  - Moves: Feed, Toggle,   |
-|    AdvanceTime            |
-|  - End Conditions         |
-+-------------+-------------+
-              |
-              | (future) Persistence
-              v
-+---------------------------+
-|         Database          |
-|        PostgreSQL         |
-+---------------------------+
+**Frontend:**
+```bash
+cd FlowFarmFrontend
+npm install
+```
+
+## 🏃‍♂️💨 2. Run the Project!
+You'll need two separate terminal windows to run the servers at the same time. ✌️
+
+**Start the Backend Game Server:**
+```bash
+cd backend
+npm start
+```
+*(This runs the boardgame.io engine on port 8000 ��⚙️)*
+
+**Start the Frontend React App:**
+```bash
+cd FlowFarmFrontend
+npm run dev
+```
+*(This fires up the Vite dev server with all the beautiful 3D WebGL graphics! 🎨🐟)*
+
+## 🎮 3. Play!
+Once both are running, simply click the local host link provided by your Vite terminal (usually `http://localhost:5173`) and start growing your fabulous digital fish and plants! 🥬🐡
+
+🎉 Happy Farming! 🎉

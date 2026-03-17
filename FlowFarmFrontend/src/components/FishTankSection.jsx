@@ -1,4 +1,4 @@
-const FishTankSection = ({gameState, loading, handleAddFish, handleFeedFish}) => {
+const FishTankSection = ({gameState, loading, handleAddFish, handleSellFish, handleFeedFish}) => {
 
     if (!gameState) {
         return;
@@ -39,7 +39,15 @@ const FishTankSection = ({gameState, loading, handleAddFish, handleFeedFish}) =>
                         <span className="fish-type">{fish.type}</span>
                         <span className="fish-health">❤️ {fish.health}/10</span>
                         <span className="fish-age">🕐 {fish.age}d</span>
-                        <span className="fish-weight">⚖️ {Math.round(fish.weight)}g / {fish.harvestWeight}g</span>
+                        <span className="fish-weight">⚖️ {Math.round(fish.weight)}g / {fish.harvestWeight || 800}g</span>
+                        <button 
+                            className="btn-harvest"
+                            disabled={fish.weight < (fish.harvestWeight || 800) * 0.8}
+                            onClick={() => handleSellFish(fish.id)}
+                            style={{marginLeft: 'auto', padding: '2px 8px'}}
+                        >
+                            Sell (${((fish.weight / 1000) * 2.20462 * fish.marketValue * (fish.health/10)).toFixed(2)}) 💰
+                        </button>
                     </div>
                     ))}
                 </div>

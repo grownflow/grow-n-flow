@@ -13,8 +13,8 @@ const EventsPanel = ({ gameState, onRepair }) => {
   const activeEvent = G.activeEvent || null;
   const eventHistory = G.eventHistory || [];
 
-  // Show latest events first, limit to 10
-  const recentHistory = [...eventHistory].reverse().slice(0, 10);
+  // Show latest events first, limit to 3
+  const recentHistory = [...eventHistory].reverse().slice(0, 3);
 
   return (
     <section className="events-panel">

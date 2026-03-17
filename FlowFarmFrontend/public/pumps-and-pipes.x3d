@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE X3D PUBLIC "ISO//Web3D//DTD X3D 3.3//EN" "https://www.web3d.org/specifications/x3d-3.3.dtd">
+<X3D profile="Immersive" version="3.3" xmlns:xsd="http://www.w3.org/2001/XMLSchema-instance" xsd:noNamespaceSchemaLocation="https://www.web3d.org/specifications/x3d-3.3.xsd">
+  <Scene>
+    <!-- Water Pump -->
+    <Transform DEF="WaterPump_TRANSFORM" translation="-0.19 0.03 0.03" rotation="0.000000 0.000000 0.000000">
+      <!-- Main Body -->
+      <Shape>
+        <Appearance>
+          <Material diffuseColor="0.5 0.5 0.5" />
+        </Appearance>
+        <Box size="0.06 0.05 0.08" />
+      </Shape>
+      <!-- Red Stripe -->
+      <Transform translation="0 0 0">
+        <Shape>
+          <Appearance>
+            <Material diffuseColor="0.8 0.1 0.1" />
+          </Appearance>
+          <Box size="0.062 0.01 0.082" />
+        </Shape>
+      </Transform>
+    </Transform>
+
+    <!-- Air Pump -->
+    <Transform DEF="AirPump_TRANSFORM" translation="0.03 0.023 0.02">
+      <!-- Main Body -->
+      <Shape>
+        <Appearance>
+          <Material diffuseColor="0.6 0.6 0.6" />
+        </Appearance>
+        <Box size="0.05 0.04 0.06" />
+      </Shape>
+      <!-- Blue Stripe -->
+      <Transform translation="0 0 0">
+        <Shape>
+          <Appearance>
+            <Material diffuseColor="0.1 0.1 0.8" />
+          </Appearance>
+          <Box size="0.052 0.01 0.062" />
+        </Shape>
+      </Transform>
+    </Transform>
+
+    <!-- Pipes -->
+    <Transform DEF="Pipe_TRANSFORM" translation="-0.4 0.1 0.1">
+      <!-- Main Vertical Pipe -->
+      <Transform translation="0 0 0">
+        <Shape>
+          <Appearance>
+            <Material diffuseColor="0.9 0.9 0.9" />
+          </Appearance>
+          <Cylinder radius="0.01" height="0.15" />
+        </Shape>
+      </Transform>
+      <!-- Bottom Joint -->
+      <Transform translation="0 -0.07 0">
+        <Shape>
+          <Appearance>
+            <Material diffuseColor="0.85 0.85 0.85" />
+          </Appearance>
+          <Cylinder radius="0.012" height="0.02" />
+        </Shape>
+      </Transform>
+      <!-- Top Joint -->
+      <Transform translation="0 0.07 0">
+        <Shape>
+          <Appearance>
+            <Material diffuseColor="0.85 0.85 0.85" />
+          </Appearance>
+          <Cylinder radius="0.012" height="0.02" />
+        </Shape>
+      </Transform>
+    </Transform>
+<!-- Water Outlet Pipe (Top of main vertical pipe into fish tank) -->
+    <Transform DEF="WaterOutlet_TRANSFORM" translation="-0.325 0.175 0.1" rotation="0 0 1 1.5708">
+      <Shape>
+        <Appearance>
+          <Material diffuseColor="0.9 0.9 0.9" />
+        </Appearance>
+        <Cylinder radius="0.01" height="0.15" />
+      </Shape>
+      <!-- Elbow joint connecting to vertical pipe -->
+      <Transform translation="0 0.075 0">
+        <Shape>
+          <Appearance>
+            <Material diffuseColor="0.85 0.85 0.85" />
+          </Appearance>
+          <Sphere radius="0.013" />
+        </Shape>
+      </Transform>
+      <!-- Open End Nozzle -->
+      <Transform translation="0 -0.075 0">
+        <Shape>
+          <Appearance>
+            <Material diffuseColor="0.85 0.85 0.85" />
+          </Appearance>
+          <Cylinder radius="0.012" height="0.02" />
+        </Shape>
+      </Transform>
+    </Transform>
+
+    <!-- Air Pipe Route -->
+    <Transform DEF="AirPipeRoute_TRANSFORM">
+      <!-- Stub up from Air Pump -->
+      <Transform translation="0.03 0.043 0.02">
+        <Shape>
+          <Appearance><Material diffuseColor="0.9 0.9 0.9" /></Appearance>
+          <Cylinder radius="0.008" height="0.02" />
+        </Shape>
+      </Transform>
+      <!-- Elbow 1 -->
+      <Transform translation="0.03 0.053 0.02">
+        <Shape>
+          <Appearance><Material diffuseColor="0.85 0.85 0.85" /></Appearance>
+          <Sphere radius="0.01" />
+        </Shape>
+      </Transform>
+      <!-- Z-Axis Pipe -->
+      <Transform translation="0.03 0.053 0.06" rotation="1 0 0 1.5708">
+        <Shape>
+          <Appearance><Material diffuseColor="0.9 0.9 0.9" /></Appearance>
+          <Cylinder radius="0.008" height="0.08" />
+        </Shape>
+      </Transform>
+      <!-- Elbow 2 -->
+      <Transform translation="0.03 0.053 0.1">
+        <Shape>
+          <Appearance><Material diffuseColor="0.85 0.85 0.85" /></Appearance>
+          <Sphere radius="0.01" />
+        </Shape>
+      </Transform>
+      <!-- X-Axis Pipe -->
+      <Transform translation="-0.185 0.053 0.1" rotation="0 0 1 1.5708">
+        <Shape>
+          <Appearance><Material diffuseColor="0.9 0.9 0.9" /></Appearance>
+          <Cylinder radius="0.008" height="0.43" />
+        </Shape>
+      </Transform>
+      <!-- Connector Joint at Main Vertical Pipe -->
+      <Transform translation="-0.4 0.053 0.1">
+        <Shape>
+          <Appearance><Material diffuseColor="0.85 0.85 0.85" /></Appearance>
+          <Cylinder radius="0.013" height="0.02" />
+        </Shape>
+      </Transform>
+    </Transform>
+<!-- Perpendicular Pipe routing into the fish tank (-Z direction) -->
+    <Transform DEF="WaterOutlet_Z_TRANSFORM">
+      <!-- Elbow at the end of the previous X-pipe -->
+      <Transform translation="-0.25 0.175 0.1">
+        <Shape>
+          <Appearance><Material diffuseColor="0.85 0.85 0.85" /></Appearance>
+          <Sphere radius="0.013" />
+        </Shape>
+      </Transform>
+      <!-- Pipe entering into the tank (-Z axis) -->
+      <Transform translation="-0.25 0.175 0.05" rotation="1 0 0 1.5708">
+        <Shape>
+          <Appearance><Material diffuseColor="0.9 0.9 0.9" /></Appearance>
+          <Cylinder radius="0.01" height="0.1" />
+        </Shape>
+      </Transform>
+      <!-- Final Nozzle pointing toward the water -->
+      <Transform translation="-0.25 0.175 0.0" rotation="1 0 0 1.5708">
+        <Shape>
+          <Appearance><Material diffuseColor="0.85 0.85 0.85" /></Appearance>
+          <Cylinder radius="0.012" height="0.02" />
+        </Shape>
+      </Transform>
+    </Transform>
+<!-- Overflow Pipe from Fish Tank to Grow Bed (+X direction) -->
+    <Transform DEF="OverflowPipe_TRANSFORM">
+      <!-- Main Horizontal Pipe spinning between the tanks -->
+      <!-- Center is approx X=-0.07, height is 0.30 to cross the gap from X=-0.22 to X=0.08 -->
+      <Transform translation="-0.12 0.15 0" rotation="0 0 1 1.5708">
+        <Shape>
+          <Appearance><Material diffuseColor="0.9 0.9 0.9" /></Appearance>
+          <Cylinder radius="0.008" height="0.20" />
+        </Shape>
+      </Transform>
+      <!-- Intake Flange (Fish Tank side) -->
+      <Transform translation="-0.22 0.15 0" rotation="0 0 1 1.5708">
+        <Shape>
+          <Appearance><Material diffuseColor="0.85 0.85 0.85" /></Appearance>
+          <Cylinder radius="0.010" height="0.02" />
+        </Shape>
+      </Transform>
+      <!-- Output Flange (Grow Bed side) -->
+      <Transform translation="-0.02 0.15 0" rotation="0 0 1 1.5708">
+        <Shape>
+          <Appearance><Material diffuseColor="0.85 0.85 0.85" /></Appearance>
+          <Cylinder radius="0.010" height="0.04" />
+        </Shape>
+      </Transform>
+    </Transform>
+  
+    <!-- PUMP SHAKE EFFECT -->
+    <TimeSensor DEF="PowerTimer" cycleInterval="0.5" loop="true" />
+    
+    <PositionInterpolator DEF="WaterPumpShaker" key="0 0.25 0.5 0.75 1" keyValue="-0.19 0.03 0.03, -0.192 0.03 0.03, -0.188 0.03 0.03, -0.19 0.032 0.03, -0.19 0.03 0.03" />
+    <ROUTE fromNode="PowerTimer" fromField="fraction_changed" toNode="WaterPumpShaker" toField="set_fraction" />
+    <ROUTE fromNode="WaterPumpShaker" fromField="value_changed" toNode="WaterPump_TRANSFORM" toField="set_translation" />
+
+    <PositionInterpolator DEF="AirPumpShaker" key="0 0.25 0.5 0.75 1" keyValue="0.03 0.023 0.02, 0.032 0.023 0.02, 0.028 0.023 0.02, 0.03 0.025 0.02, 0.03 0.023 0.02" />
+    <ROUTE fromNode="PowerTimer" fromField="fraction_changed" toNode="AirPumpShaker" toField="set_fraction" />
+    <ROUTE fromNode="AirPumpShaker" fromField="value_changed" toNode="AirPump_TRANSFORM" toField="set_translation" />
+
+    <!-- WATER FLOW EFFECT (Falling from Z nozzle into fish tank) -->
+    <Transform DEF="WaterFlow_Transform" translation="-0.25 0.185 0.0">
+        <Shape>
+            <Appearance><Material diffuseColor="0.2 0.5 0.9" transparency="0.5"/></Appearance>
+            <Cylinder radius="0.008" height="0.005" />
+        </Shape>
+    </Transform>
+    <TimeSensor DEF="WaterFlowTimer" cycleInterval="0.3" loop="true" />
+    <PositionInterpolator DEF="WaterFlowMover" key="0 1" keyValue="-0.25 0.185 0.0, -0.25 0.165 0.0" />
+    <ROUTE fromNode="WaterFlowTimer" fromField="fraction_changed" toNode="WaterFlowMover" toField="set_fraction" />
+    <ROUTE fromNode="WaterFlowMover" fromField="value_changed" toNode="WaterFlow_Transform" toField="set_translation" />
+
+
+    <!-- WATER FLOW EFFECT (Spilling from Overflow Pipe to Grow Bed) -->
+    <Transform DEF="WaterFlow_Bed_Transform" translation="0 0.14 0.0">
+        <Shape>
+            <Appearance><Material diffuseColor="0.2 0.5 0.9" transparency="0.5"/></Appearance>
+            <Cylinder radius="0.008" height="0.005" />
+        </Shape>
+    </Transform>
+    <TimeSensor DEF="WaterFlowBedTimer" cycleInterval="0.15" loop="true" />
+    <PositionInterpolator DEF="WaterFlowBedMover" key="0 1" keyValue="0 0.14 0.0, 0 0.12 0.0" />
+    <ROUTE fromNode="WaterFlowBedTimer" fromField="fraction_changed" toNode="WaterFlowBedMover" toField="set_fraction" />
+    <ROUTE fromNode="WaterFlowBedMover" fromField="value_changed" toNode="WaterFlow_Bed_Transform" toField="set_translation" />
+
+    <!-- SIPHON COMPONENT -->
+    <Transform DEF="Siphon_TRANSFORM" translation="0.192 0.08 0.042">
+        <Shape>
+            <Appearance><Material diffuseColor="0.9 0.9 0.9" /></Appearance>
+            <Cylinder radius="0.008" height="0.140" />
+        </Shape>
+    </Transform>
+
+
+</Scene>
+</X3D>
+

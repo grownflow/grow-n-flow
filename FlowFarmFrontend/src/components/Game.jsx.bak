@@ -60,7 +60,7 @@ function Game() {
     gameAPI.addFish(fishType, count); // count maps to quantity param
   };
 
-  const handleSellFish = (fishId) => { console.log(`[Game] handleSellFish clicked: ${fishId}`); 
+  const handleSellFish = (fishId) => {
     gameAPI.sellFish(fishId);
   };
 
