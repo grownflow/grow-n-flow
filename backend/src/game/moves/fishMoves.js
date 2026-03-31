@@ -2,6 +2,7 @@
 // Handles feeding, adding new fish, monitoring fish health, etc.
 
 const { fishSpecies } = require('../data/fishSpecies');
+const { randomPointInWaterVolume } = require('../data/renderBounds');
 
 const fishMoves = {
   // Feed fish in the system
@@ -34,13 +35,7 @@ const fishMoves = {
 
     // Create individual fish objects
     for (let i = 0; i < qty; i++) {
-      
-      // random position in tank slightly smaller than total size to avoid clipping
-      const renderPosition = {
-        x: -0.5 + (Math.random() * 1.0), 
-        y: -0.5 + (Math.random() * 0.8),
-        z: -0.5 + (Math.random() * 1.0) 
-      };
+      const renderPosition = randomPointInWaterVolume();
       
       G.fish.push({
 
@@ -55,6 +50,8 @@ const fishMoves = {
         ammoniaProductionRate: species.ammoniaProductionRate,
         foodConsumptionRate: species.foodConsumptionRate,
         marketValue: species.marketValue,
+        renderAsset: species.renderAsset,
+        renderScale: species.renderScale,
         renderPosition,
       });
     }

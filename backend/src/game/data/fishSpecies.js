@@ -21,6 +21,8 @@ const fishSpecies = {
     consumerAcceptance: 'good',
     ammoniaProductionRate: 0.1,
     foodConsumptionRate: 0.2,
+    renderAsset: '3d/Redheadx.x3d',
+    renderScale: 0.3,
   },
   
   barramundi: {
@@ -37,6 +39,26 @@ const fishSpecies = {
     consumerAcceptance: 'good',
     ammoniaProductionRate: 0.08,
     foodConsumptionRate: 0.25,
+    renderAsset: '3d/Barramundi.x3d',
+    renderScale: 0.4,
+  },
+
+  catfish: {
+    tempRange: { min: 20, max: 32, optimal: { min: 24, max: 29 } },
+    ammoniaToleranceMax: 1.5,
+    oxygenMin: 4.0,
+    proteinRequirement: { min: 30, max: 36 },
+    harvestWeight: 700,
+    harvestTime: 240,
+    baseGrowthRate: 700 / 240,
+    marketValue: 4.00,
+    fingerlingCost: 3.50,
+    availability: 'year-round',
+    consumerAcceptance: 'good',
+    ammoniaProductionRate: 0.11,
+    foodConsumptionRate: 0.22,
+    renderAsset: '3d/Gigi.x3d',
+    renderScale: 0.5,
   }
 };
 

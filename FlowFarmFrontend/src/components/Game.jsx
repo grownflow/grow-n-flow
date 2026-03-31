@@ -1,6 +1,7 @@
 // src/components/Game.jsx
 import React, { useState, useEffect } from 'react';
 import gameAPI from '../services/gameAPI';
+import { PLANT_SLOT_COUNT } from '../config/plantSlots';
 import Renderer from './Renderer';
 import StatsSection from './StatsSection';
 import GillPopup from './GillPopup';
@@ -67,7 +68,28 @@ function Game() {
   const handlePlantSeed = (plantType) => {
     const bedLocation = `bed_${Date.now()}`;
     console.log('[Game] handlePlantSeed called:', plantType, bedLocation);
-    gameAPI.plantSeed(plantType, bedLocation);
+    gameAPI.plantSeed(plantType, bedLocation, PLANT_SLOT_COUNT);
+  };
+
+  const handleBuyAllSeeds = async (plantType) => {
+    if (!gameState?.G) return;
+
+    const maxPlantSlots = Math.max(gameState.G.maxPlantSlots || 0, PLANT_SLOT_COUNT);
+    const openSlots = Math.max(0, maxPlantSlots - (gameState.G.plants?.length || 0));
+    const seedCost = 0.3;
+    const affordableCount = Math.floor((gameState.G.money || 0) / seedCost);
+    const buyCount = Math.min(openSlots, affordableCount);
+
+    if (buyCount <= 0) return;
+
+    for (let i = 0; i < buyCount; i++) {
+      const bedLocation = `bed_${Date.now()}_${i}`;
+      const result = await gameAPI.plantSeed(plantType, bedLocation, PLANT_SLOT_COUNT);
+      if (result?.error) {
+        console.warn('[Game] buy-all stopped due to move error:', result.error);
+        break;
+      }
+    }
   };
 
   const handleFeedFish = () => {
@@ -220,6 +242,7 @@ function Game() {
               loading={loading}
               handleHarvestPlant={handleHarvestPlant}
               handlePlantSeed={handlePlantSeed}
+              handleBuyAllSeeds={handleBuyAllSeeds}
             />
           )}
 

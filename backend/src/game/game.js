@@ -47,6 +47,7 @@ const AquaponicsGame = {
     // Individual entities as arrays - each fish/plant is a separate object
     fish: [],     // Array of fish objects with individual properties
     plants: [],   // Array of plant objects in various grow beds
+    maxPlantSlots: 0,
     
     // Core aquaponics system state (plain object, not class instance)
     aquaponicsSystem: createInitialSystemState(),

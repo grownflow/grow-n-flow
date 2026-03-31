@@ -144,7 +144,10 @@ class MatchHandler {
 
     try {
       const moveArgs = args || [];
-      const newG = move(match.G, match.ctx, ...moveArgs);
+      // Call move using the expected signature used throughout moves: ({ G, ctx }, ...args)
+      // Many moves mutate G in-place and do not return a value, so support both styles.
+      const result = move({ G: match.G, ctx: match.ctx }, ...moveArgs);
+      const newG = result || match.G;
       match.G = newG;
       match.ctx.turn++;
 

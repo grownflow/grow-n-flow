@@ -1,86 +1,68 @@
 import React from 'react';
 import X3DViewer from './X3DViewer';
+import { PLANT_SLOTS } from '../config/plantSlots';
 
-const PLANT_SLOTS = [
-    { x: -0.070, y: 0.175, z: 0.020 },
-    { x: -0.034, y: 0.175, z: 0.020 },
-    { x: 0.002,  y: 0.175, z: 0.020 },
-    { x: 0.038,  y: 0.175, z: 0.020 },
-    { x: 0.074,  y: 0.175, z: 0.020 },
-    { x: -0.070, y: 0.175, z: -0.027 },
-    { x: -0.034, y: 0.175, z: -0.027 },
-    { x: 0.002,  y: 0.175, z: -0.027 },
-    { x: 0.038,  y: 0.175, z: -0.027 },
-    { x: 0.074,  y: 0.175, z: -0.027 },
-];
+const FISH_ASSET_BY_TYPE = {
+  tilapia: '3d/Redheadx.x3d',
+  barramundi: '3d/Barramundi.x3d',
+  catfish: '3d/Gigi.x3d',
+};
+
+const DEFAULT_FISH_ASSET = '3d/Redheadx.x3d';
+const DEFAULT_FISH_SCALE = 0.3;
+const SLOT_PLANT_ASSET = 'plants/lettuce1.glb';
+const SLOT_PLANT_SCALE = 1;
 
 export default function Renderer({ gameState }) {
   const plants = gameState?.G?.plants || [];
   const fish = gameState?.G?.fish || [];
 
   return (
-    <X3DViewer assetPath="Aquaponics.x3d">
+    <X3DViewer assetPath="MainSceneb.x3d">
       
-      <transform translation="0.1 0 0" scale="1 0.8 1">
+      <transform>
         {plants.map((plant, mapIndex) => {
-          const safeIndex = (plant.slotIndex !== undefined) ? plant.slotIndex : (mapIndex % 10);
+          const slotCount = PLANT_SLOTS.length;
+          const safeIndex = (plant.slotIndex !== undefined)
+            ? (plant.slotIndex % slotCount)
+            : (mapIndex % slotCount);
           const slot = PLANT_SLOTS[safeIndex];
-
-          const growthRatio = Math.min(1, Math.max(0.1, plant.age / (plant.growthDays || 42)));
-          const finalScale = 0.5 * growthRatio;
+          const plantScale = `${SLOT_PLANT_SCALE} ${SLOT_PLANT_SCALE} ${SLOT_PLANT_SCALE}`;
 
           return (
             <transform key={plant.id} translation={`${slot.x} ${slot.y} ${slot.z}`}>
-              <transform scale={`${finalScale} ${finalScale} ${finalScale}`}>
-                  <inline url='"models/plants/demo_plant.glb"' />
+              <transform scale={plantScale}>
+                  <inline url={`"${SLOT_PLANT_ASSET}"`} />
               </transform>
             </transform>
           );
         })}
       </transform>
 
-      <transform translation="-0.1 0 0">
-        <transform translation="-0.2 0.1 0" scale="0.08 0.10 0.08">
-          {fish.map((f, i) => {
-            const id = f.id;
-            const speed = 4 + (i % 3); 
-            
-            const baseX = f.renderPosition?.x || (0); 
-            const baseY = (f.renderPosition?.y || -0.1) * 3;
-            const baseZ = f.renderPosition?.z || (0);
-            
-            const rx = 0.4; 
-            const rz = 0.4; 
-            
-            const kv = [
-              `${baseX - rx} ${baseY} ${baseZ}`,    
-              `${baseX} ${baseY} ${baseZ - rz}`,    
-              `${baseX + rx} ${baseY} ${baseZ}`,    
-              `${baseX} ${baseY} ${baseZ + rz}`,     
-              `${baseX - rx} ${baseY} ${baseZ}`     
-            ].join(', ');
+      {fish.map((f, i) => {
+        const id = f.id;
 
-            return (
-              <transform key={`fishGroup_${id}`}>
-                <transform def={`FishTransform_${id}`} scale="0.003 0.003 0.003" rotation="0 1 0 0">
-                  <inline url='"models/fishes/demo_fish.glb"' />
-                </transform>
+        const baseX = f.renderPosition?.x ?? 2.8;
+        const baseY = f.renderPosition?.y ?? 0.65;
+        const baseZ = f.renderPosition?.z ?? -1.05;
 
-                <group dangerouslySetInnerHTML={{ __html: `
-                    <timeSensor DEF="FishTime_${id}" cycleInterval="${speed}" loop="true"></timeSensor>
-                    <positionInterpolator DEF="FishMover_${id}" key="0 0.25 0.5 0.75 1" keyValue="${kv}"></positionInterpolator>
-                    <orientationInterpolator DEF="FishRot_${id}" key="0 0.25 0.5 0.75 1" keyValue="0 1 0 1.57, 0 1 0 3.14, 0 1 0 -1.57, 0 1 0 0, 0 1 0 1.57"></orientationInterpolator>
-                    <ROUTE fromNode="FishTime_${id}" fromField="fraction_changed" toNode="FishMover_${id}" toField="set_fraction"></ROUTE>
-                    <ROUTE fromNode="FishTime_${id}" fromField="fraction_changed" toNode="FishRot_${id}" toField="set_fraction"></ROUTE>
-                    <ROUTE fromNode="FishMover_${id}" fromField="value_changed" toNode="FishTransform_${id}" toField="set_translation"></ROUTE>
-                    <ROUTE fromNode="FishRot_${id}" fromField="value_changed" toNode="FishTransform_${id}" toField="set_rotation"></ROUTE>
-                ` }} />
+        const scaleValue = f.renderScale || DEFAULT_FISH_SCALE;
+        const fishScale = `${scaleValue} ${scaleValue} ${scaleValue}`;
+        const assetPath = f.renderAsset || FISH_ASSET_BY_TYPE[f.type] || DEFAULT_FISH_ASSET;
 
-              </transform>
-            );
-          })}
-        </transform>
-      </transform>
+        return (
+          <transform key={`fishGroup_${id}`}>
+            <transform
+              def={`FishTransform_${id}`}
+              translation={`${baseX} ${baseY} ${baseZ}`}
+              scale={fishScale}
+              rotation="0 1 0 0"
+            >
+              <inline url={`"${assetPath}"`} />
+            </transform>
+          </transform>
+        );
+      })}
 
     </X3DViewer>
   );

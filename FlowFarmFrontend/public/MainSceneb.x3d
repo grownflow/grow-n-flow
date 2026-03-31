@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE X3D PUBLIC "ISO//Web3D//DTD X3D 3.0//EN" "https://www.web3d.org/specifications/x3d-3.0.dtd">
+<X3D version='3.0' xmlns:xsd='http://www.w3.org/2001/XMLSchema-instance' xsd:noNamespaceSchemaLocation='https://www.web3d.org/specifications/x3d-4.1.xsd'>
+  <head>
+
+    <meta name='creator' content='undefined'/>
+    <meta name='created' content='Sun, 22 Feb 2026 19:06:43 GMT'/>
+    <meta name='modified' content='Sun, 22 Feb 2026 19:57:19 GMT'/>
+    <meta name='generator' content='Sunrize X3D Editor V2.0.4, https://create3000.github.io/sunrize/'/>
+  </head>
+  <Scene>
+    <DirectionalLight/>
+
+    <PointLight color='1 1 1' location='0.9683277565240922 1.5628627722098596 -4.328396077744989' radius='5' intensity='0.8'/>
+
+    <PointLight color='1 1 1' location='-3.1205342913764107 5.931679552603429 -3.883703503947868' radius='5' intensity='0.8'/>
+
+    <pointLight color='1 1 1' location='4.791555566134104 1.6104764309514508 -3.8448879323408263' radius='5' intensity='0.8'/>
+
+        <Background groundAngle='1.309 1.570796' groundColor='0.1 0.1 0 0.4 0.25 0.2 0.6 0.6 0.6' skyAngle='1.309 1.571' skyColor='0 0.2 0.7 0 0.5 1 1 1 1'/>
+    
+    <NavigationInfo 
+        avatarSize='0.25, 1.75, 0.75'/>
+
+    <Transform>
+      <Inline DEF='System'
+          url='"./Aquaponics/Untitledc.x3d"'/>
+    </Transform>
+
+    
+  </Scene>
+</X3D>
