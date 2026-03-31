@@ -3,10 +3,18 @@
 
 const { plantSpecies } = require('../data/plantSpecies');
 
+const DEFAULT_MAX_PLANT_SLOTS = 4 * 9 + 2 * 4 * 11;
+
 const plantMoves = {
   // Plant a seed in a grow bed
   // Parameters: plantType (e.g. 'ParrisIslandRomaine'), bedLocation
-  plantSeed: ({ G, ctx }, plantType, bedLocation) => {
+  plantSeed: ({ G, ctx }, plantType, bedLocation, slotCount) => {
+    const parsedSlotCount = Number(slotCount);
+    const maxPlantSlots = Number.isInteger(parsedSlotCount) && parsedSlotCount > 0
+      ? parsedSlotCount
+      : (G.maxPlantSlots || DEFAULT_MAX_PLANT_SLOTS);
+    G.maxPlantSlots = maxPlantSlots;
+
     const species = plantSpecies[plantType];
     if (!species) {
       console.log(`[plantSeed] Unknown species: ${plantType}`);
@@ -15,8 +23,8 @@ const plantMoves = {
     }
 
     
-    if (G.plants.length >= 10) {
-      console.log('[plantSeed] Reached maximum capacity of 10 plants.');
+    if (G.plants.length >= maxPlantSlots) {
+      console.log(`[plantSeed] Reached maximum capacity of ${maxPlantSlots} plants.`);
       G.lastAction = { type: 'plantSeed', success: false, reason: 'capacity_reached' };
       return;
     }
@@ -34,8 +42,14 @@ const plantMoves = {
     
     const occupiedSlots = new Set(G.plants.map(p => p.slotIndex).filter(i => i !== undefined));
     let slotIndex = 0;
-    while (occupiedSlots.has(slotIndex) && slotIndex < 10) {
+    while (occupiedSlots.has(slotIndex) && slotIndex < maxPlantSlots) {
         slotIndex++;
+    }
+
+    if (slotIndex >= maxPlantSlots) {
+      console.log(`[plantSeed] No free slot index available within ${maxPlantSlots} slots.`);
+      G.lastAction = { type: 'plantSeed', success: false, reason: 'capacity_reached' };
+      return;
     }
 
     const totalGrowthDays = (species.totalGrowthTime || 6) * 7;
@@ -44,6 +58,8 @@ const plantMoves = {
       id: `plant_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
       type: plantType,
       category: species.category,
+      renderAsset: species.renderAsset,
+      renderScale: species.renderScale,
       slotIndex,
       location: bedLocation,
       age: 0,                   // days since planting

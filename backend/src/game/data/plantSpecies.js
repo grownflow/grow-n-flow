@@ -45,6 +45,8 @@ const plantSpecies = {
         marketAcceptance: 'excellent',
         shelfLife: 7,
         availability: 'year-round',
+        renderAsset: 'plants/lettuce1.glb',
+        renderScale: 1.5,
         // Nutrient requirements (mg/L minimum thresholds)
         nutrientRequirements: {
             nitrogen: 5,      // Nitrate-nitrogen (NO3-N)

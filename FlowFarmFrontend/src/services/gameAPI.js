@@ -1,165 +1,93 @@
-// src/services/gameAPI.js
-// Connects to the boardgame.io backend using the official client
-
-import { Client } from 'boardgame.io/client';
-import { SocketIO } from 'boardgame.io/multiplayer';
-
-// Game definition must match backend's game name
-const AquaponicsGame = {
-  name: 'aquaponics',
-  // Minimal setup - actual setup is on the server
-  setup: () => ({}),
-  moves: {
-    // Fish moves
-    addFish: () => {},
-    feedFish: () => {},
-    removeFish: () => {},
-    
-    // Plant moves
-    plantSeed: () => {},
-    harvestPlant: () => {},
-    carePlant: () => {},
-    
-    // Economy moves
-    buyEquipment: () => {},
-    sellFish: () => {},
-    sellProducts: () => {},
-    skipTurn: () => {},
-    
-    // System moves
-    progressTurn: () => {},
-    repairSystem: () => {},
-  }
-};
+// REST-based game API client using backend HTTP routes and polling.
+const API_BASE = 'http://localhost:4000/api/games/aquaponics';
 
 class GameAPI {
   constructor() {
-    this.client = null;
-    this.unsubscribe = null;
+    this.matchID = null;
+    this.pollHandle = null;
     this.state = null;
+    this.connecting = false;
   }
 
-  // Create and connect to a new game
   async createMatch(onStateChange) {
-    console.log('[gameAPI] Creating match, connecting to http://localhost:8000...');
-
-    // Cleanup existing client if any
-    if (this.unsubscribe) {
-      this.unsubscribe();
-      this.unsubscribe = null;
-    }
-
-    if (this.client) {
-      try {
-        this.client.stop();
-      } catch (e) {
-        console.warn('[gameAPI] Error stopping previous client:', e);
+    if (this.connecting) return;
+    this.connecting = true;
+    try {
+      console.log('[gameAPI] Creating match via REST:', API_BASE + '/create');
+      const res = await fetch(`${API_BASE}/create`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+      if (!res.ok) throw new Error('Create match failed: ' + res.status);
+      const body = await res.json();
+      // MatchHandler.create may return different shapes; try common fields
+      this.matchID = body.matchID || body.id || body._id || body.match || body.id;
+      if (!this.matchID && body && typeof body === 'object') {
+        // fallback: try to find a string value
+        for (const k of Object.keys(body)) {
+          if (typeof body[k] === 'string' && body[k].includes('match')) { this.matchID = body[k]; break; }
+        }
       }
-      this.client = null;
+      console.log('[gameAPI] matchID:', this.matchID);
+
+      // Start polling for state
+      this.startPolling(onStateChange);
+      return this.matchID;
+    } finally {
+      this.connecting = false;
     }
-
-    const newMatchID = `match_${Date.now()}`;
-    
-    // Create the boardgame.io client connected to your backend
-    this.client = Client({
-      game: AquaponicsGame,
-      multiplayer: SocketIO({ server: 'http://localhost:8000' }),
-      playerID: '0',
-      matchID: newMatchID,
-      debug: false,
-    });
-
-    console.log('[gameAPI] Client created, matchID:', this.client.matchID || 'none');
-
-    // Subscribe to state changes
-    this.unsubscribe = this.client.subscribe((state) => {
-      console.log('[gameAPI] State update received:', state ? 'has state' : 'null', state?.G ? 'has G' : 'no G');
-      if (state) {
-        this.state = state;
-        if (onStateChange) onStateChange(state);
-      }
-    });
-
-    // Start the client
-    this.client.start();
-    console.log('[gameAPI] Client started');
-
-    return this.client;
   }
 
-  // Get current game state
+  startPolling(onStateChange, interval = 1000) {
+    if (this.pollHandle) clearInterval(this.pollHandle);
+    if (!this.matchID) return;
+    this.pollHandle = setInterval(async () => {
+      try {
+        const res = await fetch(`${API_BASE}/${this.matchID}`);
+        if (!res.ok) return;
+        const json = await res.json();
+        this.state = json;
+        if (onStateChange) onStateChange(json);
+      } catch (e) {
+        console.warn('[gameAPI] poll error', e);
+      }
+    }, interval);
+  }
+
+  stopPolling() {
+    if (this.pollHandle) clearInterval(this.pollHandle);
+    this.pollHandle = null;
+  }
+
   getGameState() {
     return this.state?.G || null;
   }
 
-  // Execute moves through the client
-  // Fish moves
-  addFish(fishType, quantity) {
-    console.log('[gameAPI] addFish called:', fishType, quantity, 'client:', !!this.client);
-    if (this.client) this.client.moves.addFish(fishType, quantity);
+  async makeMove(move, args = [], playerID = '0') {
+    if (!this.matchID) throw new Error('No match');
+    const res = await fetch(`${API_BASE}/${this.matchID}/move`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ move, args, playerID }),
+    });
+    return res.json();
   }
 
-  feedFish(fishId, foodAmount) {
-    console.log('[gameAPI] feedFish called:', fishId, foodAmount, 'client:', !!this.client);
-    if (this.client) this.client.moves.feedFish(fishId, foodAmount);
-  }
+  // Convenience wrappers for moves used by the UI
+  addFish(fishType, quantity) { return this.makeMove('addFish', [fishType, quantity]); }
+  feedFish(fishId, foodAmount) { return this.makeMove('feedFish', [fishId, foodAmount]); }
+  removeFish(fishId) { return this.makeMove('removeFish', [fishId]); }
+  plantSeed(plantType, bedLocation, slotCount) { return this.makeMove('plantSeed', [plantType, bedLocation, slotCount]); }
+  harvestPlant(plantId) { return this.makeMove('harvestPlant', [plantId]); }
+  carePlant(plantId, careType) { return this.makeMove('carePlant', [plantId, careType]); }
+  buyEquipment(equipmentType, quantity = 1) { return this.makeMove('buyEquipment', [equipmentType, quantity]); }
+  sellFish(fishId) { return this.makeMove('sellFish', [fishId]); }
+  sellProducts(productType, quantity) { return this.makeMove('sellProducts', [productType, quantity]); }
+  skipTurn() { return this.makeMove('skipTurn', []); }
+  progressTurn() { return this.makeMove('progressTurn', []); }
+  repairSystem() { return this.makeMove('repairSystem', []); }
 
-  removeFish(fishId) {
-    console.log('[gameAPI] removeFish called:', fishId, 'client:', !!this.client);
-    if (this.client) this.client.moves.removeFish(fishId);
-  }
-
-  // Plant moves
-  plantSeed(plantType, bedLocation) {
-    console.log('[gameAPI] plantSeed called:', plantType, bedLocation, 'client:', !!this.client);
-    if (this.client) this.client.moves.plantSeed(plantType, bedLocation);
-  }
-
-  harvestPlant(plantId) {
-    console.log('[gameAPI] harvestPlant called:', plantId, 'client:', !!this.client);
-    if (this.client) this.client.moves.harvestPlant(plantId);
-  }
-
-  carePlant(plantId, careType) {
-    if (this.client) this.client.moves.carePlant(plantId, careType);
-  }
-
-  // Economy moves
-  buyEquipment(equipmentType, quantity = 1) {
-    if (this.client) this.client.moves.buyEquipment(equipmentType, quantity);
-  }
-
-  sellFish(fishId) {
-    if (this.client) this.client.moves.sellFish(fishId);
-  }
-
-  sellProducts(productType, quantity) {
-    if (this.client) this.client.moves.sellProducts(productType, quantity);
-  }
-
-  skipTurn() {
-    if (this.client) this.client.moves.skipTurn();
-  }
-
-  // System moves
-  progressTurn() {
-    console.log('[gameAPI] progressTurn called, client:', !!this.client, 'state:', !!this.state);
-    if (this.client) {
-      console.log('[gameAPI] Calling client.moves.progressTurn()');
-      this.client.moves.progressTurn();
-    } else {
-      console.error('[gameAPI] No client - cannot call progressTurn');
-    }
-  }
-
-  repairSystem() {
-    if (this.client) this.client.moves.repairSystem();
-  }
-
-  // Cleanup
   disconnect() {
-    if (this.unsubscribe) this.unsubscribe();
-    if (this.client) this.client.stop();
+    this.stopPolling();
+    this.matchID = null;
+    this.state = null;
   }
 }
 

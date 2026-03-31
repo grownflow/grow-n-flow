@@ -1,10 +1,16 @@
-const PlantsSection = ({gameState, loading, handleHarvestPlant, handlePlantSeed}) => {
+import { PLANT_SLOT_COUNT } from '../config/plantSlots';
 
+const PlantsSection = ({gameState, loading, handleHarvestPlant, handlePlantSeed, handleBuyAllSeeds}) => {
     if (!gameState) {
         return;
     }
 
     const { G, ctx } = gameState;
+    const maxPlantSlots = Math.max(G.maxPlantSlots || 0, PLANT_SLOT_COUNT);
+    const openSlots = Math.max(0, maxPlantSlots - (G.plants?.length || 0));
+    const seedCost = 0.3;
+    const affordableCount = Math.floor((G.money || 0) / seedCost);
+    const buyAllCount = Math.min(openSlots, affordableCount);
 
     // Group plants by type for summary
     const plantCounts = {};
@@ -32,6 +38,28 @@ const PlantsSection = ({gameState, loading, handleHarvestPlant, handlePlantSeed}
                 </div>
             )}
 
+            <div className="action-buttons">
+                <button 
+                onClick={() => handlePlantSeed('ParrisIslandRomaine')} 
+                disabled={loading || (G.plants && G.plants.length >= maxPlantSlots)}
+                className="btn-primary"
+                >
+                {G.plants && G.plants.length >= maxPlantSlots 
+                    ? `Bed Full (Max ${maxPlantSlots})` 
+                    : "Plant Romaine Lettuce ($0.30) 🥬"
+                }
+                </button>
+                <button
+                onClick={() => handleBuyAllSeeds('ParrisIslandRomaine')}
+                disabled={loading || buyAllCount <= 0}
+                className="btn-secondary"
+                >
+                {buyAllCount > 0
+                    ? `Buy All (${buyAllCount})`
+                    : 'Buy All'}
+                </button>
+            </div>
+
             <div className="plants-info">
                 {G.plants && G.plants.length > 0 ? (
                 <div className="plants-list">
@@ -56,19 +84,6 @@ const PlantsSection = ({gameState, loading, handleHarvestPlant, handlePlantSeed}
                 ) : (
                 <p className="empty-message">No plants yet. Plant some seeds!</p>
                 )}
-            </div>
-            
-            <div className="action-buttons">
-                <button 
-                onClick={() => handlePlantSeed('ParrisIslandRomaine')} 
-                disabled={loading || (G.plants && G.plants.length >= 10)}
-                className="btn-primary"
-                >
-                {G.plants && G.plants.length >= 10 
-                    ? "Bed Full (Max 10)" 
-                    : "Plant Romaine Lettuce ($0.30) 🥬"
-                }
-                </button>
             </div>
             </section>
         </div>
