@@ -344,7 +344,7 @@
         rotation='-1 0 0 1.570796'>
       <Transform DEF='G-Object_020_ifs_TRANSFORM'>
         <Group DEF='group_ME_G-Object_2'>
-          <Shape>
+          <Shape isPickable='false'>
             <Appearance>
               <Material DEF='MA__Water_Pool_Light_'
                   emissiveColor='0.2 0.2 0.8'
@@ -364,7 +364,7 @@
         rotation='-1 0 0 1.570796'>
       <Transform DEF='G-Object_021_ifs_TRANSFORM'>
         <Group DEF='group_ME_G-Object_021'>
-          <Shape>
+          <Shape isPickable='false'>
             <Appearance>
               <Material USE='MA__Water_Pool_Light_'/>
               <ImageTexture DEF='IM_Water_Pool'
@@ -388,7 +388,7 @@
         rotation='-1 0 0 1.570796'>
       <Transform DEF='G-Object_022_ifs_TRANSFORM'>
         <Group DEF='group_ME_G-Object_022'>
-          <Shape>
+          <Shape isPickable='false'>
             <Appearance>
               <Material USE='MA__Water_Pool_Light_'/>
               <ImageTexture USE='IM_Water_Pool'/>
@@ -1975,7 +1975,7 @@
         rotation='-1 0 0 1.570796'>
       <Transform DEF='G-Object_119_ifs_TRANSFORM'>
         <Group DEF='group_ME_G-Object_119'>
-          <Shape>
+          <Shape isPickable='false'>
             <Appearance>
               <Material USE='MA__Water_Pool_Light_'/>
               <ImageTexture USE='IM_Water_Pool'/>
@@ -2633,7 +2633,7 @@
         rotation='-1 0 0 1.570796'>
       <Transform DEF='G-Object_154_ifs_TRANSFORM'>
         <Group DEF='group_ME_G-Object_154'>
-          <Shape>
+          <Shape isPickable='false'>
             <Appearance>
               <Material USE='MA__Water_Pool_Light_'/>
               <ImageTexture USE='IM_Water_Pool'/>
@@ -2656,7 +2656,7 @@
         rotation='-1 0 0 1.570796'>
       <Transform DEF='G-Object_155_ifs_TRANSFORM'>
         <Group DEF='group_ME_G-Object_155'>
-          <Shape>
+          <Shape isPickable='false'>
             <Appearance>
               <Material USE='MA__Water_Pool_Light_'/>
               <ImageTexture USE='IM_Water_Pool'/>
