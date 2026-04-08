@@ -10,6 +10,10 @@ async function createIndexes() {
     await matches.createIndex({ gameTime: 1 });
     await matches.createIndex({ status: 1 });
     await matches.createIndex({ createdAt: -1 });
+
+    const waterReadings = await getCollection('water_readings');
+    await waterReadings.createIndex({ matchID: 1, gameTime: 1 });
+    await waterReadings.createIndex({ createdAt: -1 });
     
     console.log('Indexes created');
     await close();

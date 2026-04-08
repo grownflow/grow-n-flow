@@ -670,6 +670,85 @@ button:disabled {
   line-height: 1.5;
 }
 
+/* ───── Water Trends Chart ───── */
+
+.water-chart-shell {
+  border: 2px solid #e9ecef;
+  background: #f8f9fa;
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 12px;
+}
+
+.water-chart-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #495057;
+  margin-bottom: 2px;
+}
+
+.water-chart-subtitle {
+  font-size: 12px;
+  color: #6c757d;
+  margin-bottom: 8px;
+}
+
+.water-chart {
+  width: 100%;
+  height: 120px;
+  display: block;
+}
+
+.water-chart-bg {
+  fill: #ffffff;
+  stroke: #e9ecef;
+}
+
+.water-chart-axis {
+  stroke: #adb5bd;
+  stroke-width: 0.6;
+}
+
+.water-chart-line {
+  fill: none;
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.water-chart-line.ammonia { stroke: #dc3545; }
+.water-chart-line.nitrite { stroke: #fd7e14; }
+.water-chart-line.nitrate { stroke: #28a745; }
+
+.water-chart-legend {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.legend-item {
+  font-size: 12px;
+  font-weight: 700;
+  color: #495057;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-item::before {
+  content: '';
+  width: 10px;
+  height: 3px;
+  border-radius: 99px;
+  background: #adb5bd;
+  display: inline-block;
+}
+
+.legend-item.ammonia::before { background: #dc3545; }
+.legend-item.nitrite::before { background: #fd7e14; }
+.legend-item.nitrate::before { background: #28a745; }
+
 .control-section {
   text-align: center;
 }

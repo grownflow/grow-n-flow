@@ -27,6 +27,16 @@ class GameAPI {
       }
       console.log('[gameAPI] matchID:', this.matchID);
 
+      // Dev convenience: expose matchID in browser console.
+      // Allows: fetch(`http://localhost:4000/api/games/aquaponics/${window.__matchID}/water-history`)
+      try {
+        if (typeof window !== 'undefined') {
+          window.__matchID = this.matchID;
+        }
+      } catch {
+        // ignore
+      }
+
       // Start polling for state
       this.startPolling(onStateChange);
       return this.matchID;
@@ -67,6 +77,16 @@ class GameAPI {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ move, args, playerID }),
     });
+    return res.json();
+  }
+
+  async getWaterHistory({ limit = 200, from } = {}) {
+    if (!this.matchID) throw new Error('No match');
+    const qs = new URLSearchParams();
+    if (limit !== undefined) qs.set('limit', String(limit));
+    if (from !== undefined && from !== null) qs.set('from', String(from));
+    const res = await fetch(`${API_BASE}/${this.matchID}/water-history?${qs.toString()}`);
+    if (!res.ok) throw new Error('Fetch water history failed: ' + res.status);
     return res.json();
   }
 
