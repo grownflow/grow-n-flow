@@ -1,4 +1,10 @@
+import React, { useEffect, useMemo, useState } from 'react';
+import gameAPI from '../services/gameAPI';
+
 const WaterSection = ({gameState, loading}) => {
+
+    const [historyItems, setHistoryItems] = useState([]);
+    const [historyError, setHistoryError] = useState(null);
 
     if (!gameState) {
         return;
@@ -7,6 +13,27 @@ const WaterSection = ({gameState, loading}) => {
     const { G } = gameState;
     const tank = G.aquaponicsSystem?.tank;
     const water = tank?.water;
+
+    useEffect(() => {
+        if (!gameState?.G) return;
+
+        let cancelled = false;
+        (async () => {
+            try {
+                setHistoryError(null);
+                const res = await gameAPI.getWaterHistory({ limit: 200 });
+                if (cancelled) return;
+                setHistoryItems(Array.isArray(res?.items) ? res.items : []);
+            } catch (e) {
+                if (cancelled) return;
+                setHistoryError(e?.message || String(e));
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [gameState?.G?.gameTime]);
 
     if (!tank || !water) {
         return (
@@ -20,6 +47,18 @@ const WaterSection = ({gameState, loading}) => {
     }
 
     const volumePercent = Math.round((tank.currentVolume / tank.capacity) * 100);
+
+    const nitrogenHistory = useMemo(() => {
+        // items: { gameTime, water: { ammonia, nitrite, nitrate, ... } }
+        return (historyItems || [])
+            .filter((it) => it && it.water)
+            .map((it) => ({
+                t: Number(it.gameTime ?? 0),
+                ammonia: Number(it.water.ammonia ?? 0),
+                nitrite: Number(it.water.nitrite ?? 0),
+                nitrate: Number(it.water.nitrate ?? 0),
+            }));
+    }, [historyItems]);
 
     return (
         <div>
@@ -49,6 +88,17 @@ const WaterSection = ({gameState, loading}) => {
                         />
                     </div>
                 </div>
+
+                {/* Trends Graph */}
+                <h3 className="water-group-title">📈 Trends</h3>
+                {historyError ? (
+                    <p className="empty-message">Failed to load history: {historyError}</p>
+                ) : (
+                    <WaterTrendChart
+                        title="Nitrogen Cycle (ppm)"
+                        data={nitrogenHistory}
+                    />
+                )}
 
                 {/* Nitrogen Cycle */}
                 <h3 className="water-group-title">🔄 Nitrogen Cycle</h3>
@@ -139,6 +189,70 @@ const WaterSection = ({gameState, loading}) => {
                     </>
                 )}
             </section>
+        </div>
+    );
+};
+
+const WaterTrendChart = ({ title, data }) => {
+    const width = 100;
+    const height = 40;
+    const pad = 4;
+
+    const safeData = Array.isArray(data) ? data : [];
+
+    if (safeData.length < 2) {
+        return (
+            <div className="water-chart-shell">
+                <div className="water-chart-title">{title}</div>
+                <p className="empty-message">Not enough history yet. Progress a few days.</p>
+            </div>
+        );
+    }
+
+    const allValues = [];
+    safeData.forEach((d) => {
+        allValues.push(d.ammonia, d.nitrite, d.nitrate);
+    });
+    const maxY = Math.max(0.01, ...allValues.filter((n) => Number.isFinite(n)));
+    const minY = 0;
+
+    const xForIndex = (i) => {
+        const denom = Math.max(1, safeData.length - 1);
+        return pad + ((width - pad * 2) * i) / denom;
+    };
+
+    const yForValue = (v) => {
+        const value = Number.isFinite(v) ? v : 0;
+        const denom = Math.max(0.000001, maxY - minY);
+        const pct = (value - minY) / denom;
+        const y = pad + (height - pad * 2) * (1 - pct);
+        return Math.max(pad, Math.min(height - pad, y));
+    };
+
+    const toPolyline = (key) => safeData.map((d, i) => `${xForIndex(i)},${yForValue(d[key])}`).join(' ');
+
+    const last = safeData[safeData.length - 1];
+    const first = safeData[0];
+    const xLabel = `${first.t} → ${last.t} days`;
+
+    return (
+        <div className="water-chart-shell">
+            <div className="water-chart-title">{title}</div>
+            <div className="water-chart-subtitle">{xLabel}</div>
+            <svg className="water-chart" viewBox={`0 0 ${width} ${height}`} role="img" aria-label={title}>
+                <rect x="0" y="0" width={width} height={height} className="water-chart-bg" />
+                <line x1={pad} y1={height - pad} x2={width - pad} y2={height - pad} className="water-chart-axis" />
+                <line x1={pad} y1={pad} x2={pad} y2={height - pad} className="water-chart-axis" />
+
+                <polyline points={toPolyline('ammonia')} className="water-chart-line ammonia" />
+                <polyline points={toPolyline('nitrite')} className="water-chart-line nitrite" />
+                <polyline points={toPolyline('nitrate')} className="water-chart-line nitrate" />
+            </svg>
+            <div className="water-chart-legend" aria-hidden="true">
+                <span className="legend-item ammonia">Ammonia</span>
+                <span className="legend-item nitrite">Nitrite</span>
+                <span className="legend-item nitrate">Nitrate</span>
+            </div>
         </div>
     );
 };

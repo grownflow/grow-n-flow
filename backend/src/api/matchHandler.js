@@ -9,6 +9,51 @@ const { Light } = require('../game/models/Light');
 const { WaterChemistry } = require('../game/models/WaterChemistry');
 
 class MatchHandler {
+  static async recordWaterReading(matchID, G) {
+    try {
+      const water = G?.aquaponicsSystem?.tank?.water;
+      const tank = G?.aquaponicsSystem?.tank;
+      if (!water || !tank) return;
+
+      const readings = await getCollection('water_readings');
+      const gameTime = Number(G.gameTime || 0);
+
+      await readings.insertOne({
+        matchID: String(matchID),
+        gameTime,
+        createdAt: new Date(),
+        water: {
+          ammonia: Number(water.ammonia ?? 0),
+          nitrite: Number(water.nitrite ?? 0),
+          nitrate: Number(water.nitrate ?? 0),
+          pH: Number(water.pH ?? 7),
+          temperature: Number(water.temperature ?? 25),
+          dissolvedOxygen: Number(water.dissolvedOxygen ?? 8),
+          phosphorus: Number(water.phosphorus ?? 0),
+          potassium: Number(water.potassium ?? 0),
+          calcium: Number(water.calcium ?? 0),
+          magnesium: Number(water.magnesium ?? 0),
+          iron: Number(water.iron ?? 0),
+        },
+        tank: {
+          capacity: Number(tank.capacity ?? tank.volumeLiters ?? 1000),
+          currentVolume: Number(tank.currentVolume ?? tank.currentWaterLevel ?? 0),
+          biofilterEfficiency: Number(tank.biofilterEfficiency ?? 0.8),
+        },
+        event: G.activeEvent
+          ? {
+              id: String(G.activeEvent.id),
+              type: String(G.activeEvent.type),
+              severity: String(G.activeEvent.severity),
+            }
+          : null,
+      });
+    } catch (e) {
+      // Do not fail moves if history logging fails.
+      console.warn('[recordWaterReading] failed:', e.message);
+    }
+  }
+
   // Reconstruct class instances from plain objects
   static deserializeGameState(G) {
     // First, reconstruct all plants
@@ -115,6 +160,9 @@ class MatchHandler {
       updatedAt: new Date()
     });
 
+    // Seed initial water reading for graphs.
+    await this.recordWaterReading(matchID, G);
+
     return { matchID };
   }
 
@@ -151,6 +199,10 @@ class MatchHandler {
       match.G = newG;
       match.ctx.turn++;
 
+      if (moveName === 'progressTurn') {
+        await this.recordWaterReading(matchID, newG);
+      }
+
       const matches = await getCollection('matches');
       await matches.updateOne(
         { matchID },
@@ -173,6 +225,14 @@ class MatchHandler {
   static async deleteMatch(matchID) {
     const matches = await getCollection('matches');
     await matches.deleteOne({ matchID });
+
+    // Best-effort cleanup of history
+    try {
+      const readings = await getCollection('water_readings');
+      await readings.deleteMany({ matchID: String(matchID) });
+    } catch (e) {
+      console.warn('[deleteMatch] failed to delete water_readings:', e.message);
+    }
   }
 
   static async listMatches(status = 'active', limit = 50) {
