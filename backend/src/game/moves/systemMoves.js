@@ -36,6 +36,7 @@ function ensureTankAndWaterState(G) {
   tank.currentWaterLevel = tank.currentVolume;
 
   tank.biofilterEfficiency = clampNumber(tank.biofilterEfficiency ?? 0.8, 0, 1);
+  tank.circulationEfficiency = clampNumber(tank.circulationEfficiency ?? 1.0, 0.5, 2.0);
 
   if (!tank.water) tank.water = {};
   const water = tank.water;
@@ -91,12 +92,13 @@ function estimateDailyAmmoniaFromFish(fishArray) {
   return Math.max(0, perFish + byBiomass + bySpeciesRate);
 }
 
-function applyNitrificationStep({ water, biofilterEfficiency, circulationStopped }) {
+function applyNitrificationStep({ water, biofilterEfficiency, circulationStopped, circulationEfficiency }) {
   // Simple 1-day step: ammonia -> nitrite -> nitrate.
   // Keep ammonia/nitrite persistent (do NOT zero them out).
   const eff = clampNumber(biofilterEfficiency, 0, 1);
   const circulationMult = circulationStopped ? 0.15 : 1.0;
-  const k = 0.65 * eff * circulationMult; // fraction converted per day (0..~0.65)
+  const circEff = clampNumber(circulationEfficiency ?? 1.0, 0.5, 2.0);
+  const k = 0.65 * eff * circulationMult * circEff; // fraction converted per day
 
   const ammoniaToNitrite = Math.min(water.ammonia, water.ammonia * k);
   water.ammonia = Math.max(0, water.ammonia - ammoniaToNitrite);
@@ -170,14 +172,16 @@ const systemMoves = {
       water,
       biofilterEfficiency: tank.biofilterEfficiency,
       circulationStopped: Boolean(G.eventEffects?.circulationStopped),
+      circulationEfficiency: tank.circulationEfficiency,
     });
 
     const uptake = applyPlantNitrateUptake({ G, water, lightsAvailable });
 
     // Age plants and advance growth stages
     if (G.plants && G.plants.length > 0) {
+      const plantGrowthMult = clampNumber(G.systemModifiers?.plantGrowthMultiplier ?? 1.0, 0.5, 3.0);
       G.plants.forEach(plant => {
-        plant.age += 1;
+        plant.age += plantGrowthMult;
         const progress = plant.age / (plant.growthDays || 42);
         if (progress >= 1.0) {
           plant.growthStage = 'mature';

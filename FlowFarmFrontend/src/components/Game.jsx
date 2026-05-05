@@ -8,6 +8,7 @@ import GillPopup from './GillPopup';
 import BillsPanel from './BillsPanel';
 import EventsPanel from './EventsPanel';
 import FishTankSection from './FishTankSection';
+import InventoryPanel from './InventoryPanel';
 import PlantsSection from './PlantsSection';
 import WaterSection from './WaterSection';
 import "./Game.css"
@@ -86,13 +87,9 @@ function Game() {
 
     if (buyCount <= 0) return;
 
-    for (let i = 0; i < buyCount; i++) {
-      const bedLocation = `bed_${Date.now()}_${i}`;
-      const result = await gameAPI.plantSeed(plantType, bedLocation, PLANT_SLOT_COUNT);
-      if (result?.error) {
-        console.warn('[Game] buy-all stopped due to move error:', result.error);
-        break;
-      }
+    const result = await gameAPI.plantSeedsBulk(plantType, buyCount, PLANT_SLOT_COUNT);
+    if (result?.error) {
+      console.warn('[Game] buy-all failed:', result.error);
     }
   };
 
@@ -110,6 +107,11 @@ function Game() {
   const handleHarvestPlant = (plantId) => {
     console.log('[Game] handleHarvestPlant called:', plantId);
     gameAPI.harvestPlant(plantId);
+  };
+
+  const handleHarvestAllMaturePlants = () => {
+    console.log('[Game] handleHarvestAllMaturePlants clicked');
+    gameAPI.harvestAllMaturePlants();
   };
 
   const handleRepairSystem = () => {
@@ -145,6 +147,7 @@ function Game() {
     { id: 'controls', label: 'Controls' },
     { id: 'water', label: 'Water' },
     { id: 'plants', label: 'Plants' },
+    { id: 'inventory', label: 'Inventory' },
     { id: 'fish', label: 'Fish' },
     { id: 'bills', label: 'Bills' },
     { id: 'events', label: 'Events' },
@@ -483,9 +486,14 @@ function Game() {
               gameState={gameState}
               loading={loading}
               handleHarvestPlant={handleHarvestPlant}
+              handleHarvestAllMaturePlants={handleHarvestAllMaturePlants}
               handlePlantSeed={handlePlantSeed}
               handleBuyAllSeeds={handleBuyAllSeeds}
             />
+          )}
+
+          {activeTab === 'inventory' && gameState && (
+            <InventoryPanel gameState={gameState} loading={loading} />
           )}
 
           {activeTab === 'fish' && gameState && (

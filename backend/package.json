@@ -10,7 +10,11 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:unit": "jest tests/unit",
-    "test:integration": "jest tests/integration"
+    "test:integration": "jest tests/integration",
+    "smoke:inventory": "node scripts/test-inventory-water-treatment.js",
+    "smoke:harvest": "node scripts/test-harvest-inventory-sell.js",
+    "smoke:harvest:local": "node scripts/test-harvest-inventory-sell-local.js",
+    "smoke:buyall": "node scripts/test-buy-all-seeds-bulk.js"
   },
   "keywords": [
     "aquaponics",

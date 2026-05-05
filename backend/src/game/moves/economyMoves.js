@@ -1,12 +1,160 @@
 // All moves related to economic aspects of the game
 // Handles buying/selling, equipment purchases, market interactions
 
+const { equipment } = require('../data/equipment');
+
+function clampNumber(value, min, max) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return min;
+  return Math.max(min, Math.min(max, n));
+}
+
+function unwrapMoveArgs(firstArg, secondArg) {
+  // Supports both boardgame.io signature:
+  //   ({ G, ctx }, ...)
+  // and older direct-call signature used in some scripts/tests:
+  //   (G, ctx, ...)
+  if (firstArg && typeof firstArg === 'object' && 'G' in firstArg && 'ctx' in firstArg) {
+    return { G: firstArg.G, ctx: firstArg.ctx };
+  }
+  return { G: firstArg, ctx: secondArg };
+}
+
+function unwrapBuyEquipmentArgs(arg1, arg2, arg3, arg4) {
+  // boardgame.io: (ctxArg, equipmentType, quantity)
+  if (arg1 && typeof arg1 === 'object' && 'G' in arg1 && 'ctx' in arg1) {
+    return { G: arg1.G, ctx: arg1.ctx, equipmentType: arg2, quantity: arg3 };
+  }
+  // legacy scripts: (G, ctx, equipmentType, quantity)
+  return { G: arg1, ctx: arg2, equipmentType: arg3, quantity: arg4 };
+}
+
+function ensureSystemState(G) {
+  if (!G.aquaponicsSystem) G.aquaponicsSystem = { tank: {}, light: { isOn: true } };
+  if (!G.aquaponicsSystem.tank) G.aquaponicsSystem.tank = {};
+  if (!G.aquaponicsSystem.tank.water) G.aquaponicsSystem.tank.water = {};
+  const tank = G.aquaponicsSystem.tank;
+  const water = tank.water;
+
+  tank.biofilterEfficiency = clampNumber(tank.biofilterEfficiency ?? 0.8, 0, 1);
+  tank.circulationEfficiency = clampNumber(tank.circulationEfficiency ?? 1.0, 0.5, 2.0);
+  water.pH = clampNumber(water.pH ?? 7.0, 0, 14);
+  water.dissolvedOxygen = clampNumber(water.dissolvedOxygen ?? 8.0, 0, 20);
+  water.potassium = clampNumber(water.potassium ?? 40, 0, 10000);
+  water.calcium = clampNumber(water.calcium ?? 60, 0, 10000);
+  water.iron = clampNumber(water.iron ?? 2, 0, 10000);
+
+  return { tank, water };
+}
+
 const economyMoves = {
+  getEquipmentCatalog: (arg1, arg2) => {
+    const { G } = unwrapMoveArgs(arg1, arg2);
+    if (G) {
+      G.lastAction = {
+        type: 'getEquipmentCatalog',
+        success: true,
+        equipment
+      };
+    }
+    return G;
+  },
+
   // Buy equipment or upgrades
   // Parameters: equipmentType, quantity
-  buyEquipment: ({ G, ctx }, equipmentType, quantity = 1) => {
-    console.log(`Player ${ctx.currentPlayer} bought ${quantity} ${equipmentType}`);
-    // TODO: Deduct money, add equipment to inventory, improve system efficiency
+  buyEquipment: (arg1, arg2, arg3, arg4) => {
+    const { G, ctx, equipmentType, quantity } = unwrapBuyEquipmentArgs(arg1, arg2, arg3, arg4);
+    const type = String(equipmentType || '');
+    const qty = Math.max(1, Math.floor(Number(quantity) || 1));
+
+    const data = equipment[type];
+    if (!data) {
+      if (G) {
+        G.error = `Unknown equipment: ${type}`;
+        G.lastAction = { type: 'buyEquipment', success: false, reason: 'unknown_equipment', equipmentType: type };
+      }
+      return Object.assign(G || {}, { error: `Unknown equipment: ${type}` });
+    }
+
+    if (!G.equipment) G.equipment = {};
+
+    const unitCost = Number(data.cost || 0);
+    const totalCost = unitCost * qty;
+    const money = Number(G.money || 0);
+    if (money < totalCost) {
+      const msg = `Insufficient funds. Need $${totalCost}, have $${money}`;
+      G.error = msg;
+      G.lastAction = { type: 'buyEquipment', success: false, reason: 'insufficient_funds', equipmentType: type, quantity: qty, cost: totalCost };
+      return Object.assign(G, { error: msg });
+    }
+
+    G.money = money - totalCost;
+    G.equipment[type] = (Number(G.equipment[type]) || 0) + qty;
+
+    const benefits = [];
+    const { tank, water } = ensureSystemState(G);
+
+    if (type === 'biofilter') {
+      tank.biofilterEfficiency = clampNumber(tank.biofilterEfficiency + 0.05 * qty, 0, 1);
+      benefits.push('Improved nitrogen cycle efficiency');
+    }
+
+    if (type === 'waterPump') {
+      tank.circulationEfficiency = clampNumber(tank.circulationEfficiency + 0.05 * qty, 0.5, 2.0);
+      benefits.push('Improved water circulation');
+    }
+
+    if (type === 'airPump') {
+      water.dissolvedOxygen = clampNumber(water.dissolvedOxygen + 0.5 * qty, 0, 20);
+      benefits.push('Increased oxygen levels');
+    }
+
+    if (type === 'fishFood') {
+      // Keep a simple fish-food stockpile for later when feedFish is implemented.
+      G.fishFood = (Number(G.fishFood) || 0) + (10 * qty);
+      benefits.push(`Added ${10 * qty} units of fish food`);
+    }
+
+    // Instant-use consumables that directly adjust tank water chemistry.
+    if (data.type === 'consumable' && data.waterEffects && water) {
+      const eff = data.waterEffects;
+      if (Number.isFinite(eff.pHDelta)) {
+        water.pH = clampNumber(water.pH + eff.pHDelta * qty, 0, 14);
+        benefits.push('Adjusted pH');
+      }
+      if (Number.isFinite(eff.calciumDeltaMgL)) {
+        water.calcium = clampNumber((water.calcium ?? 0) + eff.calciumDeltaMgL * qty, 0, 10000);
+        benefits.push('Added calcium');
+      }
+      if (Number.isFinite(eff.potassiumDeltaMgL)) {
+        water.potassium = clampNumber((water.potassium ?? 0) + eff.potassiumDeltaMgL * qty, 0, 10000);
+        benefits.push('Added potassium');
+      }
+      if (Number.isFinite(eff.ironDeltaMgL)) {
+        water.iron = clampNumber((water.iron ?? 0) + eff.ironDeltaMgL * qty, 0, 10000);
+        benefits.push('Added iron');
+      }
+    }
+
+    if (!G.systemModifiers) G.systemModifiers = {};
+    if (type === 'growLight') {
+      // Used in systemMoves.progressTurn to accelerate plant aging.
+      G.systemModifiers.plantGrowthMultiplier = clampNumber((G.systemModifiers.plantGrowthMultiplier ?? 1.0) + 0.1 * qty, 1.0, 3.0);
+      benefits.push('Improved plant growth rate');
+      if (!G.aquaponicsSystem.light) G.aquaponicsSystem.light = { isOn: true };
+      G.aquaponicsSystem.light.isOn = true;
+    }
+
+    G.lastAction = {
+      type: 'buyEquipment',
+      success: true,
+      equipmentType: type,
+      quantity: qty,
+      cost: totalCost,
+      benefits
+    };
+
+    return G;
   },
 
   sellFish: ({ G, ctx }, fishIdentifier) => {
@@ -67,6 +215,60 @@ const economyMoves = {
       fishSold,
       totalValue
     };
+  },
+
+  // Sell harvested products from inventory.
+  // Parameters: productType (e.g. 'ParrisIslandRomaine'), quantity (optional; default all)
+  sellProducts: (arg1, arg2, arg3, arg4) => {
+    const { G, ctx } = unwrapMoveArgs(arg1, arg2);
+    const productType = (arg1 && typeof arg1 === 'object' && 'G' in arg1 && 'ctx' in arg1)
+      ? arg2
+      : arg3;
+    const quantity = (arg1 && typeof arg1 === 'object' && 'G' in arg1 && 'ctx' in arg1)
+      ? arg3
+      : arg4;
+
+    const key = String(productType || '');
+    if (!key) {
+      G.lastAction = { type: 'sellProducts', success: false, reason: 'missing_product_type' };
+      G.error = 'Missing product type';
+      return Object.assign(G, { error: 'Missing product type' });
+    }
+
+    const produce = G.inventory?.produce;
+    const entry = produce ? produce[key] : null;
+    const available = Number(entry?.count || 0);
+    if (!entry || available <= 0) {
+      G.lastAction = { type: 'sellProducts', success: false, reason: 'not_in_inventory', productType: key };
+      G.error = `No inventory available for: ${key}`;
+      return Object.assign(G, { error: `No inventory available for: ${key}` });
+    }
+
+    const requested = Number(quantity);
+    const qty = Number.isFinite(requested) && requested > 0 ? Math.floor(requested) : available;
+    const sellQty = Math.max(1, Math.min(available, qty));
+
+    const unitPrice = Number(entry.unitPrice || 0);
+    const totalValue = sellQty * unitPrice;
+    G.money = (Number(G.money) || 0) + totalValue;
+
+    const remaining = available - sellQty;
+    if (remaining <= 0) {
+      delete G.inventory.produce[key];
+    } else {
+      G.inventory.produce[key] = { ...entry, count: remaining };
+    }
+
+    G.lastAction = {
+      type: 'sellProducts',
+      success: true,
+      productType: key,
+      quantity: sellQty,
+      unitPrice,
+      totalValue,
+    };
+
+    return G;
   },
 
   // Skip turn to advance time and save energy

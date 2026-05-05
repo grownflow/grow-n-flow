@@ -124,9 +124,8 @@ const WaterSection = ({gameState, loading}) => {
                         value={water.nitrate}
                         unit="ppm"
                         decimals={2}
-                        thresholds={{ warning: 150, danger: 200 }}
-                        idealLabel="5–150"
-                        invertWarning
+                        rangeWarning={{ low: 20, high: 100 }}
+                        idealLabel="20–100"
                     />
                 </div>
 
@@ -138,8 +137,8 @@ const WaterSection = ({gameState, loading}) => {
                         value={water.pH}
                         unit=""
                         decimals={1}
-                        rangeWarning={{ low: 6.0, high: 7.5 }}
-                        idealLabel="6.0–7.5"
+                        rangeWarning={{ low: 6.5, high: 7.0 }}
+                        idealLabel="6.5–7.0"
                     />
                     <WaterStat
                         label="Temperature"
@@ -163,11 +162,11 @@ const WaterSection = ({gameState, loading}) => {
                 {/* Plant Nutrients */}
                 <h3 className="water-group-title">🌱 Plant Nutrients</h3>
                 <div className="water-stats">
-                    <WaterStat label="Phosphorus" value={water.phosphorus} unit="mg/L" decimals={1} idealLabel="≥ 3" />
-                    <WaterStat label="Potassium" value={water.potassium} unit="mg/L" decimals={1} idealLabel="≥ 30" />
+                    <WaterStat label="Phosphorus" value={water.phosphorus} unit="mg/L" decimals={1} thresholds={{ warning: 5, danger: 2 }} idealLabel="> 5" invertWarning />
+                    <WaterStat label="Potassium" value={water.potassium} unit="mg/L" decimals={1} thresholds={{ warning: 50, danger: 30 }} idealLabel="> 50" invertWarning />
                     <WaterStat label="Calcium" value={water.calcium} unit="mg/L" decimals={1} idealLabel="≥ 50" />
                     <WaterStat label="Magnesium" value={water.magnesium} unit="mg/L" decimals={1} idealLabel="≥ 15" />
-                    <WaterStat label="Iron" value={water.iron} unit="mg/L" decimals={2} idealLabel="≥ 1" />
+                    <WaterStat label="Iron" value={water.iron} unit="mg/L" decimals={2} thresholds={{ warning: 1.5, danger: 1.0 }} idealLabel="> 1.5" invertWarning />
                 </div>
 
                 {/* Light Status */}

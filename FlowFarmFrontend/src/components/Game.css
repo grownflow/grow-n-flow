@@ -449,6 +449,19 @@ section h2 {
   padding: 40px;
 }
 
+/* Inventory tab: ensure readable text on white cards */
+.inventory-panel {
+  color: #000;
+}
+
+.inventory-panel h3 {
+  color: #000;
+}
+
+.inventory-panel .empty-message {
+  color: #000;
+}
+
 .action-buttons {
   display: flex;
   gap: 10px;
