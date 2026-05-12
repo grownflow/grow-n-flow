@@ -12,6 +12,8 @@ const createInitialSystemState = () => ({
     id: `tank_${Date.now()}`,
     capacity: 1000,
     currentVolume: 1000,
+    foodInTank: 0,
+    sediment: 0,
     water: {
       temperature: 25,
       pH: 7.0,
@@ -55,6 +57,14 @@ const AquaponicsGame = {
     // Game mechanics and player resources
     gameTime: 0,    // DAYS since game start
     money: 5000,    // Player currency for purchases and upgrades
+
+    // Purchased equipment / supplies (counts by key from data/equipment.js)
+    equipment: {},
+
+    // Player-held inventory (harvested goods, etc.)
+    inventory: {
+      produce: {}
+    },
     
     // Utility bills tracking
     billsAccrued: {

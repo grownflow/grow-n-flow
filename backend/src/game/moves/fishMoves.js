@@ -4,12 +4,92 @@
 const { fishSpecies } = require('../data/fishSpecies');
 const { randomPointInWaterVolume } = require('../data/renderBounds');
 
+function clampNumber(value, min, max) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return min;
+  return Math.min(max, Math.max(min, n));
+}
+
+function unwrapFeedFishArgs(arg1, arg2, arg3, arg4) {
+  // Supports both:
+  //  - boardgame.io signature: ({ G, ctx }, fishIdentifier, foodAmount)
+  //  - legacy/unit-test style: (G, ctx, fishIdentifier, foodAmount)
+  if (arg1 && typeof arg1 === 'object' && arg1.G && arg1.ctx) {
+    return { G: arg1.G, ctx: arg1.ctx, fishIdentifier: arg2, foodAmount: arg3 };
+  }
+  return { G: arg1, ctx: arg2 || { currentPlayer: '0' }, fishIdentifier: arg3, foodAmount: arg4 };
+}
+
+function ensureTankAndWaterState(G) {
+  if (!G.aquaponicsSystem) G.aquaponicsSystem = { tank: {}, growBeds: {}, light: { isOn: true } };
+  if (!G.aquaponicsSystem.tank) G.aquaponicsSystem.tank = {};
+  const tank = G.aquaponicsSystem.tank;
+  tank.foodInTank = clampNumber(tank.foodInTank ?? 0, 0, 1e9);
+  tank.sediment = clampNumber(tank.sediment ?? 0, 0, 1e12);
+  if (!tank.water) tank.water = {};
+  const water = tank.water;
+
+  water.temperature = clampNumber(water.temperature ?? 25, -10, 60);
+  water.ammonia = clampNumber(water.ammonia ?? 0, 0, 1000);
+  water.dissolvedOxygen = clampNumber(water.dissolvedOxygen ?? 8, 0, 20);
+
+  return { tank, water };
+}
+
 const fishMoves = {
   // Feed fish in the system
   // Parameters: fishId (specific fish or 'all'), foodAmount
-  feedFish: ({ G, ctx }, fishId, foodAmount) => {
-    console.log(`Player ${ctx.currentPlayer} fed fish ${fishId} with ${foodAmount} food`);
-    // TODO: Find fish by ID, update health, consume food budget, affect water quality
+  feedFish: (arg1, arg2, arg3, arg4) => {
+    const { G, ctx, fishIdentifier, foodAmount } = unwrapFeedFishArgs(arg1, arg2, arg3, arg4);
+
+    if (!G) return G;
+    if (!Array.isArray(G.fish)) G.fish = [];
+
+    const player = ctx?.currentPlayer ?? '0';
+
+    const desiredFood = Math.floor(Number(foodAmount) || 0);
+    if (!Number.isFinite(desiredFood) || desiredFood <= 0) {
+      const msg = `Invalid food amount: ${foodAmount}`;
+      G.error = msg;
+      G.lastAction = { type: 'feedFish', success: false, reason: 'invalid_food_amount', fishIdentifier, foodAmount };
+      return G;
+    }
+
+    const availableFood = Math.floor(Number(G.fishFood) || 0);
+    if (availableFood <= 0) {
+      const msg = 'No fish food available';
+      G.error = msg;
+      G.lastAction = { type: 'feedFish', success: false, reason: 'no_fish_food', fishIdentifier, foodAmount: desiredFood, availableFood };
+      return G;
+    }
+
+    const foodAmountUsed = Math.max(0, Math.min(availableFood, desiredFood));
+    const partial = foodAmountUsed < desiredFood;
+
+    const { tank } = ensureTankAndWaterState(G);
+
+    // "Feed fish" now means "add food into the tank".
+    // Fish will actually eat from tank.foodInTank during progressTurn.
+    const tankFoodBefore = Number(tank.foodInTank || 0);
+    tank.foodInTank = clampNumber(tankFoodBefore + foodAmountUsed, 0, 1e9);
+    G.fishFood = Math.max(0, availableFood - foodAmountUsed);
+
+    console.log(`Player ${player} inserted ${foodAmountUsed}/${desiredFood} food into tank (now ${tank.foodInTank}).`);
+    if (G.error) G.error = null;
+    G.lastAction = {
+      type: 'feedFish',
+      success: true,
+      fishIdentifier,
+      foodAmountRequested: desiredFood,
+      foodAmountUsed,
+      availableFood,
+      partial,
+      inventoryFoodRemaining: G.fishFood,
+      tankFoodBefore: Number(tankFoodBefore.toFixed(3)),
+      tankFoodAfter: Number(Number(tank.foodInTank).toFixed(3)),
+    };
+
+    return G;
   },
 
   // Add new fish to the system

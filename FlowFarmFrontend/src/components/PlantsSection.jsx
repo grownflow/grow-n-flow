@@ -1,6 +1,6 @@
 import { PLANT_SLOT_COUNT } from '../config/plantSlots';
 
-const PlantsSection = ({gameState, loading, handleHarvestPlant, handlePlantSeed, handleBuyAllSeeds}) => {
+const PlantsSection = ({gameState, loading, handleHarvestPlant, handleHarvestAllMaturePlants, handlePlantSeed, handleBuyAllSeeds}) => {
     if (!gameState) {
         return;
     }
@@ -11,6 +11,8 @@ const PlantsSection = ({gameState, loading, handleHarvestPlant, handlePlantSeed,
     const seedCost = 0.3;
     const affordableCount = Math.floor((G.money || 0) / seedCost);
     const buyAllCount = Math.min(openSlots, affordableCount);
+
+    const matureCount = (G.plants || []).filter((p) => p && p.growthStage === 'mature').length;
 
     // Group plants by type for summary
     const plantCounts = {};
@@ -58,6 +60,15 @@ const PlantsSection = ({gameState, loading, handleHarvestPlant, handlePlantSeed,
                     ? `Buy All (${buyAllCount})`
                     : 'Buy All'}
                 </button>
+                <button
+                onClick={handleHarvestAllMaturePlants}
+                disabled={loading || matureCount <= 0}
+                className="btn-secondary"
+                >
+                {matureCount > 0
+                    ? `Harvest All (${matureCount})`
+                    : 'Harvest All'}
+                </button>
             </div>
 
             <div className="plants-info">
@@ -75,7 +86,7 @@ const PlantsSection = ({gameState, loading, handleHarvestPlant, handlePlantSeed,
                             className="btn-harvest"
                             disabled={loading}
                         >
-                            Harvest (${plant.valuePerHead?.toFixed(2)}) 🌾
+                            Harvest to Inventory 🌾
                         </button>
                         )}
                     </div>

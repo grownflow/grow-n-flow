@@ -80,15 +80,33 @@ class MatchHandler {
       
       // Reconstruct Tank with WaterChemistry
       if (G.aquaponicsSystem.tank) {
-        const tank = new Tank(G.aquaponicsSystem.tank.volumeLiters || 1000);
-        if (G.aquaponicsSystem.tank.water) {
+        const tankData = G.aquaponicsSystem.tank;
+        const tank = new Tank(tankData.volumeLiters || tankData.capacity || 1000);
+
+        // Preserve persisted schema fields (capacity/currentVolume/foodInTank/etc).
+        // Tank is a legacy class; without copying, newer plain-state fields are dropped.
+        Object.assign(tank, tankData);
+
+        if (tankData.water) {
           const water = new WaterChemistry();
-          Object.assign(water, G.aquaponicsSystem.tank.water);
+          Object.assign(water, tankData.water);
           tank.water = water;
         }
-        tank.biofilterEfficiency = G.aquaponicsSystem.tank.biofilterEfficiency || 0.8;
-        tank.turn = G.aquaponicsSystem.tank.turn || 0;
-        tank.log = G.aquaponicsSystem.tank.log || [];
+
+        // Ensure commonly relied-on fields exist.
+        if (tank.foodInTank === undefined || tank.foodInTank === null) {
+          tank.foodInTank = 0;
+        }
+        if (tank.biofilterEfficiency === undefined || tank.biofilterEfficiency === null) {
+          tank.biofilterEfficiency = 0.8;
+        }
+        if (!Array.isArray(tank.log)) {
+          tank.log = [];
+        }
+        if (tank.turn === undefined || tank.turn === null) {
+          tank.turn = 0;
+        }
+
         sys.tank = tank;
       }
       

@@ -102,9 +102,10 @@ class Bot {
     const foodAvailable = G.fishFood || 0;
     if (foodAvailable < 5) {
       // Try to buy fish food if we can afford it
-      const foodCost = 20; // Cost of 10 units
+      // buyEquipment('fishFood', qty) adds 10 units per qty
+      const foodCost = 20; // Kept as the bot's heuristic for affordability
       if (G.money >= foodCost + this.config.minMoneyBuffer) {
-        return { moveName: 'buyFishFood', args: [1] };
+        return { moveName: 'buyEquipment', args: ['fishFood', 1] };
       }
       return null;
     }

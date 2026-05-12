@@ -8,6 +8,8 @@ import GillPopup from './GillPopup';
 import BillsPanel from './BillsPanel';
 import EventsPanel from './EventsPanel';
 import FishTankSection from './FishTankSection';
+import InventoryPanel from './InventoryPanel';
+import MarketPanel from './MarketPanel';
 import PlantsSection from './PlantsSection';
 import WaterSection from './WaterSection';
 import "./Game.css"
@@ -18,12 +20,15 @@ function Game() {
   const [error, setError] = useState(null);
   const [connected, setConnected] = useState(false);
 
+  const [lastFishDeathAlertTurn, setLastFishDeathAlertTurn] = useState(null);
+
   const [activeViewpoint, setActiveViewpoint] = useState('Viewpoint1');
   const [lastPickedLabel, setLastPickedLabel] = useState('—');
   const [selection, setSelection] = useState(null); // { kind: 'plant' | 'fish', id }
 
   const [panelOpen, setPanelOpen] = useState(true);
-  const [activeTab, setActiveTab] = useState('controls');
+  const [activeTab, setActiveTab] = useState('market');
+  const [matchId, setMatchId] = useState(null);
 
   const [gillText, setGillText] = useState("");
   const [gillActive, setGillActive] = useState(false);
@@ -31,6 +36,8 @@ function Game() {
   const [hasClickedOnWater, setHasClickedOnWater] = useState(false);
   const [hasClickedOnPlants, setHasClickedOnPlants] = useState(false);
   const [hasClickedOnFish, setHasClickedOnFish] = useState(false);
+
+  const [feedFishStatus, setFeedFishStatus] = useState({ pending: false, message: null, ok: null, at: null });
 
   // Initialize game on component mount
   useEffect(() => {
@@ -47,7 +54,7 @@ function Game() {
     setError(null);
     try {
       // Connect to backend and subscribe to state changes
-      await gameAPI.createMatch((state) => {
+      const createdMatchId = await gameAPI.createMatch((state) => {
         // This callback fires whenever game state changes
         if (state) {
           setGameState(state); // Store full state (has .G and .ctx)
@@ -55,6 +62,8 @@ function Game() {
           setLoading(false);
         }
       });
+
+      setMatchId(createdMatchId || null);
     } catch (err) {
       setError('Failed to connect to game server: ' + err.message);
       setLoading(false);
@@ -86,20 +95,56 @@ function Game() {
 
     if (buyCount <= 0) return;
 
-    for (let i = 0; i < buyCount; i++) {
-      const bedLocation = `bed_${Date.now()}_${i}`;
-      const result = await gameAPI.plantSeed(plantType, bedLocation, PLANT_SLOT_COUNT);
-      if (result?.error) {
-        console.warn('[Game] buy-all stopped due to move error:', result.error);
-        break;
-      }
+    const result = await gameAPI.plantSeedsBulk(plantType, buyCount, PLANT_SLOT_COUNT);
+    if (result?.error) {
+      console.warn('[Game] buy-all failed:', result.error);
     }
   };
 
-  const handleFeedFish = () => {
-    // Backend expects (fishId, foodAmount) not (tankId, amount)
-    // Using 0 as fishId for the first fish, 10 as food amount
-    gameAPI.feedFish(0, 10);
+  const handleFeedFish = async (overrideAmount) => {
+    if (feedFishStatus.pending) return;
+
+    const fishIdentifier = 'tank';
+
+    const availableFood = Math.floor(Number(gameState?.G?.fishFood) || 0);
+    const fallbackDesired = 10;
+    const desired = Math.floor(Number(overrideAmount) || fallbackDesired);
+    const amount = Math.max(1, desired);
+
+    setFeedFishStatus({ pending: true, message: 'Adding food…', ok: null, at: Date.now() });
+    try {
+      const res = await gameAPI.feedFish(fishIdentifier, amount);
+      const action = res?.G?.lastAction;
+
+      // Prefer the move's lastAction. G.error may be stale from earlier moves.
+      if (action?.type === 'feedFish') {
+        if (action?.success === false) {
+          const reason = action?.reason ? ` (${action.reason})` : '';
+          setFeedFishStatus({ pending: false, message: `Add food failed${reason}.`, ok: false, at: Date.now() });
+          return;
+        }
+
+        const used = action?.foodAmountUsed ?? action?.foodAmountRequested;
+        const invRemaining = action?.inventoryFoodRemaining;
+        const tankBefore = action?.tankFoodBefore;
+        const tankAfter = action?.tankFoodAfter;
+        const partial = Boolean(action?.partial);
+        const msg = `Added ${used ?? '—'} food into tank${partial ? ' (partial)' : ''}. `
+          + `Tank food: ${tankBefore ?? '—'} → ${tankAfter ?? '—'}. `
+          + `Inventory fish food remaining: ${invRemaining ?? availableFood ?? '—'}.`;
+        setFeedFishStatus({ pending: false, message: msg, ok: true, at: Date.now() });
+        return;
+      }
+
+      if (res?.error || res?.G?.error) {
+        setFeedFishStatus({ pending: false, message: String(res?.error || res?.G?.error), ok: false, at: Date.now() });
+        return;
+      }
+
+      setFeedFishStatus({ pending: false, message: 'Food added.', ok: true, at: Date.now() });
+    } catch (e) {
+      setFeedFishStatus({ pending: false, message: e?.message || String(e), ok: false, at: Date.now() });
+    }
   };
 
   const handleProgressTurn = () => {
@@ -110,6 +155,11 @@ function Game() {
   const handleHarvestPlant = (plantId) => {
     console.log('[Game] handleHarvestPlant called:', plantId);
     gameAPI.harvestPlant(plantId);
+  };
+
+  const handleHarvestAllMaturePlants = () => {
+    console.log('[Game] handleHarvestAllMaturePlants clicked');
+    gameAPI.harvestAllMaturePlants();
   };
 
   const handleRepairSystem = () => {
@@ -142,9 +192,10 @@ function Game() {
   }
 
   const tabs = [
-    { id: 'controls', label: 'Controls' },
+    { id: 'market', label: 'Market' },
     { id: 'water', label: 'Water' },
     { id: 'plants', label: 'Plants' },
+    { id: 'inventory', label: 'Inventory' },
     { id: 'fish', label: 'Fish' },
     { id: 'bills', label: 'Bills' },
     { id: 'events', label: 'Events' },
@@ -190,6 +241,32 @@ function Game() {
       cancelled = true;
     };
   }, [activeViewpoint]);
+
+  useEffect(() => {
+    const turn = gameState?.ctx?.turn;
+    const action = gameState?.G?.lastAction;
+    if (!turn || !action || action.type !== 'progressTurn') return;
+
+    const deaths = action?.fishDeaths;
+    if (!Array.isArray(deaths) || deaths.length === 0) return;
+    if (turn === lastFishDeathAlertTurn) return;
+
+    const lines = deaths
+      .map((d) => {
+        const type = d?.type ? String(d.type) : 'fish';
+        const id = d?.id ? String(d.id) : '';
+        return id ? `${type} (${id})` : type;
+      })
+      .filter(Boolean);
+
+    try {
+      window.alert(`Fish died: ${lines.join(', ')}`);
+    } catch {
+      // ignore
+    }
+
+    setLastFishDeathAlertTurn(turn);
+  }, [gameState?.ctx?.turn, gameState?.G?.lastAction, lastFishDeathAlertTurn]);
 
   const handlePicked = ({ label }) => {
     if (!label) return;
@@ -387,20 +464,13 @@ function Game() {
             {selection.kind === 'fish' && (
               selectedFish ? (
                 <div className="selection-overlay-body">
-                  <div className="selection-row"><strong>ID:</strong> {selectedFish.id ?? '—'}</div>
                   <div className="selection-row"><strong>Type:</strong> {selectedFish.type ?? '—'}</div>
                   <div className="selection-row"><strong>Health:</strong> {selectedFish.health ?? '—'}/10</div>
                   <div className="selection-row"><strong>Age:</strong> {selectedFish.age ?? '—'}d</div>
                   <div className="selection-row"><strong>Weight:</strong> {selectedFish.weight != null ? `${Math.round(Number(selectedFish.weight))}g` : '—'}</div>
-                  <div className="selection-row"><strong>Harvest Weight:</strong> {selectedFish.harvestWeight ?? '—'}g</div>
-                  <div className="selection-row"><strong>Harvest Time:</strong> {selectedFish.harvestTime ?? '—'}d</div>
                   <div className="selection-row"><strong>Market Value:</strong> {selectedFish.marketValue != null ? `$${Number(selectedFish.marketValue).toFixed(2)}/lb` : '—'}</div>
-                  <div className="selection-row"><strong>Growth Rate:</strong> {selectedFish.growthRate ?? '—'}</div>
                   <div className="selection-row"><strong>Food Rate:</strong> {selectedFish.foodConsumptionRate ?? '—'}</div>
                   <div className="selection-row"><strong>Ammonia Rate:</strong> {selectedFish.ammoniaProductionRate ?? '—'}</div>
-                  <div className="selection-row"><strong>Render Asset:</strong> {selectedFish.renderAsset ?? '—'}</div>
-                  <div className="selection-row"><strong>Render Scale:</strong> {selectedFish.renderScale ?? '—'}</div>
-                  <div className="selection-row"><strong>Render Position:</strong> {selectedFish.renderPosition ? `${selectedFish.renderPosition.x ?? '—'}, ${selectedFish.renderPosition.y ?? '—'}, ${selectedFish.renderPosition.z ?? '—'}` : '—'}</div>
                 </div>
               ) : (
                 <div className="selection-overlay-body">
@@ -451,27 +521,15 @@ function Game() {
             </div>
           )}
 
-          {activeTab === 'controls' && (
-            <section className="control-section">
-              <h2>🎛️ Controls</h2>
-              <div className="picked-readout">
-                <h3>Last clicked object</h3>
-                <div className="picked-value">{lastPickedLabel}</div>
-              </div>
-              <div className="control-status">
-                <div><strong>Status:</strong> {loading ? 'Connecting…' : connected ? 'Connected' : 'Disconnected'}</div>
-              </div>
-              <div className="action-buttons">
-                <button onClick={handleRepairSystem} disabled={loading || !connected} className="btn-secondary" type="button">Repair System</button>
-              </div>
-            </section>
-          )}
-
-          {activeTab !== 'controls' && !gameState && (
+          {activeTab !== 'gill' && !gameState && (
             <section>
               <h2>Loading</h2>
               <p className="empty-message">Waiting for game state…</p>
             </section>
+          )}
+
+          {activeTab === 'market' && gameState && (
+            <MarketPanel gameState={gameState} loading={loading} matchId={matchId} />
           )}
 
           {activeTab === 'water' && gameState && (
@@ -483,9 +541,14 @@ function Game() {
               gameState={gameState}
               loading={loading}
               handleHarvestPlant={handleHarvestPlant}
+              handleHarvestAllMaturePlants={handleHarvestAllMaturePlants}
               handlePlantSeed={handlePlantSeed}
               handleBuyAllSeeds={handleBuyAllSeeds}
             />
+          )}
+
+          {activeTab === 'inventory' && gameState && (
+            <InventoryPanel gameState={gameState} loading={loading} />
           )}
 
           {activeTab === 'fish' && gameState && (
@@ -495,6 +558,7 @@ function Game() {
               handleAddFish={handleAddFish}
               handleSellFish={handleSellFish}
               handleFeedFish={handleFeedFish}
+              feedFishStatus={feedFishStatus}
             />
           )}
 
