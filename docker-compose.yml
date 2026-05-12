@@ -21,6 +21,8 @@ services:
       - NODE_ENV=development
       - MONGO_URI=mongodb://mongo:27017
       - DB_NAME=aquaponics_dev
+      - SESSION_SECRET=dev_only_change_me
+      - FRONTEND_ORIGIN=http://localhost:5173
     depends_on:
       mongo:
         condition: service_healthy

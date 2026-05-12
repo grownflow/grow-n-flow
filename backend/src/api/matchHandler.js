@@ -155,7 +155,7 @@ class MatchHandler {
     return deserialized;
   }
 
-  static async create() {
+  static async create({ ownerUserId } = {}) {
     const matchID = Math.random().toString(36).substring(2, 15);
     const G = AquaponicsGame.setup();
     const ctx = {
@@ -169,6 +169,7 @@ class MatchHandler {
     const matches = await getCollection('matches');
     await matches.insertOne({
       matchID,
+      ownerUserId: ownerUserId ? String(ownerUserId) : null,
       G,
       ctx,
       players: ['0'],

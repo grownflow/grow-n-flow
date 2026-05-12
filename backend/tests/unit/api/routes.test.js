@@ -1,18 +1,29 @@
 const request = require('supertest');
-const express = require('express');
-const routes = require('../../../src/api/routes/index');
+const { app } = require('../../../src/app');
 const { close } = require('../../../src/db');
-
-// Create a test app with the routes
-const app = express();
-app.use(express.json());
-app.use('/api', routes);
 
 describe('API Routes', () => {
   let matchID;
+  let agent;
 
   afterAll(async () => {
     await close();
+  });
+
+  beforeAll(async () => {
+    agent = request.agent(app);
+    // Register (or login if already exists) and keep the session cookie.
+    try {
+      await agent
+        .post('/api/auth/register')
+        .send({ email: 'test@example.com', username: 'testuser', password: 'password123' })
+        .expect(200);
+    } catch {
+      await agent
+        .post('/api/auth/login')
+        .send({ identifier: 'test@example.com', password: 'password123' })
+        .expect(200);
+    }
   });
 
   test('GET /api should return API status message', async () => {
@@ -24,7 +35,7 @@ describe('API Routes', () => {
   });
 
   test('POST /api/games/aquaponics/create should create a match', async () => {
-    const response = await request(app)
+    const response = await agent
       .post('/api/games/aquaponics/create')
       .send({})
       .expect(200);
@@ -36,12 +47,12 @@ describe('API Routes', () => {
 
   test('GET /api/games/aquaponics/:matchID should return game state', async () => {
     // Create a match first
-    const createResponse = await request(app)
+    const createResponse = await agent
       .post('/api/games/aquaponics/create')
       .send({});
     const testMatchID = createResponse.body.matchID;
 
-    const response = await request(app)
+    const response = await agent
       .get(`/api/games/aquaponics/${testMatchID}`)
       .expect(200);
     
@@ -53,12 +64,12 @@ describe('API Routes', () => {
 
   test('POST /api/games/aquaponics/:matchID/move should execute addFish move', async () => {
     // Create a match first
-    const createResponse = await request(app)
+    const createResponse = await agent
       .post('/api/games/aquaponics/create')
       .send({});
     const testMatchID = createResponse.body.matchID;
 
-    const response = await request(app)
+    const response = await agent
       .post(`/api/games/aquaponics/${testMatchID}/move`)
       .send({
         move: 'addFish',
@@ -75,12 +86,12 @@ describe('API Routes', () => {
 
   test('POST /api/games/aquaponics/:matchID/move should return error for invalid move', async () => {
     // Create a match first
-    const createResponse = await request(app)
+    const createResponse = await agent
       .post('/api/games/aquaponics/create')
       .send({});
     const testMatchID = createResponse.body.matchID;
 
-    const response = await request(app)
+    const response = await agent
       .post(`/api/games/aquaponics/${testMatchID}/move`)
       .send({
         move: 'invalidMove',

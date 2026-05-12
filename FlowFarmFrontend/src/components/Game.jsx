@@ -1,10 +1,9 @@
 // src/components/Game.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import gameAPI from '../services/gameAPI';
 import { PLANT_SLOT_COUNT } from '../config/plantSlots';
 import Renderer from './Renderer';
 import StatsSection from './StatsSection';
-import GillPopup from './GillPopup';
 import BillsPanel from './BillsPanel';
 import EventsPanel from './EventsPanel';
 import FishTankSection from './FishTankSection';
@@ -14,7 +13,7 @@ import PlantsSection from './PlantsSection';
 import WaterSection from './WaterSection';
 import "./Game.css"
 
-function Game() {
+function Game({ onTitleClick }) {
   const [gameState, setGameState] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -30,24 +29,114 @@ function Game() {
   const [activeTab, setActiveTab] = useState('market');
   const [matchId, setMatchId] = useState(null);
 
-  const [gillText, setGillText] = useState("");
-  const [gillActive, setGillActive] = useState(false);
-
-  const [hasClickedOnWater, setHasClickedOnWater] = useState(false);
-  const [hasClickedOnPlants, setHasClickedOnPlants] = useState(false);
-  const [hasClickedOnFish, setHasClickedOnFish] = useState(false);
+  const [loadMenuOpen, setLoadMenuOpen] = useState(false);
+  const [storedMatches, setStoredMatches] = useState([]);
+  const [storedMatchesLoading, setStoredMatchesLoading] = useState(false);
+  const [storedMatchesError, setStoredMatchesError] = useState(null);
+  const loadMenuRef = useRef(null);
 
   const [feedFishStatus, setFeedFishStatus] = useState({ pending: false, message: null, ok: null, at: null });
 
   // Initialize game on component mount
   useEffect(() => {
-    startNewGame();
+    resumeGame();
     
     // Cleanup on unmount
     return () => {
       gameAPI.disconnect();
     };
   }, []);
+
+  const resumeGame = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const matchID = await gameAPI.createMatch((state) => {
+        if (state) {
+          setGameState(state);
+          setConnected(true);
+          setLoading(false);
+        }
+      }, { mode: 'resume' });
+
+      setMatchId(matchID || null);
+    } catch (err) {
+      setError('Failed to resume game: ' + err.message);
+      setLoading(false);
+    }
+  };
+
+  const fetchStoredMatches = async () => {
+    setStoredMatchesLoading(true);
+    setStoredMatchesError(null);
+    try {
+      const res = await fetch('http://localhost:4000/api/games/aquaponics/matches?limit=200', {
+        credentials: 'include',
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body?.error || `Fetch matches failed: ${res.status}`);
+      setStoredMatches(Array.isArray(body?.items) ? body.items : []);
+    } catch (e) {
+      setStoredMatchesError(e?.message || String(e));
+      setStoredMatches([]);
+    } finally {
+      setStoredMatchesLoading(false);
+    }
+  };
+
+  const openLoadMenu = async () => {
+    setLoadMenuOpen(true);
+    await fetchStoredMatches();
+  };
+
+  const closeLoadMenu = () => {
+    setLoadMenuOpen(false);
+  };
+
+  useEffect(() => {
+    if (!loadMenuOpen) return;
+
+    const onDocMouseDown = (e) => {
+      const node = loadMenuRef.current;
+      if (!node) return;
+      if (node.contains(e.target)) return;
+      closeLoadMenu();
+    };
+
+    document.addEventListener('mousedown', onDocMouseDown);
+    return () => document.removeEventListener('mousedown', onDocMouseDown);
+  }, [loadMenuOpen]);
+
+  const handleLoadMatch = async (id) => {
+    if (!id) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const loaded = await gameAPI.loadMatch(String(id), (state) => {
+        if (state) {
+          setGameState(state);
+          setConnected(true);
+          setLoading(false);
+        }
+      });
+      setMatchId(loaded || null);
+      closeLoadMenu();
+    } catch (err) {
+      setError('Failed to load game: ' + err.message);
+      setLoading(false);
+    }
+  };
+
+  const formatWhen = (isoOrDate) => {
+    if (!isoOrDate) return '—';
+    try {
+      const d = new Date(isoOrDate);
+      if (Number.isNaN(d.getTime())) return '—';
+      return d.toLocaleString();
+    } catch {
+      return '—';
+    }
+  };
 
   const startNewGame = async () => {
     setLoading(true);
@@ -61,7 +150,7 @@ function Game() {
           setConnected(true);
           setLoading(false);
         }
-      });
+      }, { mode: 'create' });
 
       setMatchId(createdMatchId || null);
     } catch (err) {
@@ -166,31 +255,6 @@ function Game() {
     gameAPI.repairSystem();
   };
 
-  // Gill popup controls.
-  const activateGill = (text) => {
-    setGillText(text);
-    setGillActive(true);
-  }
-
-  const deactivateGill = () => {
-    setGillActive(false);
-  }
-
-  const handleSwitchStatsPage = (page) => {
-    if (page == "water" && !hasClickedOnWater) {
-      activateGill("Keeping an eye on your water quality is crucial for proper plant and fish health!");
-      setHasClickedOnWater(true);
-    }
-    else if (page == "plants" && !hasClickedOnPlants) {
-      activateGill("Plants need proper nutrients and care to thrive in your aquaponics system!");
-      setHasClickedOnPlants(true);
-    }
-    else if (page == "fish" && !hasClickedOnFish) {
-      activateGill("Healthy fish produce the nutrients your plants need. Make sure to feed them well!");
-      setHasClickedOnFish(true);
-    }
-  }
-
   const tabs = [
     { id: 'market', label: 'Market' },
     { id: 'water', label: 'Water' },
@@ -199,7 +263,6 @@ function Game() {
     { id: 'fish', label: 'Fish' },
     { id: 'bills', label: 'Bills' },
     { id: 'events', label: 'Events' },
-    { id: 'gill', label: "Gill" },
   ];
 
   useEffect(() => {
@@ -333,9 +396,6 @@ function Game() {
   const switchTab = (tabId) => {
     setActiveTab(tabId);
     if (!panelOpen) setPanelOpen(true);
-    if (tabId === 'water' || tabId === 'plants' || tabId === 'fish') {
-      handleSwitchStatsPage(tabId);
-    }
   };
 
   const dayNumber = gameState?.G?.gameTime ?? gameState?.ctx?.turn ?? null;
@@ -345,14 +405,86 @@ function Game() {
     <div className="scene-shell">
       <header className="topbar" aria-label="Game header">
         <div className="topbar-left">
-          <div className="topbar-title">Grow-n-Flow</div>
+          <button
+            type="button"
+            className="topbar-title topbar-title-button"
+            onClick={() => onTitleClick && onTitleClick()}
+            aria-label="Open account"
+          >
+            Grow-n-Flow
+          </button>
           <div className="topbar-stats">
             <span>Day: {dayNumber ?? '—'}</span>
             <span>Money: {money != null ? `$${Number(money).toFixed(2)}` : '—'}</span>
           </div>
         </div>
         <div className="topbar-actions">
-          <button onClick={startNewGame} disabled={loading} className="btn-newgame" type="button">New Game</button>
+          <div className="load-menu" ref={loadMenuRef}>
+            <button
+              onClick={() => (loadMenuOpen ? closeLoadMenu() : openLoadMenu())}
+              disabled={loading}
+              className="btn-newgame"
+              type="button"
+              aria-haspopup="menu"
+              aria-expanded={loadMenuOpen}
+            >
+              Load Game
+            </button>
+
+            {loadMenuOpen && (
+              <div className="load-menu-panel" role="menu" aria-label="Load game menu">
+                <div className="load-menu-header">
+                  <div className="load-menu-title">Your Games</div>
+                  <button className="load-menu-close" type="button" onClick={closeLoadMenu} aria-label="Close">
+                    ×
+                  </button>
+                </div>
+
+                {storedMatchesLoading && (
+                  <div className="load-menu-row">Loading…</div>
+                )}
+
+                {storedMatchesError && (
+                  <div className="load-menu-row load-menu-error">
+                    {storedMatchesError}
+                    <button type="button" className="load-menu-retry" onClick={fetchStoredMatches}>Retry</button>
+                  </div>
+                )}
+
+                {!storedMatchesLoading && !storedMatchesError && storedMatches.length === 0 && (
+                  <div className="load-menu-row">No saved games yet.</div>
+                )}
+
+                {!storedMatchesLoading && !storedMatchesError && storedMatches.length > 0 && (
+                  <div className="load-menu-list">
+                    {storedMatches.map((m) => (
+                      <button
+                        key={m.matchID}
+                        type="button"
+                        className={`load-menu-item ${String(m.matchID) === String(matchId) ? 'active' : ''}`}
+                        onClick={() => handleLoadMatch(m.matchID)}
+                      >
+                        <div className="load-menu-item-top">
+                          <span className="load-menu-item-id">{m.matchID}</span>
+                          <span className="load-menu-item-status">{m.status || '—'}</span>
+                        </div>
+                        <div className="load-menu-item-sub">
+                          <span>Day: {m.gameTime ?? '—'}</span>
+                          <span>Updated: {formatWhen(m.updatedAt)}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <div className="load-menu-footer">
+                  <button type="button" className="load-menu-action" onClick={startNewGame} disabled={loading || storedMatchesLoading}>
+                    New Game
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
           <button onClick={handleProgressTurn} disabled={loading || !connected} className="btn-progress" type="button">Progress Day</button>
         </div>
       </header>
@@ -521,7 +653,7 @@ function Game() {
             </div>
           )}
 
-          {activeTab !== 'gill' && !gameState && (
+          {!gameState && (
             <section>
               <h2>Loading</h2>
               <p className="empty-message">Waiting for game state…</p>
@@ -568,23 +700,6 @@ function Game() {
 
           {activeTab === 'events' && gameState && (
             <EventsPanel gameState={gameState} onRepair={handleRepairSystem} />
-          )}
-
-          {activeTab === 'gill' && (
-            <section className="gill-section">
-              <h2>🧠 Gill’s Advice</h2>
-              <GillPopup
-                gillText={gillText || 'No advice yet. Click Water/Plants/Fish tabs to get guidance.'}
-                active={true}
-                inline={true}
-                onClose={deactivateGill}
-              />
-              {gillActive && (
-                <div className="action-buttons">
-                  <button className="btn-secondary" onClick={deactivateGill} type="button">Clear</button>
-                </div>
-              )}
-            </section>
           )}
         </div>
       </aside>
