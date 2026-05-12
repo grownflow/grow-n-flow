@@ -99,6 +99,7 @@ class GameAPI {
   harvestPlant(plantId) { return this.makeMove('harvestPlant', [plantId]); }
   harvestAllMaturePlants() { return this.makeMove('harvestAllMaturePlants', []); }
   carePlant(plantId, careType) { return this.makeMove('carePlant', [plantId, careType]); }
+  getEquipmentCatalog() { return this.makeMove('getEquipmentCatalog', []); }
   buyEquipment(equipmentType, quantity = 1) { return this.makeMove('buyEquipment', [equipmentType, quantity]); }
   sellFish(fishId) { return this.makeMove('sellFish', [fishId]); }
   sellProducts(productType, quantity) { return this.makeMove('sellProducts', [productType, quantity]); }

@@ -12,6 +12,8 @@ const createInitialSystemState = () => ({
     id: `tank_${Date.now()}`,
     capacity: 1000,
     currentVolume: 1000,
+    foodInTank: 0,
+    sediment: 0,
     water: {
       temperature: 25,
       pH: 7.0,
