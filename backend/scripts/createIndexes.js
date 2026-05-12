@@ -3,9 +3,14 @@ const { getCollection, close } = require('../src/db');
 
 async function createIndexes() {
   try {
+    const users = await getCollection('users');
+    await users.createIndex({ email: 1 }, { unique: true });
+    await users.createIndex({ username: 1 }, { unique: true, partialFilterExpression: { username: { $type: 'string' } } });
+
     const matches = await getCollection('matches');
     
     await matches.createIndex({ matchID: 1 }, { unique: true });
+    await matches.createIndex({ ownerUserId: 1, updatedAt: -1 });
     await matches.createIndex({ players: 1 });
     await matches.createIndex({ gameTime: 1 });
     await matches.createIndex({ status: 1 });

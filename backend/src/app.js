@@ -1,5 +1,8 @@
 const express = require("express");
 const cors = require("@koa/cors");
+const expressCors = require('cors');
+const session = require('express-session');
+const MongoStore = require('connect-mongo');
 const { Server } = require("boardgame.io/server");
 const { AquaponicsGame } = require("./game/game");
 
@@ -8,13 +11,48 @@ const app = express();
 // Basic middleware
 app.use(express.json());
 
-// CORS
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "*");
-  res.header("Access-Control-Allow-Methods", "*");
-  next();
-});
+// CORS (must allow credentials for cookie-based sessions)
+// Supports a comma-separated allowlist via FRONTEND_ORIGIN.
+const defaultOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173'];
+const allowedOrigins = (process.env.FRONTEND_ORIGIN
+  ? String(process.env.FRONTEND_ORIGIN).split(',').map((s) => s.trim()).filter(Boolean)
+  : defaultOrigins
+);
+
+app.use(expressCors({
+  origin: (origin, cb) => {
+    // Allow same-origin / server-to-server requests with no Origin header.
+    if (!origin) return cb(null, true);
+    if (allowedOrigins.includes(origin)) return cb(null, true);
+    return cb(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
+// Sessions (stored in Mongo)
+const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017';
+const dbName = process.env.DB_NAME || 'aquaponics_dev';
+const sessionSecret = process.env.SESSION_SECRET || 'dev_only_change_me';
+app.use(session({
+  name: 'gnf.sid',
+  secret: sessionSecret,
+  resave: false,
+  saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: mongoUri,
+    dbName,
+    collectionName: 'sessions',
+    stringify: false,
+  }),
+  cookie: {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+  },
+}));
 
 // Health check
 app.get("/", (req, res) => {

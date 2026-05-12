@@ -89,6 +89,23 @@ html, body, #root {
   white-space: nowrap;
 }
 
+.topbar-title-button {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.topbar-title-button:hover {
+  text-decoration: underline;
+}
+
+.topbar-title-button:focus-visible {
+  outline: 2px solid #999;
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
 .topbar-stats {
   display: flex;
   gap: 8px;
@@ -109,6 +126,143 @@ html, body, #root {
   display: flex;
   gap: 8px;
   align-items: center;
+}
+
+/* Load Game dropdown */
+.load-menu {
+  position: relative;
+}
+
+.load-menu-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: min(520px, calc(100vw - 24px));
+  max-height: 70vh;
+  overflow: auto;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  box-shadow: 0 10px 28px rgba(0,0,0,0.12);
+  padding: 10px;
+  z-index: 12000;
+}
+
+.load-menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 8px;
+}
+
+.load-menu-title {
+  font-weight: 800;
+  color: #333;
+}
+
+.load-menu-close {
+  width: 36px;
+  height: 32px;
+  border-radius: 8px;
+  background: white;
+  border: 1px solid #ccc;
+  color: #333;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.load-menu-row {
+  padding: 10px;
+  color: #333;
+}
+
+.load-menu-error {
+  color: #8a1f11;
+  background: #fff5f5;
+  border: 1px solid #f2c1c1;
+  border-radius: 10px;
+}
+
+.load-menu-retry {
+  margin-left: 10px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: white;
+  border: 1px solid #ccc;
+  color: #333;
+}
+
+.load-menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.load-menu-item {
+  text-align: left;
+  border-radius: 12px;
+  background: white;
+  border: 1px solid #ddd;
+  padding: 10px;
+  color: #333;
+}
+
+.load-menu-item:hover {
+  background: #f8f9fa;
+  border-color: #bbb;
+}
+
+.load-menu-item.active {
+  border-color: #999;
+  background: #f8f9fa;
+}
+
+.load-menu-item-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  font-weight: 800;
+}
+
+.load-menu-item-id {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 12px;
+}
+
+.load-menu-item-status {
+  font-size: 12px;
+  font-weight: 800;
+  color: #555;
+}
+
+.load-menu-item-sub {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+  font-size: 12px;
+  color: #555;
+  flex-wrap: wrap;
+}
+
+.load-menu-footer {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.load-menu-action {
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: white;
+  border: 1px solid #ccc;
+  color: #333;
+  font-weight: 800;
 }
 
 .panel-toggle {

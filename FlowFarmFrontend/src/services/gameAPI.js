@@ -9,12 +9,34 @@ class GameAPI {
     this.connecting = false;
   }
 
-  async createMatch(onStateChange) {
+  async loadMatch(matchID, onStateChange) {
+    if (!matchID) throw new Error('Missing matchID');
+
+    this.stopPolling();
+    this.matchID = String(matchID);
+
+    // Fetch state once immediately (avoids waiting for first poll tick)
+    const res = await fetch(`${API_BASE}/${this.matchID}`, { credentials: 'include' });
+    if (!res.ok) throw new Error('Load match failed: ' + res.status);
+    const json = await res.json();
+    this.state = json;
+    if (onStateChange) onStateChange(json);
+
+    this.startPolling(onStateChange);
+    return this.matchID;
+  }
+
+  async createMatch(onStateChange, { mode = 'create' } = {}) {
     if (this.connecting) return;
     this.connecting = true;
     try {
-      console.log('[gameAPI] Creating match via REST:', API_BASE + '/create');
-      const res = await fetch(`${API_BASE}/create`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+      const endpoint = mode === 'resume' ? '/resume' : '/create';
+      console.log('[gameAPI] Match via REST:', API_BASE + endpoint);
+      const res = await fetch(`${API_BASE}${endpoint}`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
       if (!res.ok) throw new Error('Create match failed: ' + res.status);
       const body = await res.json();
       // MatchHandler.create may return different shapes; try common fields
@@ -50,7 +72,7 @@ class GameAPI {
     if (!this.matchID) return;
     this.pollHandle = setInterval(async () => {
       try {
-        const res = await fetch(`${API_BASE}/${this.matchID}`);
+        const res = await fetch(`${API_BASE}/${this.matchID}`, { credentials: 'include' });
         if (!res.ok) return;
         const json = await res.json();
         this.state = json;
@@ -74,6 +96,7 @@ class GameAPI {
     if (!this.matchID) throw new Error('No match');
     const res = await fetch(`${API_BASE}/${this.matchID}/move`, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ move, args, playerID }),
     });
@@ -85,7 +108,7 @@ class GameAPI {
     const qs = new URLSearchParams();
     if (limit !== undefined) qs.set('limit', String(limit));
     if (from !== undefined && from !== null) qs.set('from', String(from));
-    const res = await fetch(`${API_BASE}/${this.matchID}/water-history?${qs.toString()}`);
+    const res = await fetch(`${API_BASE}/${this.matchID}/water-history?${qs.toString()}`, { credentials: 'include' });
     if (!res.ok) throw new Error('Fetch water history failed: ' + res.status);
     return res.json();
   }
