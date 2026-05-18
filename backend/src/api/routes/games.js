@@ -3,8 +3,28 @@ const { MatchHandler } = require('../matchHandler');
 const { getCollection } = require('../../db');
 const { requireAuth } = require('../../middleware/auth');
 
+const validGames = new Set(['aquaponics']);
+const allowedStatuses = new Set(['active', 'archived', 'completed']);
+
+function validateGameName(req, res, next) {
+  if (!validGames.has(req.params.gameName)) {
+    return res.status(404).json({ error: 'Game not found' });
+  }
+  next();
+}
+
+function validateMatchID(req, res, next, matchID) {
+  if (!/^[a-z0-9]+$/i.test(matchID)) {
+    return res.status(400).json({ error: 'Invalid matchID' });
+  }
+  next();
+}
+
+router.param('matchID', validateMatchID);
+
 // All game routes require authentication (cookie-based session)
 router.use(requireAuth);
+router.use('/:gameName', validateGameName);
 
 // List the current user's matches (lightweight metadata only)
 // Query params:
@@ -15,6 +35,10 @@ router.get('/:gameName/matches', async (req, res) => {
     const ownerUserId = req.user.userId;
     const status = req.query.status ? String(req.query.status) : null;
     const limit = Math.max(1, Math.min(200, Number(req.query.limit || 50)));
+
+    if (status && !allowedStatuses.has(status)) {
+      return res.status(400).json({ error: 'Invalid status' });
+    }
 
     const matches = await getCollection('matches');
     const query = { ownerUserId: String(ownerUserId) };
@@ -133,8 +157,14 @@ router.get('/:gameName/:matchID', async (req, res) => {
 router.post('/:gameName/:matchID/move', async (req, res) => {
   try {
     const { matchID } = req.params;
-    const { move, args, playerID } = req.body;
+    const move = String(req.body.move || '');
+    const args = Array.isArray(req.body.args) ? req.body.args : [];
+    const playerID = req.body.playerID !== undefined ? String(req.body.playerID) : undefined;
     const ownerUserId = req.user.userId;
+
+    if (!move) {
+      return res.status(400).json({ error: 'Move is required' });
+    }
 
     const matches = await getCollection('matches');
     const exists = await matches.findOne(

@@ -1,0 +1,23 @@
+Key Parameters and Relationships
+The efficiency of an aquaponic system depends on the following parameters and their interconnected relationships:
+
+The Nitrogen Cycle (Nitrification): This is the core relationship in the system. Fish release ammonia through waste and gills. Beneficial bacteria (Nitrosomonas) convert toxic ammonia into nitrite, and then other bacteria (Nitrobacter) convert nitrite into nitrate, which serves as plant fertilizer.
+Total Ammonia Nitrogen (TAN), pH, and Temperature: TAN measures the total ammonia in the water. Its toxicity depends on pH and temperature: un-ionized ammonia (NH3) is highly toxic and increases when the water is warmer or has a high pH (basic). Ionized ammonia (NH4+) is less toxic and more common when the pH is below 7.0.
+Dissolved Oxygen (D.O.) and Temperature: There is an inverse relationship between these two; as water temperature increases, its capacity to hold dissolved oxygen decreases. All three main organisms (fish, plants, and bacteria) require oxygen to survive.
+pH and Nutrient Availability: The pH level acts as a "gatekeeper" for plant nutrients. If pH rises above 7.5, nutrients can "lock up" and become inaccessible to plants. Conversely, the nitrification process is acid-producing, meaning bacteria naturally lower the pH over time as they break down waste.
+Carbonate Hardness (KH) and pH Stability: KH (or alkalinity) represents the water's ability to resist drastic pH swings. Bacteria consume carbonates during nitrification, so maintaining KH is essential to prevent the pH from crashing.
+Iron: Plants specifically require iron to prevent chlorosis (yellowing of the leaves). In aquaponics, chelated iron (like DTPA) is preferred because it remains available to plants even at pH levels above 6.5.
+Failure Modes and Corrective Actions
+When parameters fall out of the "Goldilocks zone," the following actions should be taken:
+
+Failure Mode	Possible Causes	Corrective Actions
+High Ammonia or Nitrite	Dead fish, uneaten feed, solids buildup, or overstocking.	Remove dead fish/feed; clean filters; reduce feeding; perform a 25% water change with dechlorinated water; stop feeding for a few days.
+High Nitrates	Too many fish, overfeeding, or not enough plants.	Reduce fish or feed; increase plant count; perform daily 25% water changes until levels normalize.
+Low Nitrates	Not enough fish/feed, too many plants, or algae stealing nutrients.	Increase fish or feed; reduce plant count; add supplemental nutrients; introduce red wiggler worms to media beds.
+pH Too High	Hard water source or lack of natural acid production.	Add small amounts of phosphoric or nitric acid; install a water softener; adjust pH by no more than 0.1 per hour.
+pH Too Low	Natural nitrification process consuming alkalinity.	Add buffers like potassium bicarbonate, calcium hydroxide, or potassium silicate. Adjust slowly (max 0.1 per hour).
+Low Dissolved Oxygen	High temperature, solids buildup, or overcrowding.	Increase airstones or upgrade the air pump; clean out solid waste to prevent anaerobic zones; reduce fish count.
+Iron Deficiency	Iron being used up by plants or "locked up" by high pH.	Add chelated iron (DTPA) to reach a target level of 2 ppm.
+Temperature Extremes	Climate changes or faulty equipment.	Check heaters/chillers; add shade cloths to cool or insulation to warm the system; consider switching to more temperature-tolerant species.
+Fish Disease	Poor water quality, overcrowding, or mishandling.	Remove sick fish immediately; use salt baths to kill parasites; maintain optimal D.O. and pH to reduce stress.
+To avoid these failures, it is recommended to monitor pH, D.O., and temperature daily, and test for nitrogen levels (TAN, nitrite, nitrate) weekly.

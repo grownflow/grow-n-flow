@@ -752,6 +752,28 @@ button:disabled {
   box-shadow: 0 5px 15px rgba(32, 201, 151, 0.35);
 }
 
+.btn-mute {
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  line-height: 1;
+}
+
+.btn-mute:hover {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+.btn-mute.muted {
+  background: rgba(220, 53, 69, 0.25);
+  border-color: rgba(220, 53, 69, 0.5);
+}
+
 .btn-secondary {
   background: #6c757d;
   color: white;
@@ -839,6 +861,238 @@ button:disabled {
   color: #adb5bd;
   font-weight: 400;
   margin-top: 2px;
+}
+
+/* ───── Supplement panel ───── */
+
+.supplement-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.supplement-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 2px solid #e9ecef;
+  gap: 12px;
+}
+
+.supplement-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.supplement-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #495057;
+}
+
+.supplement-effect {
+  font-size: 11px;
+  color: #6c757d;
+}
+
+.supplement-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.supplement-stock {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.supplement-stock.good  { color: #28a745; }
+.supplement-stock.danger { color: #dc3545; }
+
+.btn-apply-supplement {
+  background: linear-gradient(135deg, #17a2b8, #138496);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-apply-supplement:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(23, 162, 184, 0.4);
+}
+
+.btn-apply-supplement:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ───── Low-Oxygen Quick Fix ───── */
+
+.low-do-alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border-left: 4px solid;
+  margin: 4px 0 12px;
+}
+
+.low-do-alert.warning {
+  background: #fff8e1;
+  border-color: #ffc107;
+}
+
+.low-do-alert.danger {
+  background: #fdecea;
+  border-color: #dc3545;
+}
+
+.low-do-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+}
+
+.low-do-text strong {
+  font-size: 13px;
+}
+
+.low-do-text span {
+  color: #6c757d;
+  font-size: 12px;
+}
+
+.btn-fix-do {
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #fd7e14, #e8680c);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.btn-fix-do:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(253, 126, 20, 0.4);
+}
+
+.btn-fix-do:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ───── High Nitrogen Quick Fix ───── */
+
+.high-n-alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border-left: 4px solid;
+  margin: 4px 0 12px;
+}
+
+.high-n-alert.warning {
+  background: #f3e8ff;
+  border-color: #6f42c1;
+}
+
+.high-n-alert.danger {
+  background: #fdecea;
+  border-color: #dc3545;
+}
+
+.high-n-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+}
+
+.high-n-text strong {
+  font-size: 13px;
+}
+
+.high-n-text span {
+  color: #6c757d;
+  font-size: 12px;
+  font-family: monospace;
+}
+
+.btn-fix-n {
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #6f42c1, #5a32a3);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.btn-fix-n:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(111, 66, 193, 0.4);
+}
+
+.btn-fix-n:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ───── Species Plant Grid ───── */
+
+.species-plant-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.species-plant-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.species-label {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  color: #2d6a4f;
+  white-space: nowrap;
+}
+
+.btn-sm {
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 6px;
+  white-space: nowrap;
 }
 
 /* ───── Tank Volume Bar ───── */
@@ -996,9 +1250,22 @@ button:disabled {
   display: inline-block;
 }
 
-.legend-item.ammonia::before { background: #dc3545; }
-.legend-item.nitrite::before { background: #fd7e14; }
-.legend-item.nitrate::before { background: #28a745; }
+.legend-item.ammonia::before  { background: #dc3545; }
+.legend-item.nitrite::before  { background: #fd7e14; }
+.legend-item.nitrate::before  { background: #28a745; }
+
+.legend-item.fish-deaths::before {
+  background: #d9534f;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.legend-item.plant-deaths::before {
+  background: #5cb85c;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
 
 .control-section {
   text-align: center;

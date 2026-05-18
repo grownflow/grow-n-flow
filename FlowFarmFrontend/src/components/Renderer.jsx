@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import X3DViewer from './X3DViewer';
 import { PLANT_SLOTS } from '../config/plantSlots';
 
@@ -10,12 +10,81 @@ const FISH_ASSET_BY_TYPE = {
 
 const DEFAULT_FISH_ASSET = '3d/Redheadx.x3d';
 const DEFAULT_FISH_SCALE = 0.3;
-const SLOT_PLANT_ASSET = 'plants/lettuce1.glb';
-const SLOT_PLANT_SCALE = 1;
+const DEFAULT_PLANT_ASSET = 'plants/lettuce1.glb';
+const DEFAULT_PLANT_SCALE = 1;
 
 export default function Renderer({ gameState, onPicked }) {
   const plants = gameState?.G?.plants || [];
   const fish = gameState?.G?.fish || [];
+
+  // Stable slot map: slotIndex → { plant, visible }
+  // Stable fish list: [{ fish, visible }, ...]
+  // We never remove entries from either — dead entries are hidden via render="false".
+  // X3DOM's MutationObserver watches the entire <scene>. Changing a geometric
+  // attribute (translation, scale, rotation) on a <transform> that contains an
+  // <inline> causes X3DOM to re-evaluate the subtree and reload ALL inline assets,
+  // making every fish/plant disappear. The fix: keep all geometric attributes
+  // constant after mount and use render="false" to hide dead entries — X3DOM skips
+  // render="false" nodes during traversal without touching their loaded content.
+  const [stablePlantMap, setStablePlantMap] = useState(() => new Map());
+  const [stableFishList, setStableFishList] = useState([]);
+
+  useEffect(() => {
+    setStablePlantMap(prev => {
+      const alivePlantIds = new Set(plants.map(p => p.id));
+      let changed = false;
+      const next = new Map(prev);
+
+      for (const plant of plants) {
+        const entry = next.get(plant.slotIndex);
+        if (!entry || !entry.visible || entry.plant.id !== plant.id) {
+          next.set(plant.slotIndex, { plant, visible: true });
+          changed = true;
+        }
+      }
+
+      for (const [slotIndex, entry] of next) {
+        if (entry.visible && !alivePlantIds.has(entry.plant.id)) {
+          next.set(slotIndex, { ...entry, visible: false });
+          changed = true;
+        }
+      }
+
+      // Return same reference when nothing changed to skip re-render
+      return changed ? next : prev;
+    });
+  }, [plants]);
+
+  useEffect(() => {
+    setStableFishList(prev => {
+      const aliveFishById = new Map(fish.map(f => [f.id, f]));
+      let changed = false;
+
+      const updated = prev.map(entry => {
+        const alive = aliveFishById.get(entry.fish.id);
+        if (alive) {
+          if (!entry.visible || entry.fish !== alive) {
+            changed = true;
+            return { fish: alive, visible: true };
+          }
+          return entry;
+        }
+        if (entry.visible) {
+          changed = true;
+          return { ...entry, visible: false };
+        }
+        return entry;
+      });
+
+      const existingIds = new Set(prev.map(e => e.fish.id));
+      const newFish = fish.filter(f => !existingIds.has(f.id));
+      if (newFish.length > 0) changed = true;
+
+      return changed
+        ? [...updated, ...newFish.map(f => ({ fish: f, visible: true }))]
+        : prev;
+    });
+  }, [fish]);
 
   return (
     <X3DViewer assetPath="MainSceneb.x3d" onPicked={onPicked}>
@@ -85,40 +154,38 @@ export default function Renderer({ gameState, onPicked }) {
         fieldofview="0.78540"
         description="Bed 3"
       />
-      
       <transform>
-        {plants.map((plant, mapIndex) => {
-          const slotCount = PLANT_SLOTS.length;
-          const safeIndex = (plant.slotIndex !== undefined)
-            ? (plant.slotIndex % slotCount)
-            : (mapIndex % slotCount);
+        {Array.from(stablePlantMap.values()).map(({ plant, visible }) => {
+          const safeIndex = plant.slotIndex % PLANT_SLOTS.length;
           const slot = PLANT_SLOTS[safeIndex];
-          const plantScale = `${SLOT_PLANT_SCALE} ${SLOT_PLANT_SCALE} ${SLOT_PLANT_SCALE}`;
+
+          const plantAsset = plant.renderAsset || DEFAULT_PLANT_ASSET;
+          const plantScale = plant.renderScale || DEFAULT_PLANT_SCALE;
 
           return (
             <transform
-              key={plant.id}
+              key={`slot_${plant.slotIndex}`}
               id={`Plant_${plant.id}`}
               data-pick-label={`Plant_${plant.id}`}
               translation={`${slot.x} ${slot.y} ${slot.z}`}
+              scale={`${plantScale} ${plantScale} ${plantScale}`}
+              render={visible ? "true" : "false"}
             >
-              <transform scale={plantScale}>
-                  <inline url={`"${SLOT_PLANT_ASSET}"`} />
-              </transform>
+              <inline url={`"${plantAsset}"`} />
             </transform>
           );
         })}
       </transform>
 
-      {fish.map((f, i) => {
+      {stableFishList.map(({ fish: f, visible }) => {
         const id = f.id;
 
         const baseX = f.renderPosition?.x ?? 2.8;
         const baseY = f.renderPosition?.y ?? 0.65;
         const baseZ = f.renderPosition?.z ?? -1.05;
 
-        const scaleValue = f.renderScale || DEFAULT_FISH_SCALE;
-        const fishScale = `${scaleValue} ${scaleValue} ${scaleValue}`;
+        const normalScale = f.renderScale || DEFAULT_FISH_SCALE;
+        const fishScale = `${normalScale} ${normalScale} ${normalScale}`;
         const assetPath = f.renderAsset || FISH_ASSET_BY_TYPE[f.type] || DEFAULT_FISH_ASSET;
 
         return (
@@ -130,6 +197,7 @@ export default function Renderer({ gameState, onPicked }) {
               translation={`${baseX} ${baseY} ${baseZ}`}
               scale={fishScale}
               rotation="0 1 0 0"
+              render={visible ? "true" : "false"}
             >
               <inline url={`"${assetPath}"`} />
             </transform>

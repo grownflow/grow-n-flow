@@ -89,7 +89,9 @@ const economyMoves = {
     }
 
     G.money = money - totalCost;
-    G.equipment[type] = (Number(G.equipment[type]) || 0) + qty;
+    // packQuantity > 1 means buying 1 purchase unit stocks multiple inventory units (e.g. aeration stones: pack of 10)
+    const stockPerPurchase = (Number.isFinite(data.packQuantity) && data.packQuantity > 1) ? data.packQuantity : 1;
+    G.equipment[type] = (Number(G.equipment[type]) || 0) + qty * stockPerPurchase;
 
     const benefits = [];
     const { tank, water } = ensureSystemState(G);
@@ -115,25 +117,11 @@ const economyMoves = {
       benefits.push(`Added ${10 * qty} units of fish food`);
     }
 
-    // Instant-use consumables that directly adjust tank water chemistry.
-    if (data.type === 'consumable' && data.waterEffects && water) {
-      const eff = data.waterEffects;
-      if (Number.isFinite(eff.pHDelta)) {
-        water.pH = clampNumber(water.pH + eff.pHDelta * qty, 0, 14);
-        benefits.push('Adjusted pH');
-      }
-      if (Number.isFinite(eff.calciumDeltaMgL)) {
-        water.calcium = clampNumber((water.calcium ?? 0) + eff.calciumDeltaMgL * qty, 0, 10000);
-        benefits.push('Added calcium');
-      }
-      if (Number.isFinite(eff.potassiumDeltaMgL)) {
-        water.potassium = clampNumber((water.potassium ?? 0) + eff.potassiumDeltaMgL * qty, 0, 10000);
-        benefits.push('Added potassium');
-      }
-      if (Number.isFinite(eff.ironDeltaMgL)) {
-        water.iron = clampNumber((water.iron ?? 0) + eff.ironDeltaMgL * qty, 0, 10000);
-        benefits.push('Added iron');
-      }
+    // Consumables with waterEffects are stored in inventory.
+    // Apply them manually via the applyConsumable move from the Water Quality panel.
+    if (data.type === 'consumable' && data.waterEffects) {
+      const totalStocked = qty * stockPerPurchase;
+      benefits.push(`Added ${totalStocked} to inventory — apply from Water Quality panel`);
     }
 
     if (!G.systemModifiers) G.systemModifiers = {};

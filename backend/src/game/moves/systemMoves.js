@@ -3,6 +3,7 @@ const { EventManager } = require('../utils/EventManager');
 const { equipment } = require('../data/equipment');
 const { EVENTS } = require('../data/events');
 const { fishSpecies } = require('../data/fishSpecies');
+const { plantSpecies } = require('../data/plantSpecies');
 const { EnvironmentalStress } = require('../utils/environmentalStress');
 
 function clampNumber(value, min, max) {
@@ -118,6 +119,115 @@ function distributeTankFoodByNeed({ availableFood, needs }) {
   return { portions, totalEaten };
 }
 
+function createSystemAlerts({ water, tank, G }) {
+  const alerts = [];
+  const ammonia = Number(water.ammonia ?? 0);
+  const nitrite = Number(water.nitrite ?? 0);
+  const nitrate = Number(water.nitrate ?? 0);
+  const oxygen = Number(water.dissolvedOxygen ?? 0);
+  const pH = Number(water.pH ?? 7.0);
+
+  if (oxygen < 5.0) {
+    alerts.push('Dissolved oxygen is below 5 ppm; immediately increase aeration and reduce feeding.');
+  }
+
+  if ((ammonia >= 1.0 || nitrite >= 1.0) && oxygen >= 5.0) {
+    alerts.push('Fish may appear to gasp at the surface despite normal dissolved oxygen because ammonia or nitrite is impairing gill function. Test ammonia and nitrite, stop feeding, increase aeration, and perform a partial water change.');
+  }
+
+  if (ammonia >= 2.0) {
+    alerts.push('Ammonia is spiking. Stop or drastically reduce feeding, remove dead fish if needed, and do a partial water change.');
+  }
+
+  if (nitrite >= 1.0) {
+    alerts.push('Nitrite is rising to a stressful range. Reduce feeding, perform a partial water change, and check biofilter efficiency.');
+    if (tank.biofilterEfficiency < 0.6) {
+      alerts.push('Biofilter efficiency is low; buy or repair biofilter equipment.');
+    }
+  }
+
+  if (nitrate <= 1.0) {
+    alerts.push('Nitrate is near zero, which can mean ammonia is accumulating dangerously fast. Increase fish feeding gradually or reduce plant biomass to rebalance.');
+  } else if (nitrate < 5.0) {
+    alerts.push('Nitrate is unusually low; increase fish waste output or reduce plant nutrient demand.');
+  }
+
+  if (pH < 6.5) {
+    alerts.push('pH is below the optimal range; add buffering solution (calcium carbonate or potassium carbonate) in small increments to raise pH toward 6.5–7.2.');
+  }
+
+  if (pH > 7.5) {
+    alerts.push('High pH can lock up nutrients and stress plants; lower pH slowly toward 6.5–7.2.');
+  }
+
+  if (water.iron < 1.0) {
+    alerts.push('Low iron can cause plant chlorosis. Add chelated iron to reach approximately 2 ppm.');
+  }
+
+  if (G && Array.isArray(G.fish) && G.fish.length === 0 && water.nitrate < 5.0) {
+    alerts.push('Low nitrate with no fish present indicates insufficient nutrient production or too much plant biomass.');
+  }
+
+  return alerts;
+}
+
+function applyPlantHealthAndMortality({ G, water, lightsAvailable }) {
+  const plantDeaths = [];
+  if (!Array.isArray(G.plants) || G.plants.length === 0) return { plantDeaths };
+
+  const pH = Number(water.pH ?? 7.0);
+  const nitrate = Number(water.nitrate ?? 0);
+  const iron = Number(water.iron ?? 0);
+  const lowLightPenalty = lightsAvailable ? 0 : 0.5;
+
+  for (const plant of G.plants) {
+    const species = plantSpecies[plant.type] || {};
+    const growthDays = Number(plant.growthDays || species.totalGrowthTime * 7 || 42);
+    let healthPenalty = 0;
+
+    if (nitrate < 3.0) {
+      healthPenalty += (3.0 - nitrate) * 0.4;
+    }
+
+    if (pH < 6.0 || pH > 7.5) {
+      healthPenalty += 1.2;
+    } else if (pH < 6.2 || pH > 7.2) {
+      healthPenalty += 0.6;
+    }
+
+    if (iron < 1.0) {
+      healthPenalty += 0.5;
+    }
+
+    healthPenalty += lowLightPenalty;
+
+    if (plant.age > growthDays * 1.5) {
+      healthPenalty += 0.2;
+    }
+    if (plant.age > growthDays * 2) {
+      healthPenalty += 0.5;
+    }
+
+    if (healthPenalty > 0) {
+      plant.health = clampNumber(Number(plant.health) - healthPenalty, 0, 10);
+    } else {
+      // All conditions good — plants recover slowly, capped at 10.
+      plant.health = clampNumber(Number(plant.health) + 0.15, 0, 10);
+    }
+
+    if (plant.health <= 0) {
+      plantDeaths.push({ id: String(plant.id ?? ''), type: String(plant.type ?? ''), age: Number(plant.age ?? 0) });
+      plant._dead = true;
+    }
+  }
+
+  if (plantDeaths.length > 0) {
+    G.plants = G.plants.filter((plant) => !plant._dead);
+  }
+
+  return { plantDeaths };
+}
+
 function applyDailyFishFeedingFromTank({ G, tank, water }) {
   if (!Array.isArray(G.fish) || G.fish.length === 0) {
     return {
@@ -144,6 +254,7 @@ function applyDailyFishFeedingFromTank({ G, tank, water }) {
 
   const temperature = Number(water.temperature ?? 25);
   const ammonia = Number(water.ammonia ?? 0);
+  const nitrite = Number(water.nitrite ?? 0);
   const oxygen = Number(water.dissolvedOxygen ?? 8);
 
   // Daily "need" per fish (units match fishFood units).
@@ -177,7 +288,7 @@ function applyDailyFishFeedingFromTank({ G, tank, water }) {
     const speciesKey = String(fish.type || '').toLowerCase();
     const species = fishSpecies[speciesKey] || fishSpecies.tilapia;
 
-    const stress = EnvironmentalStress.calculateOverallStress(temperature, ammonia, oxygen, species);
+    const stress = EnvironmentalStress.calculateOverallStress(temperature, ammonia, oxygen, species, Number(water.pH ?? 7.0), nitrite);
     stressOverallSum += Number(stress?.overall || 0);
 
     const requiredFood = clampNumber(needs[i] ?? 0.2, 0.05, 10);
@@ -197,7 +308,30 @@ function applyDailyFishFeedingFromTank({ G, tank, water }) {
     } else {
       healthDelta += 0.35;
     }
+
+    const oldAgeDays = Number(fish.harvestTime ?? species.harvestTime ?? 0);
+    if (oldAgeDays > 0 && fish.age > oldAgeDays + 30) {
+      const agePenalty = Math.min(1.5, (fish.age - oldAgeDays - 30) / 30 * 0.5);
+      healthDelta -= agePenalty;
+    }
+
+    // Extreme water conditions: all fish are affected (same water), but the penalty
+    // is calibrated so the player has ~10 days to intervene before mass death.
+    if (ammonia >= 3.0 || nitrite >= 2.0 || oxygen <= 2.0) {
+      healthDelta -= 0.8;
+    }
+
     fish.health = clampNumber(beforeHealth + healthDelta, 0, 10);
+
+    // Starvation: track consecutive days without any food.
+    // Each unfed day past the first adds an escalating penalty; death is unconditional at 5 days.
+    const daysUnfed = portion === 0 ? (Number(fish.daysWithoutFood) || 0) + 1 : 0;
+    fish.daysWithoutFood = daysUnfed;
+    if (daysUnfed >= 5) {
+      fish.health = 0;
+    } else if (daysUnfed >= 2) {
+      fish.health = clampNumber(fish.health - (daysUnfed - 1) * 0.4, 0, 10);
+    }
 
     // Debug payload for UI (kept small + serializable)
     if (fishDebug.length < 100) {
@@ -225,6 +359,7 @@ function applyDailyFishFeedingFromTank({ G, tank, water }) {
           before: Number(beforeHealth.toFixed(3)),
           delta: Number(healthDelta.toFixed(3)),
           after: Number(Number(fish.health).toFixed(3)),
+          daysWithoutFood: daysUnfed,
         },
         weight: {
           before: Number(beforeWeight.toFixed(3)),
@@ -245,6 +380,7 @@ function applyDailyFishFeedingFromTank({ G, tank, water }) {
     }
 
     if (portion > 0) {
+      fish.daysWithoutFood = 0;
       fish.lastFedAt = Date.now();
       if (Number.isFinite(Number(G.gameTime))) fish.lastFedDay = Number(G.gameTime);
     }
@@ -336,7 +472,8 @@ function applyNitrificationStep({ water, biofilterEfficiency, circulationStopped
   const eff = clampNumber(biofilterEfficiency, 0, 1);
   const circulationMult = circulationStopped ? 0.15 : 1.0;
   const circEff = clampNumber(circulationEfficiency ?? 1.0, 0.5, 2.0);
-  const k = 0.65 * eff * circulationMult * circEff; // fraction converted per day
+  const oxygenFactor = water.dissolvedOxygen < 5.0 ? clampNumber(water.dissolvedOxygen / 5.0, 0.1, 1.0) : 1.0;
+  const k = 0.65 * eff * circulationMult * circEff * oxygenFactor; // fraction converted per day
 
   const ammoniaToNitrite = Math.min(water.ammonia, water.ammonia * k);
   water.ammonia = Math.max(0, water.ammonia - ammoniaToNitrite);
@@ -370,10 +507,77 @@ function applyPlantNitrateUptake({ G, water, lightsAvailable }) {
   return { nitrateUptake };
 }
 
-const systemMoves = {
-  progressTurn: ({ G, ctx }) => {
-    console.log('[progressTurn] G.gameTime before:', G.gameTime);
-    const { tank, water } = ensureTankAndWaterState(G);
+function performPartialWaterChange({ G, ctx }, percent = 0.2) {
+  const { tank, water } = ensureTankAndWaterState(G);
+  const ratio = clampNumber(1 - Number(percent), 0.5, 0.95);
+
+  const ammoniaBefore = Number(water.ammonia);
+  const nitriteBefore = Number(water.nitrite);
+  const nitrateBefore = Number(water.nitrate);
+
+  water.ammonia = clampNumber(water.ammonia * ratio, 0, 1000);
+  water.nitrite = clampNumber(water.nitrite * ratio, 0, 1000);
+  water.nitrate = clampNumber(water.nitrate * ratio, 0, 10000);
+  water.phosphorus = clampNumber(water.phosphorus * ratio, 0, 10000);
+  water.potassium = clampNumber(water.potassium * ratio, 0, 10000);
+  water.calcium = clampNumber(water.calcium * ratio, 0, 10000);
+  water.magnesium = clampNumber(water.magnesium * ratio, 0, 10000);
+  water.iron = clampNumber(water.iron * ratio, 0, 10000);
+
+  water.dissolvedOxygen = clampNumber(water.dissolvedOxygen + (1 - ratio) * 4, 0, 20);
+  G.billsAccrued = G.billsAccrued || { electricity: 0, water: 0 };
+  G.billsAccrued.water += Number(((1 - ratio) * 0.3).toFixed(3));
+
+  G.lastAction = {
+    type: 'performPartialWaterChange',
+    success: true,
+    percentReplaced: Number(((1 - ratio) * 100).toFixed(1)),
+    ammoniaBefore: Number(ammoniaBefore.toFixed(3)),
+    ammoniaAfter: Number(water.ammonia.toFixed(3)),
+    nitriteBefore: Number(nitriteBefore.toFixed(3)),
+    nitriteAfter: Number(water.nitrite.toFixed(3)),
+    nitrateBefore: Number(nitrateBefore.toFixed(3)),
+    nitrateAfter: Number(water.nitrate.toFixed(3)),
+    dissolvedOxygenAfter: Number(water.dissolvedOxygen.toFixed(3))
+  };
+
+  return G;
+}
+
+function stopFeeding({ G, ctx }) {
+  const { tank } = ensureTankAndWaterState(G);
+  const removed = Number(tank.foodInTank || 0);
+  tank.foodInTank = 0;
+
+  G.lastAction = {
+    type: 'stopFeeding',
+    success: true,
+    removedFood: Number(removed.toFixed(3))
+  };
+
+  return G;
+}
+
+function increaseAeration({ G, ctx }, amount = 1.0) {
+  const { water, tank } = ensureTankAndWaterState(G);
+  const oxygenAdded = clampNumber(Number(amount), 0.1, 5.0);
+  const before = Number(water.dissolvedOxygen);
+  water.dissolvedOxygen = clampNumber(water.dissolvedOxygen + oxygenAdded, 0, 20);
+  tank.circulationEfficiency = clampNumber((tank.circulationEfficiency ?? 1.0) + 0.1, 0.5, 2.0);
+
+  G.lastAction = {
+    type: 'increaseAeration',
+    success: true,
+    dissolvedOxygenBefore: Number(before.toFixed(3)),
+    dissolvedOxygenAfter: Number(water.dissolvedOxygen.toFixed(3)),
+    circulationEfficiency: Number(tank.circulationEfficiency.toFixed(3))
+  };
+
+  return G;
+}
+
+function runOneTurn(G) {
+  const { tank, water } = ensureTankAndWaterState(G);
     
     // Apply active event effects before processing turn
     EventManager.applyEventEffects(G);
@@ -385,9 +589,7 @@ const systemMoves = {
     }
     tank.biofilterEfficiency = clampNumber(tank.biofilterEfficiency ?? 0.8, 0, 1);
     
-    // Simple turn progression without class methods
-    G.gameTime += 1; /* Day */
-    console.log('[progressTurn] G.gameTime after:', G.gameTime);
+    G.gameTime += 1;
 
     // Age fish (growth/health changes are applied via daily tank feeding below)
     if (Array.isArray(G.fish) && G.fish.length > 0) {
@@ -417,7 +619,10 @@ const systemMoves = {
 
     const uptake = applyPlantNitrateUptake({ G, water, lightsAvailable });
 
+    G.systemAlerts = createSystemAlerts({ water, tank, G });
+
     // Age plants and advance growth stages
+    let plantDeaths = [];
     if (G.plants && G.plants.length > 0) {
       const plantGrowthMult = clampNumber(G.systemModifiers?.plantGrowthMultiplier ?? 1.0, 0.5, 3.0);
       G.plants.forEach(plant => {
@@ -431,6 +636,9 @@ const systemMoves = {
           plant.growthStage = 'seedling';
         }
       });
+
+      const mortality = applyPlantHealthAndMortality({ G, water, lightsAvailable });
+      plantDeaths = mortality.plantDeaths || [];
     }
 
     // Calculate daily utility costs
@@ -460,16 +668,15 @@ const systemMoves = {
         paid: G.money >= totalBill
       };
       
-      if (G.money >= totalBill) {
-        G.money -= totalBill;
-        G.billsAccrued = { electricity: 0, water: 0 };
-        G.lastBillPaid = G.gameTime;
-      } else {
-        // Insufficient funds - deduct what they can afford and carry debt
-        const debt = totalBill - G.money;
-        G.money = 0;
-        billPayment.debt = Number(debt.toFixed(2));
-        billPayment.paid = false;
+      const paid = Math.min(G.money, totalBill);
+      const unpaid = totalBill - paid;
+      G.money = parseFloat((G.money - paid).toFixed(2));
+      // Always reset the billing cycle so it doesn't re-fire every turn.
+      G.billsAccrued = { electricity: 0, water: 0 };
+      G.lastBillPaid = G.gameTime;
+      billPayment.paid = unpaid <= 0;
+      if (unpaid > 0) {
+        billPayment.debt = Number(unpaid.toFixed(2));
       }
     }
     
@@ -477,11 +684,15 @@ const systemMoves = {
     const triggeredEvent = EventManager.checkForRandomEvent(G);
     if (triggeredEvent) {
       console.log(`[progressTurn] EVENT TRIGGERED: "${triggeredEvent.name}" - ${triggeredEvent.description} (duration: ${triggeredEvent.duration} days)`);
+      // Apply the newly triggered event's effects in the same turn it fires.
+      // Without this, duration-1 events (triggered at end of turn, cleared by
+      // progressEvent below) would never have their effects applied at all.
+      EventManager.applyEventEffects(G);
     }
     if (G.activeEvent) {
       console.log(`[progressTurn] Active event: "${G.activeEvent.name}" - ${G.activeEvent.turnsRemaining} turns remaining`);
     }
-    
+
     // Progress active event duration
     EventManager.progressEvent(G);
     
@@ -516,6 +727,7 @@ const systemMoves = {
         avgStress: dailyFeeding.avgStress,
       },
       fishDeaths: Array.isArray(dailyFeeding.fishDeaths) ? dailyFeeding.fishDeaths : [],
+      plantDeaths: Array.isArray(plantDeaths) ? plantDeaths : [],
       fishFeedingDebug: {
         waterSnapshot: dailyFeeding.waterSnapshot,
         fish: Array.isArray(dailyFeeding.fishDebug) ? dailyFeeding.fishDebug : [],
@@ -536,6 +748,7 @@ const systemMoves = {
       }
     }
     
+    lastAction.systemAlerts = Array.isArray(G.systemAlerts) ? G.systemAlerts : [];
     if (triggeredEvent) {
       lastAction.eventTriggered = true;
       lastAction.eventName = String(triggeredEvent.name || '');
@@ -544,7 +757,85 @@ const systemMoves = {
       lastAction.eventTriggered = false;
     }
     
-    G.lastAction = lastAction;
+  G.lastAction = lastAction;
+}
+
+const systemMoves = {
+  performPartialWaterChange,
+  stopFeeding,
+  increaseAeration,
+  applyConsumable: ({ G }, equipmentType) => {
+    const type = String(equipmentType || '');
+    const data = equipment[type];
+    if (!data || !data.waterEffects) {
+      G.error = `Unknown consumable: ${type}`;
+      G.lastAction = { type: 'applyConsumable', success: false, reason: 'unknown_consumable', equipmentType: type };
+      return;
+    }
+    const stock = Number(G.equipment?.[type]) || 0;
+    if (stock <= 0) {
+      G.error = `No ${data.description || type} in inventory`;
+      G.lastAction = { type: 'applyConsumable', success: false, reason: 'out_of_stock', equipmentType: type };
+      return;
+    }
+
+    const { tank, water } = ensureTankAndWaterState(G);
+    const eff = data.waterEffects;
+    const applied = [];
+
+    if (Number.isFinite(eff.ammoniaDeltaMgL)) {
+      water.ammonia = clampNumber((water.ammonia ?? 0) + eff.ammoniaDeltaMgL, 0, 10000);
+      applied.push(`ammonia ${eff.ammoniaDeltaMgL > 0 ? '+' : ''}${eff.ammoniaDeltaMgL} ppm`);
+    }
+    if (Number.isFinite(eff.nitriteDeltaMgL)) {
+      water.nitrite = clampNumber((water.nitrite ?? 0) + eff.nitriteDeltaMgL, 0, 10000);
+      applied.push(`nitrite ${eff.nitriteDeltaMgL > 0 ? '+' : ''}${eff.nitriteDeltaMgL} ppm`);
+    }
+    if (Number.isFinite(eff.pHDelta)) {
+      water.pH = clampNumber(water.pH + eff.pHDelta, 0, 14);
+      applied.push(`pH +${eff.pHDelta}`);
+    }
+    if (Number.isFinite(eff.calciumDeltaMgL)) {
+      water.calcium = clampNumber((water.calcium ?? 0) + eff.calciumDeltaMgL, 0, 10000);
+      applied.push(`calcium +${eff.calciumDeltaMgL} mg/L`);
+    }
+    if (Number.isFinite(eff.potassiumDeltaMgL)) {
+      water.potassium = clampNumber((water.potassium ?? 0) + eff.potassiumDeltaMgL, 0, 10000);
+      applied.push(`potassium +${eff.potassiumDeltaMgL} mg/L`);
+    }
+    if (Number.isFinite(eff.ironDeltaMgL)) {
+      water.iron = clampNumber((water.iron ?? 0) + eff.ironDeltaMgL, 0, 10000);
+      applied.push(`iron +${eff.ironDeltaMgL} mg/L`);
+    }
+    if (Number.isFinite(eff.dissolvedOxygenDeltaMgL)) {
+      water.dissolvedOxygen = clampNumber((water.dissolvedOxygen ?? 0) + eff.dissolvedOxygenDeltaMgL, 0, 15);
+      applied.push(`dissolved oxygen +${eff.dissolvedOxygenDeltaMgL} mg/L`);
+    }
+
+    if (!G.equipment) G.equipment = {};
+    G.equipment[type] = stock - 1;
+    G.lastAction = {
+      type: 'applyConsumable',
+      success: true,
+      equipmentType: type,
+      applied,
+      remaining: stock - 1,
+    };
+  },
+
+  progressTurn: ({ G }) => {
+    console.log('[progressTurn] G.gameTime before:', G.gameTime);
+    runOneTurn(G);
+    console.log('[progressTurn] G.gameTime after:', G.gameTime);
+  },
+
+  progressMultipleTurns: ({ G }, count = 3) => {
+    const days = Math.max(1, Math.min(10, Number(count) || 3));
+    console.log(`[progressMultipleTurns] advancing ${days} days from day ${G.gameTime}`);
+    for (let i = 0; i < days; i++) {
+      runOneTurn(G);
+    }
+    console.log(`[progressMultipleTurns] done, now day ${G.gameTime}`);
   },
 
   // Repair system damage from events (leaks, pump failures, etc.)

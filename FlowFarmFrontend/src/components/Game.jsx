@@ -1,6 +1,7 @@
 // src/components/Game.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import gameAPI from '../services/gameAPI';
+import soundManager from '../services/soundManager';
 import { PLANT_SLOT_COUNT } from '../config/plantSlots';
 import Renderer from './Renderer';
 import StatsSection from './StatsSection';
@@ -19,7 +20,7 @@ function Game({ onTitleClick }) {
   const [error, setError] = useState(null);
   const [connected, setConnected] = useState(false);
 
-  const [lastFishDeathAlertTurn, setLastFishDeathAlertTurn] = useState(null);
+  const [lastTurnAlerted, setLastTurnAlerted] = useState(null);
 
   const [activeViewpoint, setActiveViewpoint] = useState('Viewpoint1');
   const [lastPickedLabel, setLastPickedLabel] = useState('—');
@@ -36,6 +37,13 @@ function Game({ onTitleClick }) {
   const loadMenuRef = useRef(null);
 
   const [feedFishStatus, setFeedFishStatus] = useState({ pending: false, message: null, ok: null, at: null });
+  const [muted, setMutedState] = useState(() => soundManager.isMuted());
+
+  const toggleMute = () => {
+    const next = !muted;
+    soundManager.setMuted(next);
+    setMutedState(next);
+  };
 
   // Initialize game on component mount
   useEffect(() => {
@@ -163,7 +171,9 @@ function Game({ onTitleClick }) {
     gameAPI.addFish(fishType, count); // count maps to quantity param
   };
 
-  const handleSellFish = (fishId) => { console.log(`[Game] handleSellFish clicked: ${fishId}`); 
+  const handleSellFish = (fishId) => {
+    console.log(`[Game] handleSellFish clicked: ${fishId}`);
+    soundManager.play('harvest');
     gameAPI.sellFish(fishId);
   };
 
@@ -221,6 +231,7 @@ function Game({ onTitleClick }) {
         const msg = `Added ${used ?? '—'} food into tank${partial ? ' (partial)' : ''}. `
           + `Tank food: ${tankBefore ?? '—'} → ${tankAfter ?? '—'}. `
           + `Inventory fish food remaining: ${invRemaining ?? availableFood ?? '—'}.`;
+        soundManager.play('feedFish');
         setFeedFishStatus({ pending: false, message: msg, ok: true, at: Date.now() });
         return;
       }
@@ -241,13 +252,25 @@ function Game({ onTitleClick }) {
     gameAPI.progressTurn();
   };
 
+  const handleProgress3Days = async () => {
+    console.log('[Game] handleProgress3Days clicked');
+    setLoading(true);
+    try {
+      await gameAPI.progressMultipleTurns(3);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleHarvestPlant = (plantId) => {
     console.log('[Game] handleHarvestPlant called:', plantId);
+    soundManager.play('harvest');
     gameAPI.harvestPlant(plantId);
   };
 
   const handleHarvestAllMaturePlants = () => {
     console.log('[Game] handleHarvestAllMaturePlants clicked');
+    soundManager.play('harvest');
     gameAPI.harvestAllMaturePlants();
   };
 
@@ -309,27 +332,49 @@ function Game({ onTitleClick }) {
     const turn = gameState?.ctx?.turn;
     const action = gameState?.G?.lastAction;
     if (!turn || !action || action.type !== 'progressTurn') return;
+    if (turn === lastTurnAlerted) return;
 
-    const deaths = action?.fishDeaths;
-    if (!Array.isArray(deaths) || deaths.length === 0) return;
-    if (turn === lastFishDeathAlertTurn) return;
+    const messages = [];
 
-    const lines = deaths
-      .map((d) => {
-        const type = d?.type ? String(d.type) : 'fish';
-        const id = d?.id ? String(d.id) : '';
-        return id ? `${type} (${id})` : type;
-      })
-      .filter(Boolean);
-
-    try {
-      window.alert(`Fish died: ${lines.join(', ')}`);
-    } catch {
-      // ignore
+    const fishDeaths = Array.isArray(action?.fishDeaths) ? action.fishDeaths : [];
+    if (fishDeaths.length > 0) {
+      const lines = fishDeaths
+        .map((d) => {
+          const type = d?.type ? String(d.type) : 'fish';
+          const id = d?.id ? String(d.id) : '';
+          return id ? `${type} (${id})` : type;
+        })
+        .filter(Boolean);
+      messages.push(`Fish died: ${lines.join(', ')}`);
     }
 
-    setLastFishDeathAlertTurn(turn);
-  }, [gameState?.ctx?.turn, gameState?.G?.lastAction, lastFishDeathAlertTurn]);
+    const plantDeaths = Array.isArray(action?.plantDeaths) ? action.plantDeaths : [];
+    if (plantDeaths.length > 0) {
+      const lines = plantDeaths
+        .map((d) => {
+          const type = d?.type ? String(d.type) : 'plant';
+          const id = d?.id ? String(d.id) : '';
+          return id ? `${type} (${id})` : type;
+        })
+        .filter(Boolean);
+      messages.push(`Plants lost: ${lines.join(', ')}`);
+    }
+
+    if (action?.eventTriggered) {
+      const name = action?.eventName || 'an event';
+      messages.push(`New event triggered: ${name}`);
+      soundManager.play('eventAlert');
+    }
+
+    if (messages.length > 0) {
+      try {
+        window.alert(messages.join('\n'));
+      } catch {
+        // ignore
+      }
+      setLastTurnAlerted(turn);
+    }
+  }, [gameState?.ctx?.turn, gameState?.G?.lastAction, lastTurnAlerted]);
 
   const handlePicked = ({ label }) => {
     if (!label) return;
@@ -398,6 +443,7 @@ function Game({ onTitleClick }) {
     if (!panelOpen) setPanelOpen(true);
   };
 
+  const activeEvent = gameState?.G?.activeEvent;
   const dayNumber = gameState?.G?.gameTime ?? gameState?.ctx?.turn ?? null;
   const money = gameState?.G?.money ?? null;
 
@@ -416,6 +462,9 @@ function Game({ onTitleClick }) {
           <div className="topbar-stats">
             <span>Day: {dayNumber ?? '—'}</span>
             <span>Money: {money != null ? `$${Number(money).toFixed(2)}` : '—'}</span>
+            <span className={`event-status ${activeEvent ? 'danger' : 'good'}`}>
+              {activeEvent ? `Event: ${activeEvent.name} (${activeEvent.turnsRemaining}d left)` : 'No active events'}
+            </span>
           </div>
         </div>
         <div className="topbar-actions">
@@ -486,6 +535,16 @@ function Game({ onTitleClick }) {
             )}
           </div>
           <button onClick={handleProgressTurn} disabled={loading || !connected} className="btn-progress" type="button">Progress Day</button>
+          <button onClick={handleProgress3Days} disabled={loading || !connected} className="btn-progress" type="button">Progress 3 Days</button>
+          <button
+            type="button"
+            className={`btn-mute ${muted ? 'muted' : ''}`}
+            onClick={toggleMute}
+            aria-label={muted ? 'Unmute game sounds' : 'Mute game sounds'}
+            title={muted ? 'Unmute' : 'Mute'}
+          >
+            {muted ? '🔇' : '🔊'}
+          </button>
         </div>
       </header>
 

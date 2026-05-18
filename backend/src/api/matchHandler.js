@@ -40,6 +40,8 @@ class MatchHandler {
           currentVolume: Number(tank.currentVolume ?? tank.currentWaterLevel ?? 0),
           biofilterEfficiency: Number(tank.biofilterEfficiency ?? 0.8),
         },
+        fishDeaths: Array.isArray(G.lastAction?.fishDeaths) ? G.lastAction.fishDeaths.length : 0,
+        plantDeaths: Array.isArray(G.lastAction?.plantDeaths) ? G.lastAction.plantDeaths.length : 0,
         event: G.activeEvent
           ? {
               id: String(G.activeEvent.id),
@@ -198,19 +200,25 @@ class MatchHandler {
     return { G, ctx: match.ctx };
   }
 
+  static isValidMoveName(moveName) {
+    return typeof moveName === 'string' && Object.prototype.hasOwnProperty.call(AquaponicsGame.moves, moveName);
+  }
+
   static async makeMove(matchID, moveName, args, playerID) {
     const match = await this.getMatch(matchID);
     if (!match) {
       throw new Error('Match not found');
     }
 
-    const move = AquaponicsGame.moves[moveName];
-    if (!move) {
-      throw new Error(`Move ${moveName} not found`);
+    const normalizedMoveName = typeof moveName === 'string' ? moveName : String(moveName || '');
+    if (!this.isValidMoveName(normalizedMoveName)) {
+      throw new Error(`Move ${normalizedMoveName || 'undefined'} not found`);
     }
 
+    const move = AquaponicsGame.moves[normalizedMoveName];
+
     try {
-      const moveArgs = args || [];
+      const moveArgs = Array.isArray(args) ? args : [];
       // Call move using the expected signature used throughout moves: ({ G, ctx }, ...args)
       // Many moves mutate G in-place and do not return a value, so support both styles.
       const result = move({ G: match.G, ctx: match.ctx }, ...moveArgs);

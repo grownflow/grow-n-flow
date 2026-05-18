@@ -10,12 +10,13 @@ const fishSpecies = {
   tilapia: {
     tempRange: { min: 4, max: 34, optimal: { min: 25, max: 30 } },
     ammoniaToleranceMax: 2.0,
+    nitriteToleranceMax: 1.0,
     oxygenMin: 4.0,
     proteinRequirement: { min: 28, max: 32 },
     harvestWeight: 600,
     harvestTime: 210, // in days
     baseGrowthRate: 600 / 210, // ~2.86 per day
-    marketValue: 3.00,
+    marketValue: 4.00,
     fingerlingCost: 2.50, // Cost per fingerling
     availability: 'year-round',
     consumerAcceptance: 'good',
@@ -28,6 +29,7 @@ const fishSpecies = {
   barramundi: {
     tempRange: { min: 18, max: 34, optimal: { min: 26, max: 29 } },
     ammoniaToleranceMax: 1.0,
+    nitriteToleranceMax: 1.0,
     oxygenMin: 4.0,
     proteinRequirement: { min: 38, max: 45 },
     harvestWeight: 400,
@@ -46,12 +48,13 @@ const fishSpecies = {
   catfish: {
     tempRange: { min: 20, max: 32, optimal: { min: 24, max: 29 } },
     ammoniaToleranceMax: 1.5,
+    nitriteToleranceMax: 1.0,
     oxygenMin: 4.0,
     proteinRequirement: { min: 30, max: 36 },
     harvestWeight: 700,
     harvestTime: 240,
     baseGrowthRate: 700 / 240,
-    marketValue: 4.00,
+    marketValue: 6.00,
     fingerlingCost: 3.50,
     availability: 'year-round',
     consumerAcceptance: 'good',

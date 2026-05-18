@@ -1,5 +1,13 @@
 import { PLANT_SLOT_COUNT } from '../config/plantSlots';
 
+const SPECIES_CATALOG = [
+    { key: 'ParrisIslandRomaine', label: 'Romaine Lettuce',  icon: '🥬', seedCost: 0.30 },
+    { key: 'Basil',               label: 'Basil',            icon: '🌿', seedCost: 0.25 },
+    { key: 'Rosemary',            label: 'Rosemary',         icon: '🌱', seedCost: 0.50 },
+    { key: 'Tomato',              label: 'Tomato',           icon: '🍅', seedCost: 0.60 },
+    { key: 'Pepper',              label: 'Pepper',           icon: '🌶️', seedCost: 0.55 },
+];
+
 const PlantsSection = ({gameState, loading, handleHarvestPlant, handleHarvestAllMaturePlants, handlePlantSeed, handleBuyAllSeeds}) => {
     if (!gameState) {
         return;
@@ -8,11 +16,11 @@ const PlantsSection = ({gameState, loading, handleHarvestPlant, handleHarvestAll
     const { G, ctx } = gameState;
     const maxPlantSlots = Math.max(G.maxPlantSlots || 0, PLANT_SLOT_COUNT);
     const openSlots = Math.max(0, maxPlantSlots - (G.plants?.length || 0));
-    const seedCost = 0.3;
-    const affordableCount = Math.floor((G.money || 0) / seedCost);
-    const buyAllCount = Math.min(openSlots, affordableCount);
+    const bedFull = (G.plants && G.plants.length >= maxPlantSlots);
 
     const matureCount = (G.plants || []).filter((p) => p && p.growthStage === 'mature').length;
+    const lastProgress = G.lastAction?.type === 'progressTurn' ? G.lastAction : null;
+    const plantDeaths = Array.isArray(lastProgress?.plantDeaths) ? lastProgress.plantDeaths : [];
 
     // Group plants by type for summary
     const plantCounts = {};
@@ -23,7 +31,7 @@ const PlantsSection = ({gameState, loading, handleHarvestPlant, handleHarvestAll
             plantCounts[label]++;
         });
     }
-    
+
     return (
         <div>
             <section className="plants-section">
@@ -40,26 +48,34 @@ const PlantsSection = ({gameState, loading, handleHarvestPlant, handleHarvestAll
                 </div>
             )}
 
-            <div className="action-buttons">
-                <button 
-                onClick={() => handlePlantSeed('ParrisIslandRomaine')} 
-                disabled={loading || (G.plants && G.plants.length >= maxPlantSlots)}
-                className="btn-primary"
-                >
-                {G.plants && G.plants.length >= maxPlantSlots 
-                    ? `Bed Full (Max ${maxPlantSlots})` 
-                    : "Plant Romaine Lettuce ($0.30) 🥬"
-                }
-                </button>
-                <button
-                onClick={() => handleBuyAllSeeds('ParrisIslandRomaine')}
-                disabled={loading || buyAllCount <= 0}
-                className="btn-secondary"
-                >
-                {buyAllCount > 0
-                    ? `Buy All (${buyAllCount})`
-                    : 'Buy All'}
-                </button>
+            {/* Per-species plant buttons */}
+            <div className="species-plant-grid">
+                {SPECIES_CATALOG.map(({ key, label, icon, seedCost }) => {
+                    const affordableCount = Math.floor((G.money || 0) / seedCost);
+                    const buyAllCount = Math.min(openSlots, affordableCount);
+                    return (
+                        <div key={key} className="species-plant-row">
+                            <span className="species-label">{icon} {label} (${seedCost.toFixed(2)})</span>
+                            <button
+                                onClick={() => handlePlantSeed(key)}
+                                disabled={loading || bedFull || (G.money || 0) < seedCost}
+                                className="btn-primary btn-sm"
+                            >
+                                {bedFull ? `Bed Full (Max ${maxPlantSlots})` : 'Plant 1'}
+                            </button>
+                            <button
+                                onClick={() => handleBuyAllSeeds(key)}
+                                disabled={loading || buyAllCount <= 0}
+                                className="btn-secondary btn-sm"
+                            >
+                                {buyAllCount > 0 ? `Buy All (${buyAllCount})` : 'Buy All'}
+                            </button>
+                        </div>
+                    );
+                })}
+            </div>
+
+            <div className="action-buttons" style={{ marginTop: 8 }}>
                 <button
                 onClick={handleHarvestAllMaturePlants}
                 disabled={loading || matureCount <= 0}
@@ -72,6 +88,11 @@ const PlantsSection = ({gameState, loading, handleHarvestPlant, handleHarvestAll
             </div>
 
             <div className="plants-info">
+                {plantDeaths.length > 0 && (
+                    <div className="plants-warning" style={{ marginBottom: 10, padding: 10, background: '#fff4e5', border: '1px solid #ffdca8', borderRadius: 8 }}>
+                        <strong>Plant losses:</strong> {plantDeaths.map((d) => d?.type || 'plant').join(', ')}
+                    </div>
+                )}
                 {G.plants && G.plants.length > 0 ? (
                 <div className="plants-list">
                     {G.plants.map((plant) => (

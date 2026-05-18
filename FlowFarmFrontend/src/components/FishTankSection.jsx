@@ -14,6 +14,7 @@ const FishTankSection = ({gameState, loading, handleAddFish, handleSellFish, han
     const water = tank?.water;
     const lastAction = G?.lastAction;
     const lastProgress = lastAction?.type === 'progressTurn' ? lastAction : null;
+    const activeEvent = G?.activeEvent;
 
     const fishArray = Array.isArray(G.fish) ? G.fish : [];
     const rates = fishArray.map((f) => Number(f?.foodConsumptionRate)).filter((n) => Number.isFinite(n) && n > 0);
@@ -69,6 +70,15 @@ const FishTankSection = ({gameState, loading, handleAddFish, handleSellFish, han
                             <strong>Deaths:</strong> {lastProgress.fishDeaths.map((d) => d?.type || 'fish').join(', ')}
                         </p>
                     )}
+                </div>
+            )}
+
+            {activeEvent && (
+                <div className="tank-info" style={{ marginTop: 8, background: '#fff4e5', borderRadius: 8, padding: 10 }}>
+                    <p style={{ margin: 0 }}>
+                        <strong>Active event:</strong> {activeEvent.name} ({activeEvent.turnsRemaining}d left)
+                    </p>
+                    {activeEvent.cause && <p style={{ margin: 0 }}>Cause: {activeEvent.cause}</p>}
                 </div>
             )}
 

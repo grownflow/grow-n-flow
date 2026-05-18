@@ -66,7 +66,21 @@ const fishMoves = {
     const foodAmountUsed = Math.max(0, Math.min(availableFood, desiredFood));
     const partial = foodAmountUsed < desiredFood;
 
-    const { tank } = ensureTankAndWaterState(G);
+    const { tank, water } = ensureTankAndWaterState(G);
+
+    if (Number(water.ammonia ?? 0) >= 1.0 || Number(water.nitrite ?? 0) >= 1.0) {
+      const msg = 'Unsafe water chemistry: stop feeding and take corrective action before adding more food.';
+      G.error = msg;
+      G.lastAction = {
+        type: 'feedFish',
+        success: false,
+        reason: 'unsafe_water_conditions',
+        ammonia: Number(water.ammonia.toFixed(3)),
+        nitrite: Number(water.nitrite.toFixed(3)),
+        recommendedActions: ['stopFeeding', 'performPartialWaterChange', 'increaseAeration']
+      };
+      return G;
+    }
 
     // "Feed fish" now means "add food into the tank".
     // Fish will actually eat from tank.foodInTank during progressTurn.

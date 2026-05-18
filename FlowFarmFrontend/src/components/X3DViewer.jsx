@@ -163,6 +163,24 @@ export default function X3DViewer({ assetPath = 'fish-tank.x3d', children, onPic
     };
   }, []);
 
+  // Inject NavigationInfo via DOM API — React renders X3D elements in the HTML
+  // namespace, which treats unknown attributes (e.g. `speed`) as unrecognised DOM
+  // props and generates console errors.  Direct DOM insertion bypasses React's
+  // reconciler entirely and gives X3DOM a clean XML-like node to process.
+  useEffect(() => {
+    if (!ready) return;
+    const el = x3dRef.current;
+    if (!el) return;
+    const scene = el.querySelector('scene');
+    if (!scene) return;
+    if (!scene.querySelector('navigationinfo, NavigationInfo')) {
+      const navInfo = document.createElement('NavigationInfo');
+      navInfo.setAttribute('type', 'NONE');
+      navInfo.setAttribute('speed', '1');
+      scene.insertBefore(navInfo, scene.firstChild);
+    }
+  }, [ready]);
+
   useEffect(() => {
     if (!ready) return;
     const el = x3dRef.current;

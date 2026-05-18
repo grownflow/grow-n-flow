@@ -7,6 +7,7 @@ class GameAPI {
     this.pollHandle = null;
     this.state = null;
     this.connecting = false;
+    this._onStateChange = null;
   }
 
   async loadMatch(matchID, onStateChange) {
@@ -68,6 +69,7 @@ class GameAPI {
   }
 
   startPolling(onStateChange, interval = 1000) {
+    this._onStateChange = onStateChange;
     if (this.pollHandle) clearInterval(this.pollHandle);
     if (!this.matchID) return;
     this.pollHandle = setInterval(async () => {
@@ -81,6 +83,19 @@ class GameAPI {
         console.warn('[gameAPI] poll error', e);
       }
     }, interval);
+  }
+
+  async _fetchAndNotify() {
+    if (!this.matchID || !this._onStateChange) return;
+    try {
+      const res = await fetch(`${API_BASE}/${this.matchID}`, { credentials: 'include' });
+      if (!res.ok) return;
+      const json = await res.json();
+      this.state = json;
+      this._onStateChange(json);
+    } catch (e) {
+      console.warn('[gameAPI] force-fetch error', e);
+    }
   }
 
   stopPolling() {
@@ -100,7 +115,10 @@ class GameAPI {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ move, args, playerID }),
     });
-    return res.json();
+    const result = await res.json();
+    // Immediately refresh state so the UI doesn't have to wait for the next poll tick.
+    await this._fetchAndNotify();
+    return result;
   }
 
   async getWaterHistory({ limit = 200, from } = {}) {
@@ -127,7 +145,9 @@ class GameAPI {
   sellFish(fishId) { return this.makeMove('sellFish', [fishId]); }
   sellProducts(productType, quantity) { return this.makeMove('sellProducts', [productType, quantity]); }
   skipTurn() { return this.makeMove('skipTurn', []); }
+  applyConsumable(equipmentType) { return this.makeMove('applyConsumable', [equipmentType]); }
   progressTurn() { return this.makeMove('progressTurn', []); }
+  progressMultipleTurns(count = 3) { return this.makeMove('progressMultipleTurns', [count]); }
   repairSystem() { return this.makeMove('repairSystem', []); }
 
   disconnect() {

@@ -12,6 +12,18 @@ const equipment = {
     dailyElectricityCost: 0
   },
 
+  // Biofilter — permanent efficiency upgrade + storable consumable for ammonia/nitrite spikes
+  biofilter: {
+    cost: 120,
+    type: 'consumable',
+    description: 'Biofilter unit. Permanently improves nitrogen cycle efficiency (+5%) and reduces ammonia/nitrite when applied.',
+    dailyElectricityCost: 0,
+    waterEffects: {
+      ammoniaDeltaMgL: -1.5,
+      nitriteDeltaMgL: -0.8
+    }
+  },
+
   // Water treatment consumables (instant-use supplements)
   bufferingSolutionCalciumCarbonate: {
     cost: 15,
@@ -40,6 +52,16 @@ const equipment = {
     dailyElectricityCost: 0,
     waterEffects: {
       ironDeltaMgL: 1.0
+    }
+  },
+  aerationStones: {
+    cost: 25,
+    type: 'consumable',
+    description: 'Aeration stones (pack of 10). Each stone boosts dissolved oxygen by 2.0 mg/L.',
+    dailyElectricityCost: 0,
+    packQuantity: 10,
+    waterEffects: {
+      dissolvedOxygenDeltaMgL: 2.0
     }
   },
 

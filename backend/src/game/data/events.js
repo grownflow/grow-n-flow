@@ -15,40 +15,109 @@ const EVENTS = {
     description: 'The farmers market is extra busy today!',
     cause: 'Local festival',
     effects: {
-      message: 'Great day for sales!'
+      moneyBonus: 50
     },
-    duration: 1, // just 1 day
-    probability: 0.5, // 50% chance - triggers frequently for testing
+    duration: 1,
+    probability: 0.1,
     severity: 'low'
   },
 
-  // Technical Events - affect system components
-  powerOutage: {
-    id: 'powerOutage',
+  // Technical Events - reflect aquaponics failure modes and key parameters
+  ammoniaSpike: {
+    id: 'ammoniaSpike',
     type: EVENT_TYPES.TECHNICAL,
-    name: 'Power Outage',
-    description: 'A giant thunderstorm has knocked out power to your facility',
-    cause: 'Giant thunderstorm',
+    name: 'Sudden Ammonia Spike',
+    description: 'Ammonia has spiked in the tank, likely from overfeeding or a fish die-off.',
+    cause: 'Overfeeding, uneaten feed, or dead fish',
     effects: {
-      lightsDisabled: true
+      ammoniaIncrease: 2.5,
+      nitriteIncrease: 0.5,
+      dissolvedOxygenDecrease: 0.8
     },
-    duration: 1, // days
-    probability: 0.05, // 5% chance per turn
+    duration: 1,
+    probability: 0.06,
     severity: 'high'
   },
 
-  // Social Events - affect economy/market conditions
-  gasPriceSpike: {
-    id: 'gasPriceSpike',
-    type: EVENT_TYPES.SOCIAL,
-    name: 'Gas Price Spike',
-    description: 'Gas prices have skyrocketed',
-    cause: 'Gas prices have skyrocketed',
+  nitriteSpike: {
+    id: 'nitriteSpike',
+    type: EVENT_TYPES.TECHNICAL,
+    name: 'Nitrite Rise',
+    description: 'Nitrite levels are rising, likely because the biofilter is stressed or disturbed.',
+    cause: 'Disturbed biofilter or heavy waste load',
     effects: {
-      transportCost: 100 // +$100 cost to market
+      nitriteIncrease: 1.2,
+      dissolvedOxygenDecrease: 0.5
     },
-    duration: 5,
-    probability: 0.06,
+    duration: 1,
+    probability: 0.05,
+    severity: 'high'
+  },
+
+  lowDissolvedOxygen: {
+    id: 'lowDissolvedOxygen',
+    type: EVENT_TYPES.TECHNICAL,
+    name: 'Low Dissolved Oxygen',
+    description: 'Dissolved oxygen has dropped below safe levels due to overcrowding or solids buildup.',
+    cause: 'Poor aeration, solids buildup, or overcrowding',
+    effects: {
+      dissolvedOxygenDecrease: 2.5,
+      circulationEfficiencyReduction: 0.3
+    },
+    duration: 1,
+    probability: 0.05,
+    severity: 'high'
+  },
+
+  fishDiseaseOutbreak: {
+    id: 'fishDiseaseOutbreak',
+    type: EVENT_TYPES.TECHNICAL,
+    name: 'Fish Disease Outbreak',
+    description: 'A disease outbreak is stressing your fish and producing additional waste.',
+    cause: 'Poor water quality or pathogen introduction',
+    effects: {
+      ammoniaIncrease: 1.5,
+      nitriteIncrease: 0.8,
+      dissolvedOxygenDecrease: 1.0,
+      fishHealthReduction: 2.5,
+      // Each day of the event, only ~25% of fish are individually affected.
+      // Over a 2-day event this causes noticeable losses without wiping the tank.
+      fishHealthReductionFraction: 0.25
+    },
+    duration: 2,
+    probability: 0.02,
+    severity: 'high'
+  },
+
+  plantDiseaseOutbreak: {
+    id: 'plantDiseaseOutbreak',
+    type: EVENT_TYPES.TECHNICAL,
+    name: 'Plant Disease Outbreak',
+    description: 'A disease outbreak is impacting your plants and reducing nutrient availability.',
+    cause: 'Pathogens or nutrient imbalance',
+    effects: {
+      nitrateDecrease: 3.0,
+      ironDecrease: 0.8,
+      plantHealthReduction: 2.0,
+      // ~30% of plants affected per day; over 3 days the weakest ones die.
+      plantHealthReductionFraction: 0.30
+    },
+    duration: 3,
+    probability: 0.02,
+    severity: 'medium'
+  },
+
+  pHCrash: {
+    id: 'pHCrash',
+    type: EVENT_TYPES.TECHNICAL,
+    name: 'pH Drop',
+    description: 'The pH is drifting downward as nitrification consumes alkalinity.',
+    cause: 'Natural nitrification and low carbonate hardness',
+    effects: {
+      pHDecrease: 0.2
+    },
+    duration: 2,
+    probability: 0.04,
     severity: 'medium'
   },
 
@@ -57,13 +126,13 @@ const EVENTS = {
     id: 'waterLeak',
     type: EVENT_TYPES.TECHNICAL,
     name: 'Water Leak',
-    description: 'A leak has developed in your tank',
+    description: 'A leak has developed in your tank.',
     cause: 'Wear and tear on tank seals',
     effects: {
-      waterLossPerTurn: 50 // liters per day
+      waterLossPerTurn: 50
     },
-    duration: 999, // Lasts until repaired
-    probability: 0.04, // 4% chance per turn
+    duration: 999,
+    probability: 0.04,
     severity: 'high',
     repairCost: 75
   },
@@ -72,13 +141,13 @@ const EVENTS = {
     id: 'pumpFailure',
     type: EVENT_TYPES.TECHNICAL,
     name: 'Pump Failure',
-    description: 'Your water pump has stopped working',
+    description: 'Your water pump has stopped working.',
     cause: 'Motor burnout',
     effects: {
       circulationStopped: true
     },
-    duration: 999, // Lasts until repaired
-    probability: 0.03, // 3% chance per turn
+    duration: 999,
+    probability: 0.03,
     severity: 'high',
     repairCost: 100
   },
@@ -87,13 +156,13 @@ const EVENTS = {
     id: 'filterClog',
     type: EVENT_TYPES.TECHNICAL,
     name: 'Filter Clog',
-    description: 'Your biofilter is clogged with debris',
-    cause: 'Accumulated waste',
+    description: 'Your biofilter is clogged with debris and cannot process waste efficiently.',
+    cause: 'Accumulated solids and uneaten food',
     effects: {
-      biofilterEfficiencyReduction: 0.5 // Reduces efficiency by 50%
+      biofilterEfficiencyReduction: 0.5
     },
-    duration: 999, // Lasts until repaired
-    probability: 0.05, // 5% chance per turn
+    duration: 999,
+    probability: 0.05,
     severity: 'medium',
     repairCost: 50
   }

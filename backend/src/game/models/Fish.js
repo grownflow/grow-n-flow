@@ -24,14 +24,19 @@ class Fish {
   }
 
   feed(foodAvailable, waterConditions = {}) {
-    const { temperature = 25, ammonia = 0, oxygen = 8 } = waterConditions;
+    const { temperature = 25, ammonia = 0, oxygen = 8, pH = 7.0, nitrite = 0 } = waterConditions;
     
     const requiredFood = this.count * this.foodConsumptionRate;
     const foodRatio = Math.min(foodAvailable / requiredFood, 1);
     
     // Calculate environmental stress
     const stress = EnvironmentalStress.calculateOverallStress(
-      temperature, ammonia, oxygen, this.species
+      temperature,
+      ammonia,
+      oxygen,
+      this.species,
+      pH,
+      nitrite
     );
     
     const stressFactor = 1 - stress.overall;

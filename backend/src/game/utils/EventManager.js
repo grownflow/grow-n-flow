@@ -57,7 +57,19 @@ class EventManager {
       turnsRemaining: Number(event.duration),
       triggeredAt: Number(G.gameTime)
     };
-    
+
+    // Snapshot pre-event system state so applyEventEffects can apply a fixed
+    // reduction each turn rather than compounding on the already-reduced value.
+    const eff = event.effects || {};
+    if (eff.biofilterEfficiencyReduction !== undefined) {
+      G.activeEvent.preEventBiofilterEfficiency =
+        Number(G.aquaponicsSystem?.tank?.biofilterEfficiency ?? 0.8);
+    }
+    if (eff.circulationEfficiencyReduction !== undefined) {
+      G.activeEvent.preEventCirculationEfficiency =
+        Number(G.aquaponicsSystem?.tank?.circulationEfficiency ?? 1.0);
+    }
+
     // Add repairCost if it exists
     if (event.repairCost !== undefined) {
       G.activeEvent.repairCost = Number(event.repairCost);
@@ -117,18 +129,109 @@ class EventManager {
         G.eventEffects.circulationStopped = effects.circulationStopped;
       }
       
-      // Apply filter clog effect
+      // Apply filter clog effect — always derive from the pre-event snapshot so the
+      // reduction doesn't compound every turn (0.8 → 0.4 → 0.2 → 0.1 → …).
       if (effects.biofilterEfficiencyReduction !== undefined && G.aquaponicsSystem && G.aquaponicsSystem.tank) {
-        const originalEfficiency = G.aquaponicsSystem.tank.biofilterEfficiency || 0.8;
-        G.aquaponicsSystem.tank.biofilterEfficiency = originalEfficiency * (1 - effects.biofilterEfficiencyReduction);
+        const tank = G.aquaponicsSystem.tank;
+        const baseline = Number.isFinite(G.activeEvent.preEventBiofilterEfficiency)
+          ? G.activeEvent.preEventBiofilterEfficiency
+          : (tank.biofilterEfficiency || 0.8);
+        tank.biofilterEfficiency = Math.max(0, baseline * (1 - effects.biofilterEfficiencyReduction));
         G.eventEffects.biofilterEfficiencyReduction = effects.biofilterEfficiencyReduction;
+      }
+
+      // Apply water quality changes from aquaponics failure modes
+      if (G.aquaponicsSystem && G.aquaponicsSystem.tank && G.aquaponicsSystem.tank.water) {
+        const water = G.aquaponicsSystem.tank.water;
+
+        if (effects.ammoniaIncrease !== undefined) {
+          water.ammonia = Math.max(0, water.ammonia + Number(effects.ammoniaIncrease));
+          G.eventEffects.ammoniaIncrease = Number(effects.ammoniaIncrease);
+        }
+
+        if (effects.nitriteIncrease !== undefined) {
+          water.nitrite = Math.max(0, water.nitrite + Number(effects.nitriteIncrease));
+          G.eventEffects.nitriteIncrease = Number(effects.nitriteIncrease);
+        }
+
+        if (effects.nitrateIncrease !== undefined) {
+          water.nitrate = Math.max(0, water.nitrate + Number(effects.nitrateIncrease));
+          G.eventEffects.nitrateIncrease = Number(effects.nitrateIncrease);
+        }
+
+        if (effects.dissolvedOxygenDecrease !== undefined) {
+          water.dissolvedOxygen = Math.max(0, water.dissolvedOxygen - Number(effects.dissolvedOxygenDecrease));
+          G.eventEffects.dissolvedOxygenDecrease = Number(effects.dissolvedOxygenDecrease);
+        }
+
+        if (effects.pHDecrease !== undefined) {
+          water.pH = Math.max(0, water.pH - Number(effects.pHDecrease));
+          G.eventEffects.pHDecrease = Number(effects.pHDecrease);
+        }
+
+        if (effects.pHIncrease !== undefined) {
+          water.pH = Math.min(14, water.pH + Number(effects.pHIncrease));
+          G.eventEffects.pHIncrease = Number(effects.pHIncrease);
+        }
+
+        if (effects.nitrateDecrease !== undefined) {
+          water.nitrate = Math.max(0, water.nitrate - Number(effects.nitrateDecrease));
+          G.eventEffects.nitrateDecrease = Number(effects.nitrateDecrease);
+        }
+
+        if (effects.ironDecrease !== undefined) {
+          water.iron = Math.max(0, water.iron - Number(effects.ironDecrease));
+          G.eventEffects.ironDecrease = Number(effects.ironDecrease);
+        }
+      }
+
+      if (effects.fishHealthReduction !== undefined && Array.isArray(G.fish)) {
+        // fishHealthReductionFraction (0–1) limits what fraction of the population is
+        // affected each day of the event.  Defaults to 1.0 so events without the field
+        // keep their existing behaviour.
+        const fishFraction = Math.max(0, Math.min(1,
+          Number.isFinite(effects.fishHealthReductionFraction)
+            ? effects.fishHealthReductionFraction : 1.0
+        ));
+        G.fish.forEach((fish) => {
+          if (Math.random() < fishFraction) {
+            fish.health = Math.max(0, Number(fish.health ?? 0) - Number(effects.fishHealthReduction));
+          }
+        });
+        G.eventEffects.fishHealthReduction = Number(effects.fishHealthReduction);
+      }
+
+      if (effects.plantHealthReduction !== undefined && Array.isArray(G.plants)) {
+        const plantFraction = Math.max(0, Math.min(1,
+          Number.isFinite(effects.plantHealthReductionFraction)
+            ? effects.plantHealthReductionFraction : 1.0
+        ));
+        G.plants.forEach((plant) => {
+          if (Math.random() < plantFraction) {
+            plant.health = Math.max(0, Number(plant.health ?? 0) - Number(effects.plantHealthReduction));
+          }
+        });
+        G.eventEffects.plantHealthReduction = Number(effects.plantHealthReduction);
+      }
+
+      if (effects.circulationEfficiencyReduction !== undefined) {
+        const tank = G.aquaponicsSystem?.tank;
+        if (tank) {
+          tank.circulationEfficiency = Math.max(0.1, (tank.circulationEfficiency ?? 1.0) - Number(effects.circulationEfficiencyReduction));
+          G.eventEffects.circulationEfficiencyReduction = Number(effects.circulationEfficiencyReduction);
+        }
       }
     }
 
     // Apply social/economic effects
     if (event.type === EVENT_TYPES.SOCIAL) {
-      if (effects.transportCost !== undefined) {
-        G.eventEffects.transportCost = effects.transportCost;
+      if (Number.isFinite(effects.moneyBonus)) {
+        G.money = parseFloat(((Number(G.money) || 0) + Number(effects.moneyBonus)).toFixed(2));
+        G.eventEffects.moneyBonus = Number(effects.moneyBonus);
+      }
+      if (Number.isFinite(effects.transportCost)) {
+        G.money = parseFloat((Math.max(0, (Number(G.money) || 0) - Number(effects.transportCost))).toFixed(2));
+        G.eventEffects.transportCost = Number(effects.transportCost);
       }
     }
   }
