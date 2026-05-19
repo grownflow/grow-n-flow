@@ -2,6 +2,14 @@ import React, { useEffect, useMemo, useState } from 'react';
 import gameAPI from '../services/gameAPI';
 import soundManager from '../services/soundManager';
 
+const DEFAULT_NH_SERIES = [
+    { key: 'ammonia', className: 'ammonia', label: 'Ammonia' },
+    { key: 'nitrite', className: 'nitrite', label: 'Nitrite' },
+];
+const DEFAULT_NO3_SERIES = [
+    { key: 'nitrate', className: 'nitrate', label: 'Nitrate' },
+];
+
 const SUPPLEMENTS = [
     { key: 'biofilter',                          label: 'Biofilter',                      effect: 'Ammonia −1.5 ppm, Nitrite −0.8 ppm' },
     { key: 'bufferingSolutionCalciumCarbonate',  label: 'Buffering Solution (Calcium)',   effect: 'pH +0.2, Calcium +20 mg/L' },
@@ -183,10 +191,19 @@ const WaterSection = ({gameState, loading}) => {
                 {historyError ? (
                     <p className="empty-message">Failed to load history: {historyError}</p>
                 ) : (
-                    <WaterTrendChart
-                        title="Nitrogen Cycle (ppm)"
-                        data={nitrogenHistory}
-                    />
+                    <>
+                        <WaterTrendChart
+                            title="Ammonia & Nitrite (ppm)"
+                            data={nitrogenHistory}
+                            series={DEFAULT_NH_SERIES}
+                            showDeaths={true}
+                        />
+                        <WaterTrendChart
+                            title="Nitrate (ppm)"
+                            data={nitrogenHistory}
+                            series={DEFAULT_NO3_SERIES}
+                        />
+                    </>
                 )}
 
                 {/* Nitrogen Cycle */}
@@ -363,7 +380,7 @@ const WaterSection = ({gameState, loading}) => {
     );
 };
 
-const WaterTrendChart = ({ title, data }) => {
+const WaterTrendChart = ({ title, data, series = DEFAULT_NH_SERIES, showDeaths = false }) => {
     const width = 100;
     const height = 40;
     const pad = 4;
@@ -381,7 +398,7 @@ const WaterTrendChart = ({ title, data }) => {
 
     const allValues = [];
     safeData.forEach((d) => {
-        allValues.push(d.ammonia, d.nitrite, d.nitrate);
+        series.forEach((s) => allValues.push(d[s.key]));
     });
     const maxY = Math.max(0.01, ...allValues.filter((n) => Number.isFinite(n)));
     const minY = 0;
@@ -405,8 +422,7 @@ const WaterTrendChart = ({ title, data }) => {
     const first = safeData[0];
     const xLabel = `${first.t} → ${last.t} days`;
 
-    // Collect death events: fish (red, near bottom) and plants (green, above fish row)
-    const deathMarkers = safeData.flatMap((d, i) => {
+    const deathMarkers = showDeaths ? safeData.flatMap((d, i) => {
         const x = xForIndex(i);
         const markers = [];
         if (d.fishDeaths > 0) {
@@ -416,7 +432,7 @@ const WaterTrendChart = ({ title, data }) => {
             markers.push({ x, y: height - pad - 9, color: '#5cb85c', label: `Plant deaths: ${d.plantDeaths}`, day: d.t });
         }
         return markers;
-    });
+    }) : [];
 
     return (
         <div className="water-chart-shell">
@@ -427,9 +443,9 @@ const WaterTrendChart = ({ title, data }) => {
                 <line x1={pad} y1={height - pad} x2={width - pad} y2={height - pad} className="water-chart-axis" />
                 <line x1={pad} y1={pad} x2={pad} y2={height - pad} className="water-chart-axis" />
 
-                <polyline points={toPolyline('ammonia')} className="water-chart-line ammonia" />
-                <polyline points={toPolyline('nitrite')} className="water-chart-line nitrite" />
-                <polyline points={toPolyline('nitrate')} className="water-chart-line nitrate" />
+                {series.map((s) => (
+                    <polyline key={s.key} points={toPolyline(s.key)} className={`water-chart-line ${s.className}`} />
+                ))}
                 {deathMarkers.map((marker, index) => (
                     <g key={`death-${marker.day}-${index}`}>
                         <line
@@ -447,11 +463,11 @@ const WaterTrendChart = ({ title, data }) => {
                 ))}
             </svg>
             <div className="water-chart-legend" aria-hidden="true">
-                <span className="legend-item ammonia">Ammonia</span>
-                <span className="legend-item nitrite">Nitrite</span>
-                <span className="legend-item nitrate">Nitrate</span>
-                <span className="legend-item fish-deaths">Fish deaths</span>
-                <span className="legend-item plant-deaths">Plant deaths</span>
+                {series.map((s) => (
+                    <span key={s.key} className={`legend-item ${s.className}`}>{s.label}</span>
+                ))}
+                {showDeaths && <span className="legend-item fish-deaths">Fish deaths</span>}
+                {showDeaths && <span className="legend-item plant-deaths">Plant deaths</span>}
             </div>
         </div>
     );

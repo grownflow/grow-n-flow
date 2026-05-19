@@ -174,6 +174,14 @@ nitrite converted to nitrate  = nitrite  × k
 - Nitrification is suppressed when dissolved oxygen drops below 5.0 mg/L
 - Nitrification slightly acidifies the water (−0.01 pH per mg/L converted)
 
+**Ammonia production per fish per day** combines feeding waste and passive metabolic excretion:
+
+```
+ammoniaDelta = portion × (0.25 + 0.15 × ammoniaRate) + ammoniaRate × 1.0
+```
+
+`ammoniaRate` is the species-specific coefficient (tilapia 0.10, barramundi 0.08, catfish 0.11). With 5 tilapia fully fed, this produces roughly **0.77 ppm/day** total — enough to keep the nitrogen cycle visible on the trend chart while staying below warning thresholds at default biofilter efficiency. Nitrate starts at **5 mg/L** and builds at ~0.5–0.6 ppm/day under normal stocking (net of plant uptake).
+
 **Safe target ranges:**
 
 | Parameter        | Safe Range        | Danger Threshold |
@@ -191,11 +199,11 @@ nitrite converted to nitrate  = nitrite  × k
 
 Harvest times are compressed from real-world months to game-days for pacing.
 
-| Species    | Fingerling Cost | Harvest Weight | Game Harvest Time | Market Value | Ammonia Rate |
-|------------|-----------------|----------------|-------------------|--------------|--------------|
-| Tilapia    | $2.50           | 600 g          | 30 days           | $4.00/unit   | 0.10         |
-| Barramundi | $6.00           | 400 g          | 45 days           | $8.50/unit   | 0.08         |
-| Catfish    | $3.50           | 700 g          | 40 days           | $6.00/unit   | 0.11         |
+| Species    | Fingerling Cost | Harvest Weight | Game Harvest Time | Market Value | Ammonia Rate (ppm/day passive) |
+|------------|-----------------|----------------|-------------------|--------------|--------------------------------|
+| Tilapia    | $2.50           | 600 g          | 30 days           | $4.00/unit   | 0.10                           |
+| Barramundi | $6.00           | 400 g          | 45 days           | $8.50/unit   | 0.08                           |
+| Catfish    | $3.50           | 700 g          | 40 days           | $6.00/unit   | 0.11                           |
 
 Fish health (0–10 scale) is reduced by poor water quality (high ammonia/nitrite, low oxygen, wrong temperature or pH). Fish die at health = 0. Starvation applies escalating penalties from day 2 without food and kills unconditionally at day 5.
 
@@ -281,6 +289,17 @@ Items are purchased from the Market and stored in inventory. Consumables are app
 | Buy Fish / Plant Seeds  | Adds fingerlings or seeds from the Market                                   |
 | Harvest Plants / Fish   | Sells mature plants or market-weight fish for cash                          |
 | Sell Fish               | Sells individual fish at current market value                               |
+
+---
+
+### Water Chemistry Trend Charts
+
+The Water Chemistry panel shows two independent trend charts over game history:
+
+- **Ammonia & Nitrite (ppm)** — scaled to 0–max(ammonia, nitrite); includes death event markers (fish and plants). Use this to spot nitrogen spikes and evaluate whether your biofilter is keeping pace.
+- **Nitrate (ppm)** — scaled independently so gradual nitrate buildup is visible. A steadily rising nitrate line is a sign of a healthy, productive nitrogen cycle; a flat or falling line indicates insufficient fish load or heavy plant uptake stripping nutrients faster than fish produce them.
+
+Both charts fetch from the `water_readings` MongoDB collection, which records one entry per game day.
 
 ---
 

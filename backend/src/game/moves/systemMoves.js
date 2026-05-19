@@ -420,8 +420,10 @@ function applyDailyFishFeedingFromTank({ G, tank, water }) {
     const fishAmmoniaRate = clampNumber(Number(fish.ammoniaProductionRate ?? species.ammoniaProductionRate ?? 0.1), 0, 10);
     // Feeding waste (scaled to produce meaningful ammonia relative to plant uptake)
     const ammoniaDelta = portion * (0.25 + 0.15 * fishAmmoniaRate)
-      // Passive metabolic excretion — fish produce ammonia even when unfed
-      + fishAmmoniaRate * 0.15;
+      // Passive metabolic excretion — fish produce ammonia even when unfed.
+      // Multiplier raised from 0.15 → 1.0 so 5 tilapia at 80% biofilter keep ammonia
+      // in the 1–1.5 ppm range and nitrate visibly builds at ~0.5–0.6 ppm/day.
+      + fishAmmoniaRate * 1.0;
     const oxygenDelta = portion * 0.02;
     totalAmmoniaDelta += ammoniaDelta;
     totalOxygenDelta += oxygenDelta;

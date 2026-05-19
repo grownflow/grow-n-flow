@@ -50,7 +50,12 @@ Five species are supported across two categories:
 - Each species renders its own 3D GLB asset in the grow bed.
 
 ### Water Chemistry Panel
-The Water Chemistry panel displays all 9 simulated parameters with a live time-series chart. Fish death and plant death events are overlaid as colored markers with day and count tooltips. Quick-fix callout banners appear automatically when oxygen or nitrogen levels cross warning or danger thresholds.
+The Water Chemistry panel displays all 9 simulated parameters with two independent live trend charts:
+
+- **Ammonia & Nitrite (ppm)** — auto-scaled to the ammonia/nitrite range; fish and plant death events are overlaid as colored markers with day and count tooltips.
+- **Nitrate (ppm)** — scaled independently so the gradual rise of nitrate is visible as the nitrogen cycle matures. A rising trend is healthy; flat or falling nitrate means fish load is too low or plants are consuming nutrients faster than fish produce them.
+
+Quick-fix callout banners appear automatically when oxygen or nitrogen levels cross warning or danger thresholds.
 
 ---
 
@@ -74,7 +79,7 @@ Fish waste and uneaten food produce ammonia in the tank each day. The biofilter 
 k = 0.80 × biofilterEfficiency × circulationEfficiency × oxygenFactor
 ```
 
-Default biofilter efficiency is **0.80** (k ≈ 0.64/day); maximum is **1.0** (k = 0.80/day). Plants then draw down nitrate based on species nutrient requirements. If the biofilter is damaged or fish load exceeds processing capacity, ammonia and nitrite accumulate to toxic levels.
+Default biofilter efficiency is **0.80** (k ≈ 0.64/day); maximum is **1.0** (k = 0.80/day). Each fish contributes passive metabolic excretion (species `ammoniaRate` ppm/day) plus feeding waste proportional to food consumed. With 5 tilapia at default efficiency, total daily ammonia production is roughly **0.77 ppm**, yielding a steady-state ammonia of ~1.2 ppm — within the safe range. Nitrate starts at **5 mg/L** and builds visibly (~0.5–0.6 ppm/day net of plant uptake) as the tank matures. Plants then draw down nitrate based on species nutrient requirements. If the biofilter is damaged or fish load exceeds processing capacity, ammonia and nitrite accumulate to toxic levels.
 
 ### Tracked Water Parameters
 
@@ -82,7 +87,7 @@ Default biofilter efficiency is **0.80** (k ≈ 0.64/day); maximum is **1.0** (k
 |-----------|---------|------|
 | Ammonia (NH₃/NH₄⁺) | 0.0 mg/L | Fish waste byproduct; toxic above species tolerance |
 | Nitrite (NO₂⁻) | 0.0 mg/L | Nitrification intermediate; toxic above 1.0 mg/L |
-| Nitrate (NO₃⁻) | 30.0 mg/L | Plant nutrient; safe at normal levels |
+| Nitrate (NO₃⁻) | 5.0 mg/L | Plant nutrient; builds as fish stock grows; safe at 5–80 mg/L |
 | pH | 7.0 | Affects ammonia toxicity; optimal 6.8–7.2 |
 | Dissolved Oxygen | 8.0 mg/L | Required by fish and aerobic biofilter bacteria |
 | Temperature | 25 °C | Affects species stress and ammonia toxicity |
