@@ -48,7 +48,9 @@ const FishTankSection = ({gameState, loading, handleAddFish, handleSellFish, han
                     <strong>Tank sediment (waste):</strong> {Number(tank?.sediment ?? 0).toFixed(2)}
                 </p>
                 <p style={{ margin: 0 }}>
-                    <strong>Water:</strong> Temp {Number(water?.temperature ?? 0).toFixed(2)}°C, NH3 {Number(water?.ammonia ?? 0).toFixed(3)}, O2 {Number(water?.dissolvedOxygen ?? 0).toFixed(2)}
+                    <strong>Water:</strong> Temp {Number(water?.temperature ?? 0).toFixed(2)}°C,{' '}
+                    <span title="Ammonia — toxic fish waste. Above 0.5 ppm stresses fish.">NH₃</span> {Number(water?.ammonia ?? 0).toFixed(3)},{' '}
+                    <span title="Dissolved oxygen. Fish need above 5 mg/L to thrive. Drops with high temperature or low aeration.">O₂</span> {Number(water?.dissolvedOxygen ?? 0).toFixed(2)}
                 </p>
                 <p style={{ margin: 0 }}>
                     <strong>Recommended food/day:</strong> {Number(totalDailyNeed || 0).toFixed(2)} units (full) / {Number(minDailyToAvoidUnderfeed || 0).toFixed(2)} units (min to avoid underfeeding)

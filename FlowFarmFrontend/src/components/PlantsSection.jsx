@@ -1,6 +1,16 @@
+import { useState } from 'react';
 import { PLANT_SLOT_COUNT } from '../config/plantSlots';
 
+const PLANT_SPECIES = [
+  { type: 'ParrisIslandRomaine', label: 'Romaine Lettuce 🥬', seedCost: 0.30 },
+  { type: 'Kale',                label: 'Kale 🥦',            seedCost: 0.25 },
+  { type: 'BasilSweet',          label: 'Sweet Basil 🌿',     seedCost: 0.35 },
+  { type: 'CherryTomato',        label: 'Cherry Tomato 🍅',   seedCost: 0.80 },
+];
+
 const PlantsSection = ({gameState, loading, handleHarvestPlant, handleHarvestAllMaturePlants, handlePlantSeed, handleBuyAllSeeds}) => {
+    const [selectedType, setSelectedType] = useState('ParrisIslandRomaine');
+
     if (!gameState) {
         return;
     }
@@ -8,8 +18,8 @@ const PlantsSection = ({gameState, loading, handleHarvestPlant, handleHarvestAll
     const { G, ctx } = gameState;
     const maxPlantSlots = Math.max(G.maxPlantSlots || 0, PLANT_SLOT_COUNT);
     const openSlots = Math.max(0, maxPlantSlots - (G.plants?.length || 0));
-    const seedCost = 0.3;
-    const affordableCount = Math.floor((G.money || 0) / seedCost);
+    const selectedSpecies = PLANT_SPECIES.find(s => s.type === selectedType) || PLANT_SPECIES[0];
+    const affordableCount = Math.floor((G.money || 0) / selectedSpecies.seedCost);
     const buyAllCount = Math.min(openSlots, affordableCount);
 
     const matureCount = (G.plants || []).filter((p) => p && p.growthStage === 'mature').length;
@@ -41,18 +51,28 @@ const PlantsSection = ({gameState, loading, handleHarvestPlant, handleHarvestAll
             )}
 
             <div className="action-buttons">
-                <button 
-                onClick={() => handlePlantSeed('ParrisIslandRomaine')} 
+                <select
+                    value={selectedType}
+                    onChange={e => setSelectedType(e.target.value)}
+                    disabled={loading}
+                    style={{ marginBottom: 6 }}
+                >
+                    {PLANT_SPECIES.map(s => (
+                        <option key={s.type} value={s.type}>{s.label} (${s.seedCost.toFixed(2)})</option>
+                    ))}
+                </select>
+                <button
+                onClick={() => handlePlantSeed(selectedType)}
                 disabled={loading || (G.plants && G.plants.length >= maxPlantSlots)}
                 className="btn-primary"
                 >
-                {G.plants && G.plants.length >= maxPlantSlots 
-                    ? `Bed Full (Max ${maxPlantSlots})` 
-                    : "Plant Romaine Lettuce ($0.30) 🥬"
+                {G.plants && G.plants.length >= maxPlantSlots
+                    ? `Bed Full (Max ${maxPlantSlots})`
+                    : `Plant ${selectedSpecies.label} ($${selectedSpecies.seedCost.toFixed(2)})`
                 }
                 </button>
                 <button
-                onClick={() => handleBuyAllSeeds('ParrisIslandRomaine')}
+                onClick={() => handleBuyAllSeeds(selectedType, selectedSpecies.seedCost)}
                 disabled={loading || buyAllCount <= 0}
                 className="btn-secondary"
                 >

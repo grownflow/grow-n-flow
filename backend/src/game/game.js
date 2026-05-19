@@ -6,26 +6,30 @@ const moves = require('./moves');
 
 // Helper to create initial serializable aquaponics system state
 // boardgame.io requires all state to be JSON-serializable (no class instances)
+// Reflects the equipment that ships with the system: 1 water pump, 1 air pump, 1 grow light.
 const createInitialSystemState = () => ({
   id: `system_${Date.now()}`,
   tank: {
     id: `tank_${Date.now()}`,
     capacity: 1000,
     currentVolume: 1000,
+    currentWaterLevel: 1000,
     foodInTank: 0,
     sediment: 0,
+    biofilterEfficiency: 0.8,
+    circulationEfficiency: 1.10, // 2 water pumps (+0.05 each)
     water: {
       temperature: 25,
       pH: 7.0,
       ammonia: 0,
       nitrite: 0,
-      nitrate: 0,
-      dissolvedOxygen: 8,
-      phosphorus: 0,
-      potassium: 0,
-      calcium: 40,
-      magnesium: 10,
-      iron: 0.1
+      nitrate: 10,
+      dissolvedOxygen: 8.5, // 1 air pump (+0.5)
+      phosphorus: 5,
+      potassium: 40,
+      calcium: 60,
+      magnesium: 20,
+      iron: 2.0
     }
   },
   growBeds: {},
@@ -56,10 +60,19 @@ const AquaponicsGame = {
 
     // Game mechanics and player resources
     gameTime: 0,    // DAYS since game start
-    money: 5000,    // Player currency for purchases and upgrades
+    money: 1000,    // Player currency for purchases and upgrades
 
-    // Purchased equipment / supplies (counts by key from data/equipment.js)
-    equipment: {},
+    // Equipment that comes with the system at startup
+    equipment: {
+      waterPump: 2,
+      airPump: 1,
+      growLight: 3,
+    },
+
+    // Plant growth multiplier from 3 grow lights (+0.1 each)
+    systemModifiers: {
+      plantGrowthMultiplier: 1.3,
+    },
 
     // Player-held inventory (harvested goods, etc.)
     inventory: {

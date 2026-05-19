@@ -101,10 +101,11 @@ const WaterSection = ({gameState, loading}) => {
                 )}
 
                 {/* Nitrogen Cycle */}
-                <h3 className="water-group-title">🔄 Nitrogen Cycle</h3>
+                <h3 className="water-group-title" title="Fish waste (ammonia) is converted by beneficial bacteria into nitrite, then nitrate — which plants absorb as fertilizer.">🔄 Nitrogen Cycle</h3>
                 <div className="water-stats">
                     <WaterStat
                         label="Ammonia (NH₃)"
+                        tooltip="Toxic fish waste product. Produced daily by fish metabolism. Must stay below 0.5 ppm or fish health degrades."
                         value={water.ammonia}
                         unit="ppm"
                         decimals={2}
@@ -113,6 +114,7 @@ const WaterSection = ({gameState, loading}) => {
                     />
                     <WaterStat
                         label="Nitrite (NO₂)"
+                        tooltip="Intermediate nitrogen compound. Produced when bacteria convert ammonia. Also toxic to fish — keep below 0.25 ppm."
                         value={water.nitrite}
                         unit="ppm"
                         decimals={2}
@@ -121,6 +123,7 @@ const WaterSection = ({gameState, loading}) => {
                     />
                     <WaterStat
                         label="Nitrate (NO₃)"
+                        tooltip="End product of nitrification. Harmless at low concentrations and serves as the primary nitrogen fertilizer for plants."
                         value={water.nitrate}
                         unit="ppm"
                         decimals={2}
@@ -150,6 +153,7 @@ const WaterSection = ({gameState, loading}) => {
                     />
                     <WaterStat
                         label="Dissolved O₂"
+                        tooltip="Oxygen dissolved in the water. Fish and bacteria both need it — drops with high temperature, low aeration, or high biomass."
                         value={water.dissolvedOxygen}
                         unit="mg/L"
                         decimals={1}
@@ -160,13 +164,13 @@ const WaterSection = ({gameState, loading}) => {
                 </div>
 
                 {/* Plant Nutrients */}
-                <h3 className="water-group-title">🌱 Plant Nutrients</h3>
+                <h3 className="water-group-title" title="Nutrients plants pull from the water. Deficiencies slow growth and reduce health over time.">🌱 Plant Nutrients</h3>
                 <div className="water-stats">
-                    <WaterStat label="Phosphorus" value={water.phosphorus} unit="mg/L" decimals={1} thresholds={{ warning: 5, danger: 2 }} idealLabel="> 5" invertWarning />
-                    <WaterStat label="Potassium" value={water.potassium} unit="mg/L" decimals={1} thresholds={{ warning: 50, danger: 30 }} idealLabel="> 50" invertWarning />
-                    <WaterStat label="Calcium" value={water.calcium} unit="mg/L" decimals={1} idealLabel="≥ 50" />
-                    <WaterStat label="Magnesium" value={water.magnesium} unit="mg/L" decimals={1} idealLabel="≥ 15" />
-                    <WaterStat label="Iron" value={water.iron} unit="mg/L" decimals={2} thresholds={{ warning: 1.5, danger: 1.0 }} idealLabel="> 1.5" invertWarning />
+                    <WaterStat label="Phosphorus" tooltip="Drives root development and energy transfer (ATP). Deficiency shows as purple-tinted leaves." value={water.phosphorus} unit="mg/L" decimals={1} thresholds={{ warning: 5, danger: 2 }} idealLabel="> 5" invertWarning />
+                    <WaterStat label="Potassium" tooltip="Regulates water movement in plant cells and improves disease resistance. Deficiency causes scorched leaf edges." value={water.potassium} unit="mg/L" decimals={1} thresholds={{ warning: 50, danger: 30 }} idealLabel="> 50" invertWarning />
+                    <WaterStat label="Calcium" tooltip="Strengthens cell walls. Deficiency causes tip burn and deformed leaves in leafy greens." value={water.calcium} unit="mg/L" decimals={1} idealLabel="≥ 50" />
+                    <WaterStat label="Magnesium" tooltip="Central atom of chlorophyll. Deficiency causes yellowing between leaf veins (interveinal chlorosis) on older leaves." value={water.magnesium} unit="mg/L" decimals={1} idealLabel="≥ 15" />
+                    <WaterStat label="Iron" tooltip="Required for chlorophyll synthesis. Deficiency causes yellowing of new leaves. Supplement with chelated iron (DTPA)." value={water.iron} unit="mg/L" decimals={2} thresholds={{ warning: 1.5, danger: 1.0 }} idealLabel="> 1.5" invertWarning />
                 </div>
 
                 {/* Light Status */}
@@ -256,7 +260,7 @@ const WaterTrendChart = ({ title, data }) => {
     );
 };
 
-const WaterStat = ({ label, value, unit, decimals = 2, thresholds, rangeWarning, idealLabel, invertWarning }) => {
+const WaterStat = ({ label, value, unit, decimals = 2, thresholds, rangeWarning, idealLabel, invertWarning, tooltip }) => {
     let statusClass = '';
 
     if (thresholds && !invertWarning) {
@@ -279,7 +283,7 @@ const WaterStat = ({ label, value, unit, decimals = 2, thresholds, rangeWarning,
 
     return (
         <div className="stat-item">
-            <label>{label}</label>
+            <label title={tooltip}>{label}</label>
             <span className={statusClass}>
                 {displayValue} {unit}
             </span>

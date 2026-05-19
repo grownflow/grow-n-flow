@@ -3,6 +3,7 @@ const { EventManager } = require('../utils/EventManager');
 const { equipment } = require('../data/equipment');
 const { EVENTS } = require('../data/events');
 const { fishSpecies } = require('../data/fishSpecies');
+const { plantSpecies } = require('../data/plantSpecies');
 const { EnvironmentalStress } = require('../utils/environmentalStress');
 
 function clampNumber(value, min, max) {
@@ -417,7 +418,8 @@ const systemMoves = {
 
     const uptake = applyPlantNitrateUptake({ G, water, lightsAvailable });
 
-    // Age plants and advance growth stages
+    // Age plants, apply nutrient-based health, and detect deaths
+    let plantDeaths = [];
     if (G.plants && G.plants.length > 0) {
       const plantGrowthMult = clampNumber(G.systemModifiers?.plantGrowthMultiplier ?? 1.0, 0.5, 3.0);
       G.plants.forEach(plant => {
@@ -430,7 +432,38 @@ const systemMoves = {
         } else {
           plant.growthStage = 'seedling';
         }
+
+        if (!Number.isFinite(Number(plant.health))) plant.health = 10;
+
+        const species = plantSpecies[plant.type];
+        const req = species?.nutrientRequirements || {};
+        const pHRange = species?.pHRange || { min: 6.0, max: 7.5 };
+
+        let deficits = 0;
+        if (req.nitrogen   && water.nitrate    < req.nitrogen)   deficits += 1;
+        if (req.phosphorus && water.phosphorus < req.phosphorus) deficits += 1;
+        if (req.potassium  && water.potassium  < req.potassium)  deficits += 1;
+        if (req.calcium    && water.calcium    < req.calcium)    deficits += 0.5;
+        if (req.magnesium  && water.magnesium  < req.magnesium)  deficits += 0.5;
+        if (req.iron       && water.iron       < req.iron)       deficits += 0.5;
+        if (water.pH < pHRange.min || water.pH > (pHRange.max || 7.5)) deficits += 1;
+
+        if (deficits > 0) {
+          plant.health = clampNumber(Number(plant.health) - deficits * 0.3, 0, 10);
+        } else {
+          plant.health = clampNumber(Number(plant.health) + 0.1, 0, 10);
+        }
+
+        if (Number(plant.health) <= 0) plant._dead = true;
       });
+
+      plantDeaths = G.plants
+        .filter(p => p._dead)
+        .map(p => ({ id: String(p.id || ''), type: String(p.type || ''), age: Number(p.age || 0) }));
+
+      if (plantDeaths.length > 0) {
+        G.plants = G.plants.filter(p => !p._dead);
+      }
     }
 
     // Calculate daily utility costs
@@ -516,6 +549,7 @@ const systemMoves = {
         avgStress: dailyFeeding.avgStress,
       },
       fishDeaths: Array.isArray(dailyFeeding.fishDeaths) ? dailyFeeding.fishDeaths : [],
+      plantDeaths: plantDeaths,
       fishFeedingDebug: {
         waterSnapshot: dailyFeeding.waterSnapshot,
         fish: Array.isArray(dailyFeeding.fishDebug) ? dailyFeeding.fishDebug : [],
@@ -545,6 +579,106 @@ const systemMoves = {
     }
     
     G.lastAction = lastAction;
+  },
+
+  // Perform a partial water change (e.g. 0.25 for 25%).
+  // This dilutes tank concentrations toward a baseline "source water" profile.
+  waterChange: ({ G, ctx }, fraction) => {
+    const { tank, water } = ensureTankAndWaterState(G);
+
+    const f = clampNumber(fraction, 0, 1);
+    if (f <= 0) {
+      G.lastAction = { type: 'waterChange', success: false, reason: 'invalid_fraction', fraction };
+      return;
+    }
+
+    // Baseline for incoming replacement water. Keep this simple + deterministic.
+    // If we later want configurable source water, store it at G.sourceWater.
+    const source = {
+      ammonia: 0,
+      nitrite: 0,
+      nitrate: 5,
+      pH: 7.2,
+      temperature: clampNumber(water.temperature ?? 25, -10, 60),
+      dissolvedOxygen: 8.0,
+      phosphorus: 5,
+      potassium: 40,
+      calcium: 60,
+      magnesium: 20,
+      iron: 0.5,
+    };
+
+    const before = {
+      ammonia: Number(water.ammonia ?? 0),
+      nitrite: Number(water.nitrite ?? 0),
+      nitrate: Number(water.nitrate ?? 0),
+      pH: Number(water.pH ?? 7.0),
+      temperature: Number(water.temperature ?? 25),
+      dissolvedOxygen: Number(water.dissolvedOxygen ?? 8.0),
+      phosphorus: Number(water.phosphorus ?? 0),
+      potassium: Number(water.potassium ?? 0),
+      calcium: Number(water.calcium ?? 0),
+      magnesium: Number(water.magnesium ?? 0),
+      iron: Number(water.iron ?? 0),
+      sediment: Number(tank.sediment ?? 0),
+    };
+
+    // Mix model: new = old*(1-f) + source*f
+    water.ammonia = clampNumber(before.ammonia * (1 - f) + source.ammonia * f, 0, 1000);
+    water.nitrite = clampNumber(before.nitrite * (1 - f) + source.nitrite * f, 0, 1000);
+    water.nitrate = clampNumber(before.nitrate * (1 - f) + source.nitrate * f, 0, 10000);
+    water.pH = clampNumber(before.pH * (1 - f) + source.pH * f, 0, 14);
+    water.temperature = clampNumber(before.temperature * (1 - f) + source.temperature * f, -10, 60);
+    water.dissolvedOxygen = clampNumber(before.dissolvedOxygen * (1 - f) + source.dissolvedOxygen * f, 0, 20);
+    water.phosphorus = clampNumber(before.phosphorus * (1 - f) + source.phosphorus * f, 0, 10000);
+    water.potassium = clampNumber(before.potassium * (1 - f) + source.potassium * f, 0, 10000);
+    water.calcium = clampNumber(before.calcium * (1 - f) + source.calcium * f, 0, 10000);
+    water.magnesium = clampNumber(before.magnesium * (1 - f) + source.magnesium * f, 0, 10000);
+    water.iron = clampNumber(before.iron * (1 - f) + source.iron * f, 0, 10000);
+
+    // Sediment proxy: water change removes some suspended waste.
+    tank.sediment = clampNumber(before.sediment * (1 - f), 0, 1e12);
+
+    const after = {
+      ammonia: Number(water.ammonia ?? 0),
+      nitrite: Number(water.nitrite ?? 0),
+      nitrate: Number(water.nitrate ?? 0),
+      pH: Number(water.pH ?? 0),
+      temperature: Number(water.temperature ?? 0),
+      dissolvedOxygen: Number(water.dissolvedOxygen ?? 0),
+      phosphorus: Number(water.phosphorus ?? 0),
+      potassium: Number(water.potassium ?? 0),
+      calcium: Number(water.calcium ?? 0),
+      magnesium: Number(water.magnesium ?? 0),
+      iron: Number(water.iron ?? 0),
+      sediment: Number(tank.sediment ?? 0),
+    };
+
+    // Approximate liters replaced using normalized volume fields.
+    const liters = clampNumber(Number(tank.currentVolume ?? tank.currentWaterLevel ?? tank.capacity ?? 0) * f, 0, 1e12);
+
+    G.lastAction = {
+      type: 'waterChange',
+      success: true,
+      fraction: Number(f.toFixed(3)),
+      litersReplaced: Number(liters.toFixed(1)),
+      before: {
+        ammonia: Number(before.ammonia.toFixed(3)),
+        nitrite: Number(before.nitrite.toFixed(3)),
+        nitrate: Number(before.nitrate.toFixed(3)),
+        pH: Number(before.pH.toFixed(3)),
+        dissolvedOxygen: Number(before.dissolvedOxygen.toFixed(3)),
+        sediment: Number(before.sediment.toFixed(3)),
+      },
+      after: {
+        ammonia: Number(after.ammonia.toFixed(3)),
+        nitrite: Number(after.nitrite.toFixed(3)),
+        nitrate: Number(after.nitrate.toFixed(3)),
+        pH: Number(after.pH.toFixed(3)),
+        dissolvedOxygen: Number(after.dissolvedOxygen.toFixed(3)),
+        sediment: Number(after.sediment.toFixed(3)),
+      },
+    };
   },
 
   // Repair system damage from events (leaks, pump failures, etc.)
@@ -588,8 +722,9 @@ const systemMoves = {
     }
     
     if (event.effects.biofilterEfficiencyReduction && G.aquaponicsSystem && G.aquaponicsSystem.tank) {
-      // Restore biofilter efficiency
-      G.aquaponicsSystem.tank.biofilterEfficiency = 0.8;
+      // Restore to the efficiency the tank had before the clog (may be above 0.8 if player bought biofilters)
+      const base = Number(event._baseBiofilterEfficiency ?? 0.8);
+      G.aquaponicsSystem.tank.biofilterEfficiency = clampNumber(base, 0, 1);
     }
     
     // Clear the event

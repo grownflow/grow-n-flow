@@ -2,6 +2,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import gameAPI from '../services/gameAPI';
 import { PLANT_SLOT_COUNT } from '../config/plantSlots';
+import GillPopup from './GillPopup';
+import { QUIZZES, meetsQuizPreconditions } from '../data/quizData';
 import Renderer from './Renderer';
 import StatsSection from './StatsSection';
 import BillsPanel from './BillsPanel';
@@ -20,6 +22,12 @@ function Game({ onTitleClick }) {
   const [connected, setConnected] = useState(false);
 
   const [lastFishDeathAlertTurn, setLastFishDeathAlertTurn] = useState(null);
+  const [lastPlantDeathAlertTurn, setLastPlantDeathAlertTurn] = useState(null);
+  const [lastEventAlertTurn, setLastEventAlertTurn] = useState(null);
+
+  const [activeQuiz, setActiveQuiz] = useState(null);
+  const [completedQuizIds, setCompletedQuizIds] = useState([]);
+  const lastCheckedQuizTurn = useRef(null);
 
   const [activeViewpoint, setActiveViewpoint] = useState('Viewpoint1');
   const [lastPickedLabel, setLastPickedLabel] = useState('—');
@@ -173,12 +181,11 @@ function Game({ onTitleClick }) {
     gameAPI.plantSeed(plantType, bedLocation, PLANT_SLOT_COUNT);
   };
 
-  const handleBuyAllSeeds = async (plantType) => {
+  const handleBuyAllSeeds = async (plantType, seedCost = 0.3) => {
     if (!gameState?.G) return;
 
     const maxPlantSlots = Math.max(gameState.G.maxPlantSlots || 0, PLANT_SLOT_COUNT);
     const openSlots = Math.max(0, maxPlantSlots - (gameState.G.plants?.length || 0));
-    const seedCost = 0.3;
     const affordableCount = Math.floor((gameState.G.money || 0) / seedCost);
     const buyCount = Math.min(openSlots, affordableCount);
 
@@ -253,6 +260,11 @@ function Game({ onTitleClick }) {
 
   const handleRepairSystem = () => {
     gameAPI.repairSystem();
+  };
+
+  const handleQuizClose = () => {
+    if (activeQuiz) setCompletedQuizIds((prev) => [...prev, activeQuiz.id]);
+    setActiveQuiz(null);
   };
 
   const tabs = [
@@ -330,6 +342,62 @@ function Game({ onTitleClick }) {
 
     setLastFishDeathAlertTurn(turn);
   }, [gameState?.ctx?.turn, gameState?.G?.lastAction, lastFishDeathAlertTurn]);
+
+  useEffect(() => {
+    const turn = gameState?.ctx?.turn;
+    const action = gameState?.G?.lastAction;
+    if (!turn || !action || action.type !== 'progressTurn') return;
+
+    const deaths = action?.plantDeaths;
+    if (!Array.isArray(deaths) || deaths.length === 0) return;
+    if (turn === lastPlantDeathAlertTurn) return;
+
+    const lines = deaths
+      .map((d) => {
+        const type = d?.type ? String(d.type).replace(/([A-Z])/g, ' $1').trim() : 'plant';
+        return type;
+      })
+      .filter(Boolean);
+
+    try {
+      window.alert(`Plant${lines.length !== 1 ? 's' : ''} died: ${lines.join(', ')}`);
+    } catch {
+      // ignore
+    }
+
+    setLastPlantDeathAlertTurn(turn);
+  }, [gameState?.ctx?.turn, gameState?.G?.lastAction, lastPlantDeathAlertTurn]);
+
+  useEffect(() => {
+    const turn = gameState?.ctx?.turn;
+    const action = gameState?.G?.lastAction;
+    if (!turn || !action || action.type !== 'progressTurn') return;
+    if (!action.eventTriggered || !action.eventName) return;
+    if (turn === lastEventAlertTurn) return;
+
+    try {
+      window.alert(`New event: ${action.eventName}\n${action.eventDescription || ''}`);
+    } catch {
+      // ignore
+    }
+
+    setLastEventAlertTurn(turn);
+  }, [gameState?.ctx?.turn, gameState?.G?.lastAction, lastEventAlertTurn]);
+
+  useEffect(() => {
+    const G = gameState?.G;
+    const turn = gameState?.ctx?.turn;
+    if (!G || turn == null) return;
+    if (activeQuiz) return; // don't interrupt a quiz already showing
+    if (turn === lastCheckedQuizTurn.current) return; // only check once per turn
+
+    lastCheckedQuizTurn.current = turn;
+
+    const next = QUIZZES.find(
+      (q) => !completedQuizIds.includes(q.id) && meetsQuizPreconditions(q.preconditions, G)
+    );
+    if (next) setActiveQuiz(next);
+  }, [gameState?.ctx?.turn, completedQuizIds, activeQuiz]);
 
   const handlePicked = ({ label }) => {
     if (!label) return;
@@ -601,8 +669,8 @@ function Game({ onTitleClick }) {
                   <div className="selection-row"><strong>Age:</strong> {selectedFish.age ?? '—'}d</div>
                   <div className="selection-row"><strong>Weight:</strong> {selectedFish.weight != null ? `${Math.round(Number(selectedFish.weight))}g` : '—'}</div>
                   <div className="selection-row"><strong>Market Value:</strong> {selectedFish.marketValue != null ? `$${Number(selectedFish.marketValue).toFixed(2)}/lb` : '—'}</div>
-                  <div className="selection-row"><strong>Food Rate:</strong> {selectedFish.foodConsumptionRate ?? '—'}</div>
-                  <div className="selection-row"><strong>Ammonia Rate:</strong> {selectedFish.ammoniaProductionRate ?? '—'}</div>
+                  <div className="selection-row"><strong title="Units of food this fish consumes per day. Keep tank food above this level to avoid health loss.">Food Rate:</strong> {selectedFish.foodConsumptionRate ?? '—'}</div>
+                  <div className="selection-row"><strong title="Ammonia produced per day. More fish = more ammonia load on the biofilter.">Ammonia Rate:</strong> {selectedFish.ammoniaProductionRate ?? '—'}</div>
                 </div>
               ) : (
                 <div className="selection-overlay-body">
@@ -703,6 +771,11 @@ function Game({ onTitleClick }) {
           )}
         </div>
       </aside>
+      <GillPopup
+        active={activeQuiz !== null}
+        quiz={activeQuiz}
+        onClose={handleQuizClose}
+      />
     </div>
   );
 }

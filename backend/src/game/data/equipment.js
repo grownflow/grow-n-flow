@@ -2,8 +2,32 @@
 // All equipment available for purchase in the aquaponics game
 
 const equipment = {
+  // Core system upgrades
+  biofilter: {
+    cost: 120,
+    type: 'equipment',
+    description: 'Biofilter media upgrade. Improves conversion of ammonia and nitrite.',
+    dailyElectricityCost: 0
+  },
+  waterPump: {
+    cost: 90,
+    type: 'equipment',
+    description: 'Water pump. Improves circulation and biofilter performance.',
+    dailyElectricityCost: 6
+  },
+  airPump: {
+    cost: 75,
+    type: 'equipment',
+    description: 'Air pump / aerator. Increases dissolved oxygen.',
+    dailyElectricityCost: 4
+  },
+  growLight: {
+    cost: 60,
+    type: 'equipment',
+    description: 'Grow light. Improves plant growth.',
+    dailyElectricityCost: 5
+  },
 
-  
   // Fish equipment
   fishFood: { 
     cost: 20, 

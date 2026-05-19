@@ -199,7 +199,7 @@ const economyMoves = {
 
     let totalValue = 0;
     const fishSold = [];
-    
+
     // Remove from back to front to not mess up indices
     indicesToSell.sort((a, b) => b - a).forEach(index => {
       const fish = G.fish[index];
@@ -208,12 +208,15 @@ const economyMoves = {
       G.fish.splice(index, 1); // remove from array
     });
 
-    G.money = (G.money || 0) + totalValue;
+    const transportCost = Number(G.eventEffects?.transportCost || 0);
+    const netValue = Math.max(0, totalValue - transportCost);
+    G.money = (G.money || 0) + netValue;
     G.lastAction = {
       type: 'sellFish',
       success: true,
       fishSold,
-      totalValue
+      totalValue,
+      ...(transportCost > 0 && { transportCost, netValue }),
     };
   },
 
@@ -250,7 +253,9 @@ const economyMoves = {
 
     const unitPrice = Number(entry.unitPrice || 0);
     const totalValue = sellQty * unitPrice;
-    G.money = (Number(G.money) || 0) + totalValue;
+    const transportCost = Number(G.eventEffects?.transportCost || 0);
+    const netValue = Math.max(0, totalValue - transportCost);
+    G.money = (Number(G.money) || 0) + netValue;
 
     const remaining = available - sellQty;
     if (remaining <= 0) {
@@ -266,6 +271,7 @@ const economyMoves = {
       quantity: sellQty,
       unitPrice,
       totalValue,
+      ...(transportCost > 0 && { transportCost, netValue }),
     };
 
     return G;
