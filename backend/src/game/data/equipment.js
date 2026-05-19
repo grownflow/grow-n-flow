@@ -12,12 +12,15 @@ const equipment = {
     dailyElectricityCost: 0
   },
 
-  // Biofilter — permanent efficiency upgrade + storable consumable for ammonia/nitrite spikes
+  // Biofilter — permanent efficiency upgrade + immediate ammonia/nitrite reduction
+  // Each unit applied permanently boosts biofilterEfficiency by +5% (max 100%).
+  // At 100% efficiency the nitrification rate peaks; beyond that, fish load is the bottleneck.
   biofilter: {
     cost: 120,
     type: 'consumable',
-    description: 'Biofilter unit. Permanently improves nitrogen cycle efficiency (+5%) and reduces ammonia/nitrite when applied.',
+    description: 'Biofilter unit. Permanently improves nitrogen cycle efficiency (+5%, up to 100%) and gives an immediate ammonia/nitrite reduction when applied.',
     dailyElectricityCost: 0,
+    biofilterEfficiencyBoost: 0.05,
     waterEffects: {
       ammoniaDeltaMgL: -1.5,
       nitriteDeltaMgL: -0.8

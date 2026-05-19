@@ -136,13 +136,26 @@ function createSystemAlerts({ water, tank, G }) {
   }
 
   if (ammonia >= 2.0) {
-    alerts.push('Ammonia is spiking. Stop or drastically reduce feeding, remove dead fish if needed, and do a partial water change.');
+    alerts.push('Ammonia is spiking. Use Stop Feeding immediately, remove any dead fish, and perform a partial water change.');
+    if (G && Array.isArray(G.fish) && G.fish.length > 0) {
+      const bioEff = clampNumber(tank.biofilterEfficiency ?? 0.8, 0, 1);
+      if (bioEff >= 0.95) {
+        alerts.push(`Biofilter is at maximum efficiency but ammonia is still high — fish load is the bottleneck. Sell one or two fish to reduce waste production, or perform partial water changes every day until ammonia drops below 1.0.`);
+      } else if (bioEff >= 0.8) {
+        alerts.push(`Apply a biofilter unit to boost processing efficiency (currently ${Math.round(bioEff * 100)}%). If ammonia persists after efficiency reaches 100%, the fish load itself is too high — consider selling a fish.`);
+      } else {
+        alerts.push(`Biofilter efficiency is low (${Math.round(bioEff * 100)}%). Buy and apply biofilter units to improve the nitrogen cycle.`);
+      }
+    }
   }
 
   if (nitrite >= 1.0) {
-    alerts.push('Nitrite is rising to a stressful range. Reduce feeding, perform a partial water change, and check biofilter efficiency.');
-    if (tank.biofilterEfficiency < 0.6) {
-      alerts.push('Biofilter efficiency is low; buy or repair biofilter equipment.');
+    alerts.push('Nitrite is rising. Use Stop Feeding, perform a partial water change, and let the biofilter work — nitrite converts to safe nitrate once ammonia input drops.');
+    const bioEff = clampNumber(tank.biofilterEfficiency ?? 0.8, 0, 1);
+    if (bioEff < 0.8) {
+      alerts.push(`Biofilter efficiency is ${Math.round(bioEff * 100)}% — apply biofilter units to bring it above 80% so the nitrogen cycle can keep pace with your fish load.`);
+    } else if (bioEff >= 0.95 && G && Array.isArray(G.fish) && G.fish.length > 0) {
+      alerts.push(`Biofilter is nearly maxed (${Math.round(bioEff * 100)}%) — buying more won't help much. Reduce fish biomass by selling a fish, or do partial water changes daily until nitrite drops.`);
     }
   }
 
@@ -491,7 +504,7 @@ function applyNitrificationStep({ water, biofilterEfficiency, circulationStopped
   const circulationMult = circulationStopped ? 0.15 : 1.0;
   const circEff = clampNumber(circulationEfficiency ?? 1.0, 0.5, 2.0);
   const oxygenFactor = water.dissolvedOxygen < 5.0 ? clampNumber(water.dissolvedOxygen / 5.0, 0.1, 1.0) : 1.0;
-  const k = 0.65 * eff * circulationMult * circEff * oxygenFactor; // fraction converted per day
+  const k = 0.80 * eff * circulationMult * circEff * oxygenFactor; // fraction converted per day
 
   const ammoniaToNitrite = Math.min(water.ammonia, water.ammonia * k);
   water.ammonia = Math.max(0, water.ammonia - ammoniaToNitrite);
@@ -874,6 +887,19 @@ const systemMoves = {
     if (Number.isFinite(eff.dissolvedOxygenDeltaMgL)) {
       water.dissolvedOxygen = clampNumber((water.dissolvedOxygen ?? 0) + eff.dissolvedOxygenDeltaMgL, 0, 15);
       applied.push(`dissolved oxygen +${eff.dissolvedOxygenDeltaMgL} mg/L`);
+    }
+
+    // Permanent biofilter efficiency boost — applied once per unit consumed.
+    if (Number.isFinite(data.biofilterEfficiencyBoost) && data.biofilterEfficiencyBoost > 0) {
+      const boost = Number(data.biofilterEfficiencyBoost);
+      const current = clampNumber(tank.biofilterEfficiency ?? 0.8, 0, 1);
+      const next = clampNumber(current + boost, 0, 1);
+      if (next > current) {
+        tank.biofilterEfficiency = next;
+        applied.push(`biofilter efficiency ${current.toFixed(2)} → ${next.toFixed(2)}`);
+      } else {
+        applied.push('biofilter efficiency already at maximum (100%)');
+      }
     }
 
     if (!G.equipment) G.equipment = {};
