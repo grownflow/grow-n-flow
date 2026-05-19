@@ -6,6 +6,9 @@
 
 // change months stats to days
 
+// Harvest times are compressed for game pacing (real-world values are 6-10 months).
+// baseGrowthRate = (harvestWeight - 10g fingerling) / harvestTime, reflecting ideal
+// conditions; actual daily gain scales down with food ratio and environmental stress.
 const fishSpecies = {
   tilapia: {
     tempRange: { min: 4, max: 34, optimal: { min: 25, max: 30 } },
@@ -14,8 +17,8 @@ const fishSpecies = {
     oxygenMin: 4.0,
     proteinRequirement: { min: 28, max: 32 },
     harvestWeight: 600,
-    harvestTime: 210, // in days
-    baseGrowthRate: 600 / 210, // ~2.86 per day
+    harvestTime: 30, // compressed game days (real-world ~210 days)
+    baseGrowthRate: (600 - 10) / 30, // ~19.7 g/day under ideal conditions
     marketValue: 4.00,
     fingerlingCost: 2.50, // Cost per fingerling
     availability: 'year-round',
@@ -25,7 +28,7 @@ const fishSpecies = {
     renderAsset: '3d/Redheadx.x3d',
     renderScale: 0.3,
   },
-  
+
   barramundi: {
     tempRange: { min: 18, max: 34, optimal: { min: 26, max: 29 } },
     ammoniaToleranceMax: 1.0,
@@ -33,8 +36,8 @@ const fishSpecies = {
     oxygenMin: 4.0,
     proteinRequirement: { min: 38, max: 45 },
     harvestWeight: 400,
-    harvestTime: 285, // in days
-    baseGrowthRate: 400 / 285, // ~1.40 per day
+    harvestTime: 45, // compressed game days (real-world ~285 days)
+    baseGrowthRate: (400 - 10) / 45, // ~8.7 g/day under ideal conditions
     marketValue: 8.50,
     fingerlingCost: 6.00, // Cost per fingerling
     availability: 'seasonal',
@@ -52,8 +55,8 @@ const fishSpecies = {
     oxygenMin: 4.0,
     proteinRequirement: { min: 30, max: 36 },
     harvestWeight: 700,
-    harvestTime: 240,
-    baseGrowthRate: 700 / 240,
+    harvestTime: 40, // compressed game days (real-world ~240 days)
+    baseGrowthRate: (700 - 10) / 40, // ~17.3 g/day under ideal conditions
     marketValue: 6.00,
     fingerlingCost: 3.50,
     availability: 'year-round',

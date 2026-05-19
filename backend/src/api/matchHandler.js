@@ -9,13 +9,25 @@ const { Light } = require('../game/models/Light');
 const { WaterChemistry } = require('../game/models/WaterChemistry');
 
 class MatchHandler {
-  static async recordWaterReading(matchID, G) {
+  // snapshot: optional pre-built object { gameTime, water, tank, fishDeaths, plantDeaths, event }
+  // When snapshot is provided G is ignored (used by progressMultipleTurns for per-day records).
+  static async recordWaterReading(matchID, G, snapshot = null) {
     try {
+      const readings = await getCollection('water_readings');
+
+      if (snapshot) {
+        await readings.insertOne({
+          matchID: String(matchID),
+          createdAt: new Date(),
+          ...snapshot,
+        });
+        return;
+      }
+
       const water = G?.aquaponicsSystem?.tank?.water;
       const tank = G?.aquaponicsSystem?.tank;
       if (!water || !tank) return;
 
-      const readings = await getCollection('water_readings');
       const gameTime = Number(G.gameTime || 0);
 
       await readings.insertOne({
@@ -69,7 +81,7 @@ class MatchHandler {
     const deserialized = {
       ...G,
       gameTime: G.gameTime || 0,
-      money: G.money || 500,
+      money: G.money || 1000,
       fish: (G.fish || []).map(f => 
         Object.assign(new Fish(f.type, f.count), f)
       ),
@@ -228,6 +240,16 @@ class MatchHandler {
 
       if (moveName === 'progressTurn') {
         await this.recordWaterReading(matchID, newG);
+      } else if (moveName === 'progressMultipleTurns') {
+        const snapshots = newG.lastAction?.waterSnapshots;
+        if (Array.isArray(snapshots) && snapshots.length > 0) {
+          for (const snap of snapshots) {
+            await this.recordWaterReading(matchID, null, snap);
+          }
+        } else {
+          // Fallback: single snapshot from final state
+          await this.recordWaterReading(matchID, newG);
+        }
       }
 
       const matches = await getCollection('matches');

@@ -19,13 +19,13 @@ const createInitialSystemState = () => ({
       pH: 7.0,
       ammonia: 0,
       nitrite: 0,
-      nitrate: 0,
+      nitrate: 5,      // small baseline so plants have some initial nutrients
       dissolvedOxygen: 8,
-      phosphorus: 0,
-      potassium: 0,
+      phosphorus: 2,   // baseline to avoid immediate plant stress
+      potassium: 10,   // baseline to avoid immediate plant stress
       calcium: 40,
       magnesium: 10,
-      iron: 0.1
+      iron: 2.0        // above the 1.0 mg/L threshold so plants don't take iron-deficiency damage from day 1
     }
   },
   growBeds: {},
@@ -56,7 +56,7 @@ const AquaponicsGame = {
 
     // Game mechanics and player resources
     gameTime: 0,    // DAYS since game start
-    money: 5000,    // Player currency for purchases and upgrades
+    money: 1000,    // Player currency for purchases and upgrades
 
     // Purchased equipment / supplies (counts by key from data/equipment.js)
     equipment: {},

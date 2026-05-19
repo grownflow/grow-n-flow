@@ -60,8 +60,10 @@ class GameAPI {
         // ignore
       }
 
-      // Start polling for state
+      // Start polling, then immediately fetch so the UI doesn't wait a full
+      // poll interval before seeing the new game state.
       this.startPolling(onStateChange);
+      await this._fetchAndNotify();
       return this.matchID;
     } finally {
       this.connecting = false;
@@ -73,10 +75,16 @@ class GameAPI {
     if (this.pollHandle) clearInterval(this.pollHandle);
     if (!this.matchID) return;
     this.pollHandle = setInterval(async () => {
+      // Snapshot matchID at tick start so that if the game switches while this
+      // fetch is in-flight, the response is silently discarded.
+      const tickMatchID = this.matchID;
+      if (!tickMatchID) return;
       try {
-        const res = await fetch(`${API_BASE}/${this.matchID}`, { credentials: 'include' });
+        const res = await fetch(`${API_BASE}/${tickMatchID}`, { credentials: 'include' });
+        if (this.matchID !== tickMatchID) return;
         if (!res.ok) return;
         const json = await res.json();
+        if (this.matchID !== tickMatchID) return;
         this.state = json;
         if (onStateChange) onStateChange(json);
       } catch (e) {
@@ -87,10 +95,14 @@ class GameAPI {
 
   async _fetchAndNotify() {
     if (!this.matchID || !this._onStateChange) return;
+    // Snapshot matchID so that a game switch mid-await doesn't apply stale data.
+    const fetchMatchID = this.matchID;
     try {
-      const res = await fetch(`${API_BASE}/${this.matchID}`, { credentials: 'include' });
+      const res = await fetch(`${API_BASE}/${fetchMatchID}`, { credentials: 'include' });
+      if (this.matchID !== fetchMatchID) return;
       if (!res.ok) return;
       const json = await res.json();
+      if (this.matchID !== fetchMatchID) return;
       this.state = json;
       this._onStateChange(json);
     } catch (e) {

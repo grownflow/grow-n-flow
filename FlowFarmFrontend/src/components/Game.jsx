@@ -21,6 +21,7 @@ function Game({ onTitleClick }) {
   const [connected, setConnected] = useState(false);
 
   const [lastTurnAlerted, setLastTurnAlerted] = useState(null);
+  const [turnNotification, setTurnNotification] = useState(null); // { messages: string[], turn: number }
 
   const [activeViewpoint, setActiveViewpoint] = useState('Viewpoint1');
   const [lastPickedLabel, setLastPickedLabel] = useState('—');
@@ -117,8 +118,15 @@ function Game({ onTitleClick }) {
 
   const handleLoadMatch = async (id) => {
     if (!id) return;
+    // Clear all stale state from the previous game before loading the new one.
     setLoading(true);
     setError(null);
+    setGameState(null);
+    setConnected(false);
+    setLastTurnAlerted(null);
+    setTurnNotification(null);
+    setSelection(null);
+    setFeedFishStatus({ pending: false, message: null, ok: null, at: null });
     try {
       const loaded = await gameAPI.loadMatch(String(id), (state) => {
         if (state) {
@@ -147,14 +155,19 @@ function Game({ onTitleClick }) {
   };
 
   const startNewGame = async () => {
+    closeLoadMenu();
     setLoading(true);
     setError(null);
+    setGameState(null);
+    setConnected(false);
+    setLastTurnAlerted(null);
+    setTurnNotification(null);
+    setSelection(null);
+    setFeedFishStatus({ pending: false, message: null, ok: null, at: null });
     try {
-      // Connect to backend and subscribe to state changes
       const createdMatchId = await gameAPI.createMatch((state) => {
-        // This callback fires whenever game state changes
         if (state) {
-          setGameState(state); // Store full state (has .G and .ctx)
+          setGameState(state);
           setConnected(true);
           setLoading(false);
         }
@@ -162,7 +175,7 @@ function Game({ onTitleClick }) {
 
       setMatchId(createdMatchId || null);
     } catch (err) {
-      setError('Failed to connect to game server: ' + err.message);
+      setError('Failed to start new game: ' + err.message);
       setLoading(false);
     }
   };
@@ -361,17 +374,19 @@ function Game({ onTitleClick }) {
     }
 
     if (action?.eventTriggered) {
-      const name = action?.eventName || 'an event';
-      messages.push(`New event triggered: ${name}`);
+      if (action?.eventPending) {
+        const name = action?.eventName || 'an event';
+        const desc = action?.eventDescription ? ` — ${action.eventDescription}` : '';
+        messages.push(`Upcoming: ${name}${desc} Take action now before your next turn!`);
+      } else {
+        const name = action?.eventName || 'an event';
+        messages.push(`Event: ${name}`);
+      }
       soundManager.play('eventAlert');
     }
 
     if (messages.length > 0) {
-      try {
-        window.alert(messages.join('\n'));
-      } catch {
-        // ignore
-      }
+      setTurnNotification({ messages, turn });
       setLastTurnAlerted(turn);
     }
   }, [gameState?.ctx?.turn, gameState?.G?.lastAction, lastTurnAlerted]);
@@ -444,6 +459,7 @@ function Game({ onTitleClick }) {
   };
 
   const activeEvent = gameState?.G?.activeEvent;
+  const pendingEvent = gameState?.G?.pendingEvent;
   const dayNumber = gameState?.G?.gameTime ?? gameState?.ctx?.turn ?? null;
   const money = gameState?.G?.money ?? null;
 
@@ -462,8 +478,12 @@ function Game({ onTitleClick }) {
           <div className="topbar-stats">
             <span>Day: {dayNumber ?? '—'}</span>
             <span>Money: {money != null ? `$${Number(money).toFixed(2)}` : '—'}</span>
-            <span className={`event-status ${activeEvent ? 'danger' : 'good'}`}>
-              {activeEvent ? `Event: ${activeEvent.name} (${activeEvent.turnsRemaining}d left)` : 'No active events'}
+            <span className={`event-status ${activeEvent ? 'danger' : pendingEvent ? 'warning' : 'good'}`}>
+              {activeEvent
+                ? `Event: ${activeEvent.name} (${activeEvent.turnsRemaining}d left)`
+                : pendingEvent
+                  ? `Upcoming: ${pendingEvent.name}`
+                  : 'No active events'}
             </span>
           </div>
         </div>
@@ -547,6 +567,24 @@ function Game({ onTitleClick }) {
           </button>
         </div>
       </header>
+
+      {turnNotification && (
+        <div className="turn-notification" role="alert" aria-live="polite">
+          <div className="turn-notification-body">
+            {turnNotification.messages.map((msg, i) => (
+              <div key={i} className="turn-notification-line">{msg}</div>
+            ))}
+          </div>
+          <button
+            type="button"
+            className="turn-notification-close"
+            aria-label="Dismiss notification"
+            onClick={() => setTurnNotification(null)}
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       <div className="left-overlays" aria-label="Scene overlays">
         <div className="views-overlay" aria-label="Viewpoint navigation">

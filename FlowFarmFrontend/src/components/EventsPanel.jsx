@@ -11,6 +11,7 @@ const EventsPanel = ({ gameState, onRepair }) => {
 
   const { G } = gameState;
   const activeEvent = G.activeEvent || null;
+  const pendingEvent = G.pendingEvent || null;
   const eventHistory = G.eventHistory || [];
 
   // Show latest events first, limit to 3
@@ -18,12 +19,17 @@ const EventsPanel = ({ gameState, onRepair }) => {
 
   return (
     <section className="events-panel">
-      <h2>📰 Events</h2>
+      <h2>Events</h2>
 
-      {/* Active Event Banner */}
+      {/* Pending event — player still has time to act */}
+      {pendingEvent && (
+        <PendingEventCard event={pendingEvent} />
+      )}
+
+      {/* Active event currently affecting the system */}
       {activeEvent ? (
         <ActiveEventCard event={activeEvent} money={G.money} onRepair={onRepair} />
-      ) : (
+      ) : !pendingEvent && (
         <div className="no-active-event">
           <span className="no-event-icon">☀️</span>
           <span>All systems normal — no active events</span>
@@ -105,6 +111,48 @@ const ActiveEventCard = ({ event, money, onRepair }) => {
           )}
         </div>
       )}
+    </div>
+  );
+};
+
+const PendingEventCard = ({ event }) => {
+  const severity = SEVERITY_CONFIG[event.severity] || SEVERITY_CONFIG.medium;
+
+  return (
+    <div
+      className="pending-event-card"
+      style={{ borderColor: severity.border }}
+    >
+      <div className="event-card-header">
+        <span className="pending-event-badge">
+          Upcoming
+        </span>
+        <span className="event-severity-badge" style={{ background: severity.color }}>
+          {severity.icon} {severity.label}
+        </span>
+      </div>
+
+      <div className="event-card-body">
+        <h4 className="event-name">{event.name}</h4>
+        <p className="event-description">{event.description}</p>
+        {event.cause && (
+          <p className="event-cause"><strong>Cause:</strong> {event.cause}</p>
+        )}
+      </div>
+
+      <div className="event-effects">
+        {Object.entries(event.effects || {}).map(([key, value]) => (
+          <span key={key} className="event-effect-tag">
+            {formatEffectLabel(key)}: {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : value}
+          </span>
+        ))}
+      </div>
+
+      <p className="pending-event-notice">
+        Effects apply on your next Progress Day. Take action now — buy supplies, change
+        water, or save funds for repairs.
+        {event.repairCost != null && ` Repair will cost $${event.repairCost}.`}
+      </p>
     </div>
   );
 };

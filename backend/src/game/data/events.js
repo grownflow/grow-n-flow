@@ -7,22 +7,23 @@ const EVENT_TYPES = {
 };
 
 const EVENTS = {
-  // Test event - high probability for demonstration
+  // Social event - harmless money bonus, no effect on fish or plants
   testEvent: {
     id: 'testEvent',
     type: EVENT_TYPES.SOCIAL,
     name: 'Market Day Bonus',
-    description: 'The farmers market is extra busy today!',
+    description: 'The farmers market is extra busy today! You receive a cash bonus.',
     cause: 'Local festival',
     effects: {
       moneyBonus: 50
     },
     duration: 1,
-    probability: 0.1,
+    probability: 0.02,
     severity: 'low'
   },
 
   // Technical Events - reflect aquaponics failure modes and key parameters
+  // Probabilities are tuned so average players face ~2-3 events per 30-day cycle.
   ammoniaSpike: {
     id: 'ammoniaSpike',
     type: EVENT_TYPES.TECHNICAL,
@@ -30,12 +31,12 @@ const EVENTS = {
     description: 'Ammonia has spiked in the tank, likely from overfeeding or a fish die-off.',
     cause: 'Overfeeding, uneaten feed, or dead fish',
     effects: {
-      ammoniaIncrease: 2.5,
-      nitriteIncrease: 0.5,
-      dissolvedOxygenDecrease: 0.8
+      ammoniaIncrease: 1.5,   // reduced from 2.5 — survivable with one water change
+      nitriteIncrease: 0.3,
+      dissolvedOxygenDecrease: 0.5
     },
     duration: 1,
-    probability: 0.06,
+    probability: 0.04,        // reduced from 0.06
     severity: 'high'
   },
 
@@ -46,11 +47,11 @@ const EVENTS = {
     description: 'Nitrite levels are rising, likely because the biofilter is stressed or disturbed.',
     cause: 'Disturbed biofilter or heavy waste load',
     effects: {
-      nitriteIncrease: 1.2,
-      dissolvedOxygenDecrease: 0.5
+      nitriteIncrease: 0.8,   // reduced from 1.2
+      dissolvedOxygenDecrease: 0.3
     },
     duration: 1,
-    probability: 0.05,
+    probability: 0.03,        // reduced from 0.05
     severity: 'high'
   },
 
@@ -61,11 +62,11 @@ const EVENTS = {
     description: 'Dissolved oxygen has dropped below safe levels due to overcrowding or solids buildup.',
     cause: 'Poor aeration, solids buildup, or overcrowding',
     effects: {
-      dissolvedOxygenDecrease: 2.5,
-      circulationEfficiencyReduction: 0.3
+      dissolvedOxygenDecrease: 1.5, // reduced from 2.5 — add aeration stones to fix
+      circulationEfficiencyReduction: 0.2
     },
     duration: 1,
-    probability: 0.05,
+    probability: 0.03,        // reduced from 0.05
     severity: 'high'
   },
 
@@ -76,16 +77,15 @@ const EVENTS = {
     description: 'A disease outbreak is stressing your fish and producing additional waste.',
     cause: 'Poor water quality or pathogen introduction',
     effects: {
-      ammoniaIncrease: 1.5,
-      nitriteIncrease: 0.8,
-      dissolvedOxygenDecrease: 1.0,
-      fishHealthReduction: 2.5,
-      // Each day of the event, only ~25% of fish are individually affected.
-      // Over a 2-day event this causes noticeable losses without wiping the tank.
-      fishHealthReductionFraction: 0.25
+      ammoniaIncrease: 1.0,
+      nitriteIncrease: 0.5,
+      dissolvedOxygenDecrease: 0.5,
+      fishHealthReduction: 1.5,    // reduced from 2.5
+      // Each day of the event, only ~20% of fish are individually affected.
+      fishHealthReductionFraction: 0.20
     },
     duration: 2,
-    probability: 0.02,
+    probability: 0.015,       // reduced from 0.02
     severity: 'high'
   },
 
@@ -96,14 +96,14 @@ const EVENTS = {
     description: 'A disease outbreak is impacting your plants and reducing nutrient availability.',
     cause: 'Pathogens or nutrient imbalance',
     effects: {
-      nitrateDecrease: 3.0,
-      ironDecrease: 0.8,
-      plantHealthReduction: 2.0,
-      // ~30% of plants affected per day; over 3 days the weakest ones die.
-      plantHealthReductionFraction: 0.30
+      nitrateDecrease: 2.0,
+      ironDecrease: 0.5,
+      plantHealthReduction: 1.2,   // reduced from 2.0
+      // ~20% of plants affected per day; over 3 days weaker ones decline.
+      plantHealthReductionFraction: 0.20
     },
     duration: 3,
-    probability: 0.02,
+    probability: 0.015,       // reduced from 0.02
     severity: 'medium'
   },
 
@@ -117,7 +117,7 @@ const EVENTS = {
       pHDecrease: 0.2
     },
     duration: 2,
-    probability: 0.04,
+    probability: 0.025,       // reduced from 0.04
     severity: 'medium'
   },
 
@@ -132,7 +132,7 @@ const EVENTS = {
       waterLossPerTurn: 50
     },
     duration: 999,
-    probability: 0.04,
+    probability: 0.025,       // reduced from 0.04
     severity: 'high',
     repairCost: 75
   },
@@ -147,7 +147,7 @@ const EVENTS = {
       circulationStopped: true
     },
     duration: 999,
-    probability: 0.03,
+    probability: 0.02,        // reduced from 0.03
     severity: 'high',
     repairCost: 100
   },
@@ -162,7 +162,7 @@ const EVENTS = {
       biofilterEfficiencyReduction: 0.5
     },
     duration: 999,
-    probability: 0.05,
+    probability: 0.03,        // reduced from 0.05
     severity: 'medium',
     repairCost: 50
   }

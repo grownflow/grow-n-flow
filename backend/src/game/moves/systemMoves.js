@@ -1,7 +1,7 @@
 const { AquaponicsSystem } = require('../models/AquaponicsSystem');
 const { EventManager } = require('../utils/EventManager');
 const { equipment } = require('../data/equipment');
-const { EVENTS } = require('../data/events');
+const { EVENTS, EVENT_TYPES } = require('../data/events');
 const { fishSpecies } = require('../data/fishSpecies');
 const { plantSpecies } = require('../data/plantSpecies');
 const { EnvironmentalStress } = require('../utils/environmentalStress');
@@ -51,7 +51,7 @@ function ensureTankAndWaterState(G) {
   // Fill in defaults if missing. Keep these plain JSON values.
   water.ammonia = clampNumber(water.ammonia ?? 0, 0, 1000);
   water.nitrite = clampNumber(water.nitrite ?? 0, 0, 1000);
-  water.nitrate = clampNumber(water.nitrate ?? 10, 0, 10000);
+  water.nitrate = clampNumber(water.nitrate ?? 30, 0, 10000);
 
   water.pH = clampNumber(water.pH ?? 7.0, 0, 14);
   water.temperature = clampNumber(water.temperature ?? 25, -10, 60);
@@ -166,6 +166,14 @@ function createSystemAlerts({ water, tank, G }) {
 
   if (G && Array.isArray(G.fish) && G.fish.length === 0 && water.nitrate < 5.0) {
     alerts.push('Low nitrate with no fish present indicates insufficient nutrient production or too much plant biomass.');
+  }
+
+  // Starvation warning — fires before the fatal day-5 threshold so the player can act.
+  if (G && Array.isArray(G.fish) && G.fish.length > 0) {
+    const maxDaysUnfed = Math.max(...G.fish.map(f => Number(f.daysWithoutFood) || 0));
+    if (maxDaysUnfed >= 3) {
+      alerts.push(`Fish have not eaten in ${maxDaysUnfed} day(s). Add food to the tank immediately — fish will begin dying on day 5 without food.`);
+    }
   }
 
   return alerts;
@@ -388,9 +396,12 @@ function applyDailyFishFeedingFromTank({ G, tank, water }) {
     totalWeightGain += weightGain;
     totalHealthDelta += (Number(fish.health) - beforeHealth);
 
-    // Eating increases waste load: ammonia up, oxygen down.
+    // Waste load: ammonia up (from feeding + passive metabolism), oxygen down.
     const fishAmmoniaRate = clampNumber(Number(fish.ammoniaProductionRate ?? species.ammoniaProductionRate ?? 0.1), 0, 10);
-    const ammoniaDelta = portion * (0.03 + 0.02 * fishAmmoniaRate);
+    // Feeding waste (scaled to produce meaningful ammonia relative to plant uptake)
+    const ammoniaDelta = portion * (0.25 + 0.15 * fishAmmoniaRate)
+      // Passive metabolic excretion — fish produce ammonia even when unfed
+      + fishAmmoniaRate * 0.15;
     const oxygenDelta = portion * 0.02;
     totalAmmoniaDelta += ammoniaDelta;
     totalOxygenDelta += oxygenDelta;
@@ -578,7 +589,13 @@ function increaseAeration({ G, ctx }, amount = 1.0) {
 
 function runOneTurn(G) {
   const { tank, water } = ensureTankAndWaterState(G);
-    
+
+    // Promote a pending technical event to active — the player had at least one
+    // full turn to see the warning and take action before effects begin.
+    if (G.pendingEvent && !G.activeEvent) {
+      EventManager.promoteToActive(G);
+    }
+
     // Apply active event effects before processing turn
     EventManager.applyEventEffects(G);
 
@@ -616,6 +633,19 @@ function runOneTurn(G) {
       circulationStopped: Boolean(G.eventEffects?.circulationStopped),
       circulationEfficiency: tank.circulationEfficiency,
     });
+
+    // Natural dissolved-oxygen replenishment through surface agitation and circulation.
+    // Without this, oxygen only decreased (fish respiration) and never recovered.
+    const circulationStopped = Boolean(G.eventEffects?.circulationStopped);
+    if (!circulationStopped) {
+      const circEff = clampNumber(tank.circulationEfficiency ?? 1.0, 0, 2.0);
+      const saturatedDO = 8.0; // mg/L at ~25 °C
+      const deficit = Math.max(0, saturatedDO - Number(water.dissolvedOxygen));
+      water.dissolvedOxygen = clampNumber(
+        Number(water.dissolvedOxygen) + deficit * 0.25 * circEff,
+        0, saturatedDO
+      );
+    }
 
     const uptake = applyPlantNitrateUptake({ G, water, lightsAvailable });
 
@@ -680,24 +710,45 @@ function runOneTurn(G) {
       }
     }
     
-    // Check for random events
-    const triggeredEvent = EventManager.checkForRandomEvent(G);
-    if (triggeredEvent) {
-      console.log(`[progressTurn] EVENT TRIGGERED: "${triggeredEvent.name}" - ${triggeredEvent.description} (duration: ${triggeredEvent.duration} days)`);
-      // Apply the newly triggered event's effects in the same turn it fires.
-      // Without this, duration-1 events (triggered at end of turn, cleared by
-      // progressEvent below) would never have their effects applied at all.
-      EventManager.applyEventEffects(G);
+    // Check for new random events.
+    // TECHNICAL events are stored as G.pendingEvent — the player sees a warning
+    // this turn and effects apply on the NEXT progress.
+    // SOCIAL events (money bonus etc.) fire immediately — nothing harmful to prepare for.
+    const detectedEventDef = EventManager.checkForRandomEvent(G);
+    if (detectedEventDef) {
+      if (detectedEventDef.type === EVENT_TYPES.TECHNICAL) {
+        G.pendingEvent = {
+          id:          String(detectedEventDef.id),
+          type:        String(detectedEventDef.type),
+          name:        String(detectedEventDef.name),
+          description: String(detectedEventDef.description),
+          cause:       String(detectedEventDef.cause || ''),
+          effects:     JSON.parse(JSON.stringify(detectedEventDef.effects || {})),
+          duration:    Number(detectedEventDef.duration),
+          severity:    String(detectedEventDef.severity),
+          ...(detectedEventDef.repairCost !== undefined
+            ? { repairCost: Number(detectedEventDef.repairCost) }
+            : {}),
+          detectedAt: Number(G.gameTime),
+        };
+        console.log(`[progressTurn] UPCOMING technical event: "${detectedEventDef.name}" (player has 1 turn to prepare)`);
+      } else {
+        // Social events: trigger and apply immediately
+        EventManager.triggerEvent(G, detectedEventDef.id);
+        EventManager.applyEventEffects(G);
+        console.log(`[progressTurn] SOCIAL event fired immediately: "${detectedEventDef.name}"`);
+      }
     }
+
     if (G.activeEvent) {
       console.log(`[progressTurn] Active event: "${G.activeEvent.name}" - ${G.activeEvent.turnsRemaining} turns remaining`);
     }
 
-    // Progress active event duration
+    // Progress active event duration (decrements turnsRemaining, clears at 0)
     EventManager.progressEvent(G);
-    
+
     // Build serializable lastAction without any complex objects
-    const lastAction = { 
+    const lastAction = {
       type: 'progressTurn',
       gameTime: G.gameTime,
       dailyUtilityCosts: {
@@ -749,12 +800,15 @@ function runOneTurn(G) {
     }
     
     lastAction.systemAlerts = Array.isArray(G.systemAlerts) ? G.systemAlerts : [];
-    if (triggeredEvent) {
-      lastAction.eventTriggered = true;
-      lastAction.eventName = String(triggeredEvent.name || '');
-      lastAction.eventDescription = String(triggeredEvent.description || '');
+    if (detectedEventDef) {
+      lastAction.eventTriggered  = true;
+      lastAction.eventPending    = detectedEventDef.type === EVENT_TYPES.TECHNICAL;
+      lastAction.eventName       = String(detectedEventDef.name || '');
+      lastAction.eventDescription = String(detectedEventDef.description || '');
+      lastAction.eventSeverity   = String(detectedEventDef.severity || '');
     } else {
-      lastAction.eventTriggered = false;
+      lastAction.eventTriggered  = false;
+      lastAction.eventPending    = false;
     }
     
   G.lastAction = lastAction;
@@ -832,10 +886,90 @@ const systemMoves = {
   progressMultipleTurns: ({ G }, count = 3) => {
     const days = Math.max(1, Math.min(10, Number(count) || 3));
     console.log(`[progressMultipleTurns] advancing ${days} days from day ${G.gameTime}`);
+
+    const allFishDeaths = [];
+    const allPlantDeaths = [];
+    const waterSnapshots = [];
+
     for (let i = 0; i < days; i++) {
+      // Days 2+ of a multi-day progress: auto-feed fish from inventory so players
+      // don't have to manually re-feed between turns when using "Progress 3 Days".
+      // Day 1 uses whatever the player manually put in the tank before pressing the button.
+      if (i > 0 && Array.isArray(G.fish) && G.fish.length > 0 && Number(G.fishFood) > 0) {
+        const tank = G.aquaponicsSystem?.tank;
+        if (tank) {
+          const dailyNeed = G.fish.reduce((sum, fish) => {
+            const sk = String(fish?.type || '').toLowerCase();
+            const sp = fishSpecies[sk] || fishSpecies.tilapia;
+            return sum + clampNumber(fish.foodConsumptionRate ?? sp.foodConsumptionRate ?? 0.2, 0.05, 10);
+          }, 0);
+          const feedAmt = Math.min(Math.ceil(dailyNeed), Number(G.fishFood));
+          if (feedAmt > 0) {
+            tank.foodInTank = clampNumber((tank.foodInTank || 0) + feedAmt, 0, 1e9);
+            G.fishFood = Math.max(0, G.fishFood - feedAmt);
+          }
+        }
+      }
+
       runOneTurn(G);
+
+      // Accumulate deaths from each day before lastAction is overwritten
+      const dayFishDeaths = Array.isArray(G.lastAction?.fishDeaths) ? G.lastAction.fishDeaths : [];
+      const dayPlantDeaths = Array.isArray(G.lastAction?.plantDeaths) ? G.lastAction.plantDeaths : [];
+      allFishDeaths.push(...dayFishDeaths);
+      allPlantDeaths.push(...dayPlantDeaths);
+
+      // Snapshot water state for this day so matchHandler can persist one reading per day
+      const w = G.aquaponicsSystem?.tank?.water;
+      const t = G.aquaponicsSystem?.tank;
+      if (w) {
+        waterSnapshots.push({
+          gameTime: G.gameTime,
+          water: {
+            ammonia:         Number(w.ammonia         ?? 0),
+            nitrite:         Number(w.nitrite         ?? 0),
+            nitrate:         Number(w.nitrate         ?? 0),
+            pH:              Number(w.pH              ?? 7),
+            temperature:     Number(w.temperature     ?? 25),
+            dissolvedOxygen: Number(w.dissolvedOxygen ?? 8),
+            phosphorus:      Number(w.phosphorus      ?? 0),
+            potassium:       Number(w.potassium       ?? 0),
+            calcium:         Number(w.calcium         ?? 0),
+            magnesium:       Number(w.magnesium       ?? 0),
+            iron:            Number(w.iron            ?? 0),
+          },
+          tank: {
+            capacity:            Number(t?.capacity ?? t?.volumeLiters ?? 1000),
+            currentVolume:       Number(t?.currentVolume ?? t?.currentWaterLevel ?? 0),
+            biofilterEfficiency: Number(t?.biofilterEfficiency ?? 0.8),
+          },
+          fishDeaths:  dayFishDeaths.length,
+          plantDeaths: dayPlantDeaths.length,
+          event: G.activeEvent
+            ? { id: String(G.activeEvent.id), type: String(G.activeEvent.type), severity: String(G.activeEvent.severity) }
+            : null,
+        });
+      }
     }
-    console.log(`[progressMultipleTurns] done, now day ${G.gameTime}`);
+
+    // Merge accumulated deaths and per-day snapshots back onto the final lastAction
+    if (G.lastAction) {
+      G.lastAction.fishDeaths     = allFishDeaths;
+      G.lastAction.plantDeaths    = allPlantDeaths;
+      G.lastAction.waterSnapshots = waterSnapshots;
+
+      // If a technical event is pending at the END of the batch (detected on the
+      // last day), make sure the notification reflects it correctly.
+      if (G.pendingEvent) {
+        G.lastAction.eventTriggered   = true;
+        G.lastAction.eventPending     = true;
+        G.lastAction.eventName        = String(G.pendingEvent.name || '');
+        G.lastAction.eventDescription = String(G.pendingEvent.description || '');
+        G.lastAction.eventSeverity    = String(G.pendingEvent.severity || '');
+      }
+    }
+
+    console.log(`[progressMultipleTurns] done, now day ${G.gameTime}. fishDeaths=${allFishDeaths.length} plantDeaths=${allPlantDeaths.length}`);
   },
 
   // Repair system damage from events (leaks, pump failures, etc.)
@@ -870,12 +1004,34 @@ const systemMoves = {
     
     // Restore system to normal state
     if (event.effects.waterLossPerTurn && G.aquaponicsSystem && G.aquaponicsSystem.tank) {
-      // Refill tank to full as part of repair
-      const cap = Number(G.aquaponicsSystem.tank.capacity || G.aquaponicsSystem.tank.volumeLiters || 1000);
-      G.aquaponicsSystem.tank.capacity = cap;
-      G.aquaponicsSystem.tank.volumeLiters = cap;
-      G.aquaponicsSystem.tank.currentWaterLevel = cap;
-      G.aquaponicsSystem.tank.currentVolume = cap;
+      const tank = G.aquaponicsSystem.tank;
+      const cap = Number(tank.capacity || tank.volumeLiters || 1000);
+      const currentVol = clampNumber(tank.currentVolume ?? tank.currentWaterLevel ?? cap, 0, cap);
+
+      // Refilling dilutes dissolved pollutants proportional to the fresh-water added.
+      // Example: 200 L remaining with ammonia 2.0 mg/L → after refill to 1000 L → 0.4 mg/L.
+      if (currentVol < cap && currentVol >= 0 && tank.water) {
+        const dilution = currentVol / cap; // fraction of old water remaining
+        const w = tank.water;
+        w.ammonia   = clampNumber(Number(w.ammonia   ?? 0) * dilution, 0, 1000);
+        w.nitrite   = clampNumber(Number(w.nitrite   ?? 0) * dilution, 0, 1000);
+        w.nitrate   = clampNumber(Number(w.nitrate   ?? 0) * dilution, 0, 10000);
+        w.potassium = clampNumber(Number(w.potassium ?? 0) * dilution, 0, 10000);
+        w.calcium   = clampNumber(Number(w.calcium   ?? 0) * dilution, 0, 10000);
+        w.phosphorus= clampNumber(Number(w.phosphorus?? 0) * dilution, 0, 10000);
+        w.magnesium = clampNumber(Number(w.magnesium ?? 0) * dilution, 0, 10000);
+        w.iron      = clampNumber(Number(w.iron      ?? 0) * dilution, 0, 10000);
+        // Fresh water is well-oxygenated; top up toward 8 mg/L.
+        w.dissolvedOxygen = clampNumber(
+          Number(w.dissolvedOxygen ?? 8) * dilution + 8 * (1 - dilution),
+          0, 20
+        );
+      }
+
+      tank.capacity = cap;
+      tank.volumeLiters = cap;
+      tank.currentWaterLevel = cap;
+      tank.currentVolume = cap;
     }
     
     if (event.effects.biofilterEfficiencyReduction && G.aquaponicsSystem && G.aquaponicsSystem.tank) {

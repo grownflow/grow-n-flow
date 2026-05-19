@@ -45,7 +45,7 @@ const plantSpecies = {
         marketAcceptance: 'good',
         shelfLife: 14,
         availability: 'year-round',
-        renderAsset: 'plants/rosemary.glb',
+        renderAsset: 'plants/rosemary_t.glb',
         renderScale: 1.2,
         nutrientRequirements: {
             nitrogen: 4,
@@ -84,7 +84,7 @@ const plantSpecies = {
         marketAcceptance: 'excellent',
         shelfLife: 7,
         availability: 'year-round',
-        renderAsset: 'plants/basil.glb',
+        renderAsset: 'plants/basil_t.glb',
         renderScale: 1.2,
         nutrientRequirements: {
             nitrogen: 5,
@@ -123,7 +123,7 @@ const plantSpecies = {
         marketAcceptance: 'excellent',
         shelfLife: 10,
         availability: 'year-round',
-        renderAsset: 'plants/green_tom.glb',
+        renderAsset: 'plants/green_tom_t.glb',
         renderScale: 1.4,
         nutrientRequirements: {
             nitrogen: 6,
@@ -162,7 +162,7 @@ const plantSpecies = {
         marketAcceptance: 'good',
         shelfLife: 14,
         availability: 'year-round',
-        renderAsset: 'plants/pepper1.glb',
+        renderAsset: 'plants/pepper1_t.glb',
         renderScale: 1.3,
         nutrientRequirements: {
             nitrogen: 5,

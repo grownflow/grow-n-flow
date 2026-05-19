@@ -8,28 +8,40 @@ class EventManager {
    * @returns {Object|null} Event that triggered, or null
    */
   static checkForRandomEvent(G) {
-
-    /*
-      Dont trigger new events if one is already active.
-      One event at a time for now to simplify testing.
-      TODO: Reclarify with team to confirm that multiple
-      events can occur in one day. 
-      - Ravon
-    */
-    if (G.activeEvent && G.activeEvent.turnsRemaining > 0) {
+    // One event at a time: skip if one is active or already announced as pending.
+    if ((G.activeEvent && G.activeEvent.turnsRemaining > 0) || G.pendingEvent) {
       return null;
     }
 
-    // Roll for each possible event
-    const eventKeys = Object.keys(EVENTS);
+    // Grace period: no events for the first 7 days so players can establish their system.
+    if (Number(G.gameTime) < 7) {
+      return null;
+    }
+
+    // Roll for each possible event. Shuffle first so no event is systematically
+    // preempted by earlier entries.
+    const eventKeys = Object.keys(EVENTS).sort(() => Math.random() - 0.5);
     for (const key of eventKeys) {
       const event = EVENTS[key];
       if (Math.random() < event.probability) {
-        return this.triggerEvent(G, event.id);
+        // Return the raw event definition — the caller decides whether to store
+        // it as pending (TECHNICAL) or trigger it immediately (SOCIAL).
+        return event;
       }
     }
 
     return null;
+  }
+
+  /**
+   * Promote a pending technical event to active so effects start applying.
+   * Called at the top of each turn after the player has had a chance to react.
+   */
+  static promoteToActive(G) {
+    if (!G.pendingEvent) return;
+    const eventId = G.pendingEvent.id;
+    G.pendingEvent = null; // clear before triggerEvent to avoid guard conflicts
+    EventManager.triggerEvent(G, eventId);
   }
 
   /**
@@ -165,7 +177,9 @@ class EventManager {
         }
 
         if (effects.pHDecrease !== undefined) {
-          water.pH = Math.max(0, water.pH - Number(effects.pHDecrease));
+          // Floor at 5.0 — below this, bacteria die and the system can't recover without
+          // a full drain; pH 0 is physically meaningless in an aquaponics context.
+          water.pH = Math.max(5.0, water.pH - Number(effects.pHDecrease));
           G.eventEffects.pHDecrease = Number(effects.pHDecrease);
         }
 
@@ -217,7 +231,10 @@ class EventManager {
       if (effects.circulationEfficiencyReduction !== undefined) {
         const tank = G.aquaponicsSystem?.tank;
         if (tank) {
-          tank.circulationEfficiency = Math.max(0.1, (tank.circulationEfficiency ?? 1.0) - Number(effects.circulationEfficiencyReduction));
+          const circBaseline = Number.isFinite(G.activeEvent.preEventCirculationEfficiency)
+            ? G.activeEvent.preEventCirculationEfficiency
+            : (tank.circulationEfficiency ?? 1.0);
+          tank.circulationEfficiency = Math.max(0.1, circBaseline - Number(effects.circulationEfficiencyReduction));
           G.eventEffects.circulationEfficiencyReduction = Number(effects.circulationEfficiencyReduction);
         }
       }
@@ -249,6 +266,22 @@ class EventManager {
 
     // Event expired - clean up
     if (G.activeEvent.turnsRemaining <= 0) {
+      const eff = G.activeEvent.effects || {};
+      const tank = G.aquaponicsSystem?.tank;
+
+      if (tank) {
+        // Restore circulationEfficiency for events that reduced it temporarily
+        // (e.g. lowDissolvedOxygen, duration 1, no repairCost).
+        // filterClog reduces biofilterEfficiency but has duration 999 + repairCost —
+        // it should never expire naturally, so we leave biofilterEfficiency to repairSystem.
+        if (
+          eff.circulationEfficiencyReduction !== undefined &&
+          Number.isFinite(G.activeEvent.preEventCirculationEfficiency)
+        ) {
+          tank.circulationEfficiency = G.activeEvent.preEventCirculationEfficiency;
+        }
+      }
+
       G.activeEvent = null;
       G.eventEffects = {};
     }

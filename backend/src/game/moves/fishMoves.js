@@ -68,19 +68,13 @@ const fishMoves = {
 
     const { tank, water } = ensureTankAndWaterState(G);
 
-    if (Number(water.ammonia ?? 0) >= 1.0 || Number(water.nitrite ?? 0) >= 1.0) {
-      const msg = 'Unsafe water chemistry: stop feeding and take corrective action before adding more food.';
-      G.error = msg;
-      G.lastAction = {
-        type: 'feedFish',
-        success: false,
-        reason: 'unsafe_water_conditions',
-        ammonia: Number(water.ammonia.toFixed(3)),
-        nitrite: Number(water.nitrite.toFixed(3)),
-        recommendedActions: ['stopFeeding', 'performPartialWaterChange', 'increaseAeration']
-      };
-      return G;
-    }
+    // Warn (but still allow) feeding when water chemistry is elevated.
+    // Hard-blocking caused fish to starve to death when players couldn't lower
+    // ammonia fast enough — resulting in catastrophic simultaneous die-off.
+    const waterWarning =
+      Number(water.ammonia ?? 0) >= 1.0 || Number(water.nitrite ?? 0) >= 1.0
+        ? 'High ammonia or nitrite detected — consider a partial water change before feeding.'
+        : null;
 
     // "Feed fish" now means "add food into the tank".
     // Fish will actually eat from tank.foodInTank during progressTurn.
@@ -101,6 +95,7 @@ const fishMoves = {
       inventoryFoodRemaining: G.fishFood,
       tankFoodBefore: Number(tankFoodBefore.toFixed(3)),
       tankFoodAfter: Number(Number(tank.foodInTank).toFixed(3)),
+      ...(waterWarning ? { warning: waterWarning } : {}),
     };
 
     return G;
