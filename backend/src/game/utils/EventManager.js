@@ -208,6 +208,7 @@ class EventManager {
             ? effects.fishHealthReductionFraction : 1.0
         ));
         G.fish.forEach((fish) => {
+          if (!fish) return; // skip null/undefined entries
           if (Math.random() < fishFraction) {
             fish.health = Math.max(0, Number(fish.health ?? 0) - Number(effects.fishHealthReduction));
           }
@@ -221,6 +222,7 @@ class EventManager {
             ? effects.plantHealthReductionFraction : 1.0
         ));
         G.plants.forEach((plant) => {
+          if (!plant) return; // skip null/undefined entries
           if (Math.random() < plantFraction) {
             plant.health = Math.max(0, Number(plant.health ?? 0) - Number(effects.plantHealthReduction));
           }

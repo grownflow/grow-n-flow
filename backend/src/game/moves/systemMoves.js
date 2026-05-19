@@ -189,6 +189,11 @@ function applyPlantHealthAndMortality({ G, water, lightsAvailable }) {
   const lowLightPenalty = lightsAvailable ? 0 : 0.5;
 
   for (const plant of G.plants) {
+    if (!plant) continue; // skip null/undefined entries
+
+    // Ensure health is a valid number; missing health = treat as full.
+    if (!Number.isFinite(Number(plant.health))) plant.health = 10;
+
     const species = plantSpecies[plant.type] || {};
     const growthDays = Number(plant.growthDays || species.totalGrowthTime * 7 || 42);
     let healthPenalty = 0;
@@ -218,8 +223,9 @@ function applyPlantHealthAndMortality({ G, water, lightsAvailable }) {
 
     if (healthPenalty > 0) {
       plant.health = clampNumber(Number(plant.health) - healthPenalty, 0, 10);
-    } else {
-      // All conditions good — plants recover slowly, capped at 10.
+    } else if (Number(plant.health) > 0) {
+      // Only recover if already alive — a plant at 0 health should not be
+      // resurrected by good conditions on the same turn it was dealt fatal damage.
       plant.health = clampNumber(Number(plant.health) + 0.15, 0, 10);
     }
 
@@ -230,7 +236,8 @@ function applyPlantHealthAndMortality({ G, water, lightsAvailable }) {
   }
 
   if (plantDeaths.length > 0) {
-    G.plants = G.plants.filter((plant) => !plant._dead);
+    // Null-safe filter: also drops any unexpected null/undefined entries.
+    G.plants = G.plants.filter((plant) => plant && !plant._dead);
   }
 
   return { plantDeaths };
@@ -587,12 +594,15 @@ function increaseAeration({ G, ctx }, amount = 1.0) {
   return G;
 }
 
-function runOneTurn(G) {
+function runOneTurn(G, { skipPromotion = false } = {}) {
   const { tank, water } = ensureTankAndWaterState(G);
 
     // Promote a pending technical event to active — the player had at least one
     // full turn to see the warning and take action before effects begin.
-    if (G.pendingEvent && !G.activeEvent) {
+    // skipPromotion is set when called from progressMultipleTurns for events that
+    // were detected DURING the current batch (not before it), ensuring the player
+    // always gets a genuine reaction window before effects apply.
+    if (!skipPromotion && G.pendingEvent && !G.activeEvent) {
       EventManager.promoteToActive(G);
     }
 
@@ -887,6 +897,12 @@ const systemMoves = {
     const days = Math.max(1, Math.min(10, Number(count) || 3));
     console.log(`[progressMultipleTurns] advancing ${days} days from day ${G.gameTime}`);
 
+    // Track which pending event existed BEFORE this batch so we know which ones
+    // were detected DURING the batch. Events detected mid-batch stay pending until
+    // the player's NEXT action — they should never be silently activated within
+    // the same "Progress 3 Days" press that first showed the warning.
+    const pendingEventIdBeforeBatch = G.pendingEvent?.id ?? null;
+
     const allFishDeaths = [];
     const allPlantDeaths = [];
     const waterSnapshots = [];
@@ -911,7 +927,11 @@ const systemMoves = {
         }
       }
 
-      runOneTurn(G);
+      // Only promote a pending event if it existed BEFORE this batch started.
+      // A pending event detected on day 1 of a 3-day press must NOT be promoted
+      // on day 2 of that same press — the player hasn't had a chance to react yet.
+      const skipPromotion = G.pendingEvent?.id !== pendingEventIdBeforeBatch;
+      runOneTurn(G, { skipPromotion });
 
       // Accumulate deaths from each day before lastAction is overwritten
       const dayFishDeaths = Array.isArray(G.lastAction?.fishDeaths) ? G.lastAction.fishDeaths : [];
