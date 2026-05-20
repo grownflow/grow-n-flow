@@ -4,6 +4,26 @@ A turn-based aquaponics farm management game built with React, Node.js, boardgam
 
 ---
 
+## Quick Start: 7-Move First-Harvest Path
+
+An average player can achieve a first **plant harvest and fish harvest in exactly 7 moves**. No water-chemistry management is needed: the 7-day grace period blocks all events, and a 5-tilapia system stays within safe water parameters for the entire 6-day run.
+
+| # | Move | Notes |
+|---|------|-------|
+| 1 | **Buy Fish Food** (1 pack) | $20 → 10 units in inventory |
+| 2 | **Add Fish** — 5 Tilapia | $12.50 total; each fingerling starts at 10 g |
+| 3 | **Plant Seeds** — Basil or Romaine | $0.25–$0.30/seed; fill as many slots as cash allows |
+| 4 | **Progress 3 Days** | Auto-feeds fish from inventory all 3 days; tilapia weight ≈ 305 g by day 3 |
+| 5 | **Progress 3 Days** | Auto-feeds all 3 days; Basil matures day 5, Romaine matures day 6; tilapia ≈ 600 g |
+| 6 | **Harvest All Plants** | Moves all mature plants to inventory for sale |
+| 7 | **Sell Fish** | All 5 tilapia ≥ 480 g (80% threshold) → harvestable at full market value |
+
+**Water chemistry at day 6** (5 tilapia, 80% default biofilter): ammonia ≈ 1.0 ppm (alert, not danger), nitrite < 0.3 ppm, pH 7.0. No intervention needed.
+
+After day 7 the grace period ends and normal event probabilities apply — see the [Events](#events) section to prepare.
+
+---
+
 ## Game Features
 
 ### Turn-Based Simulation
@@ -20,17 +40,17 @@ A turn-based aquaponics farm management game built with React, Node.js, boardgam
 ### Fish Management
 Three species are modeled with species-specific tolerances, growth rates, and market values:
 
-| Species    | Harvest weight | Harvest time (game-days) | Market value | Fingerling cost |
-|------------|---------------|--------------------------|--------------|-----------------|
-| Tilapia    | 600 g         | 30                       | $4.00 / unit | $2.50           |
-| Barramundi | 400 g         | 45                       | $8.50 / unit | $6.00           |
-| Catfish    | 700 g         | 40                       | $6.00 / unit | $3.50           |
+| Species    | Harvest weight | Harvest time (game-days) | 80% harvestable | Market value | Fingerling cost |
+|------------|---------------|--------------------------|-----------------|--------------|-----------------|
+| Tilapia    | 600 g         | 6                        | day 5           | $4.00 / unit | $2.50           |
+| Catfish    | 700 g         | 12                       | day 10          | $6.00 / unit | $3.50           |
+| Barramundi | 400 g         | 14                       | day 12          | $8.50 / unit | $6.00           |
 
-Harvest times are compressed from real-world months (6–10 months per species) to game-days for playable pacing.
+Harvest times are compressed from real-world months (6–10 months per species) to game-days for playable pacing. Fish are harvestable when weight ≥ 80% of harvest weight. Tilapia is the recommended beginner species: 5 tilapia reach harvest weight within 6 days and support a first harvest on the 7-move path.
 
 - Buy fingerlings, feed fish (consumes fish food inventory), and sell mature fish to market.
 - Fish health degrades from poor water quality (ammonia, nitrite, low oxygen), starvation, and disease events.
-- **Feed Fish** before each turn. Fish not fed for 5 consecutive days die from starvation. When using **Progress 3 Days**, fish are automatically fed from inventory on days 2 and 3 of the batch — ensure you have fish food in stock before progressing multiple days.
+- Fish not fed for 5 consecutive days die from starvation. When using **Progress 3 Days**, fish are automatically fed from inventory each day the tank is empty — ensure you have fish food in stock.
 - Feeding is permitted even when ammonia or nitrite is elevated — the game shows a warning but does not block the action. In poor water, the player must decide whether to continue feeding (more ammonia risk) or hold off while fixing chemistry.
 
 ### Plant Management
@@ -79,7 +99,7 @@ Fish waste and uneaten food produce ammonia in the tank each day. The biofilter 
 k = 0.80 × biofilterEfficiency × circulationEfficiency × oxygenFactor
 ```
 
-Default biofilter efficiency is **0.80** (k ≈ 0.64/day); maximum is **1.0** (k = 0.80/day). Each fish contributes passive metabolic excretion (species `ammoniaRate` ppm/day) plus feeding waste proportional to food consumed. With 5 tilapia at default efficiency, total daily ammonia production is roughly **0.77 ppm**, yielding a steady-state ammonia of ~1.2 ppm — within the safe range. Nitrate starts at **5 mg/L** and builds visibly (~0.5–0.6 ppm/day net of plant uptake) as the tank matures. Plants then draw down nitrate based on species nutrient requirements. If the biofilter is damaged or fish load exceeds processing capacity, ammonia and nitrite accumulate to toxic levels.
+Default biofilter efficiency is **0.80** (k ≈ 0.64/day); maximum is **1.0** (k = 0.80/day). Each fish contributes passive metabolic excretion (species `ammoniaRate` ppm/day) plus feeding waste proportional to food consumed. With 5 tilapia fully fed (each consuming 0.2 food units/day), total daily ammonia production is roughly **0.77 ppm**, reaching a steady-state ammonia of ~0.43 ppm — comfortably below the 1.0 mg/L alert threshold. Nitrate starts at **5 mg/L** (the game's initial default) and builds visibly as the nitrogen cycle matures (net of plant uptake). Plants draw down nitrate based on growth stage; if the biofilter is damaged or fish load exceeds processing capacity, ammonia and nitrite accumulate to toxic levels.
 
 ### Tracked Water Parameters
 
@@ -87,7 +107,7 @@ Default biofilter efficiency is **0.80** (k ≈ 0.64/day); maximum is **1.0** (k
 |-----------|---------|------|
 | Ammonia (NH₃/NH₄⁺) | 0.0 mg/L | Fish waste byproduct; toxic above species tolerance |
 | Nitrite (NO₂⁻) | 0.0 mg/L | Nitrification intermediate; toxic above 1.0 mg/L |
-| Nitrate (NO₃⁻) | 5.0 mg/L | Plant nutrient; builds as fish stock grows; safe at 5–80 mg/L |
+| Nitrate (NO₃⁻) | 5 mg/L | Plant nutrient; builds as fish stock grows; safe at 5–80 mg/L |
 | pH | 7.0 | Affects ammonia toxicity; optimal 6.8–7.2 |
 | Dissolved Oxygen | 8.0 mg/L | Required by fish and aerobic biofilter bacteria |
 | Temperature | 25 °C | Affects species stress and ammonia toxicity |
@@ -222,7 +242,19 @@ Every action the player can take is listed below. Actions take effect immediatel
 | Progress 1 Day | Progress 1 Day | Runs one full simulation day: fish feed, chemistry updates, plants age, event rolls |
 | Progress 3 Days | Progress 3 Days | Runs three simulation days in sequence; deaths and events from all three days are reported together |
 
-**Important**: When using **Progress 3 Days**, the simulation automatically draws fish food from your inventory on days 2 and 3 of the batch to prevent starvation. Make sure your inventory has enough fish food before progressing multiple days. Day 1 of any batch still uses whatever food is already in the tank — use **Feed Fish** first.
+**7-Move First-Harvest Path**: An average player can achieve a first plant harvest and first fish harvest in 7 moves. The 7-day grace period blocks all events, so no water-chemistry management is required on this path:
+
+| # | Move | Result |
+|---|------|--------|
+| 1 | Buy Fish Food (1 pack) | 10 units in inventory |
+| 2 | Add Fish — 5 Tilapia | Starting at 10 g each |
+| 3 | Plant Seeds — Basil or Romaine | Cheapest and fastest plants |
+| 4 | Progress 3 Days | Days 1–3 auto-fed from inventory |
+| 5 | Progress 3 Days | Days 4–6 auto-fed; Basil matures day 5, Romaine day 6 |
+| 6 | Harvest All Plants | All mature plants moved to inventory |
+| 7 | Sell Fish | All 5 tilapia ≥ 480 g → harvestable |
+
+**Important**: When using **Progress 3 Days**, fish are automatically fed from inventory each day the tank is empty. Ensure you have fish food in stock before progressing multiple days.
 
 ### Fish Actions
 
@@ -286,7 +318,7 @@ The **Market panel** sells fingerlings (by species), fish food, and water treatm
 
 ### Stocking Strategy
 
-- **Fish Food**: The game auto-feeds fish from inventory on days 2 and 3 when using Progress 3 Days, but day 1 uses whatever is already in the tank — use **Feed Fish** before each progress action. Keep at least 10 units in stock at all times.
+- **Fish Food**: Progress 3 Days auto-feeds fish from inventory every day the tank is empty, including day 1. Keep at least 10 units in stock. Use **Feed Fish** manually before **Progress Day** (single day) — single-day progress does not auto-feed.
 - **Aeration Stones**: Keep at least 5 in reserve. Low DO events, pump failures, and disease outbreaks all demand immediate oxygen correction. The Water Chemistry panel shows a one-click Quick Fix when oxygen is critical.
 - **Biofilter units**: Each application gives an immediate ammonia/nitrite reduction **and** permanently raises biofilter efficiency by 5% (up to 100%). Buying 4 units raises efficiency from the default 80% to 100%, which is the maximum the filter can achieve — beyond that, reducing fish load or doing water changes is necessary. Keep 1–2 in stock; the Ammonia Spike (4%/turn) and Nitrite Rise (3%/turn) events are the most common hazards.
 - **Buffering solutions**: pH Drop occurs at 2.5% per turn; over a long game it will strike multiple times. Keep 2–3 units stocked. CaCO₃ is preferred when calcium is also low; K₂CO₃ when potassium is the limiting plant nutrient.
@@ -301,8 +333,17 @@ The **Market panel** sells fingerlings (by species), fish food, and water treatm
 - A **Bills Panel** shows outstanding costs and deducts them each turn.
 
 ### Sound Effects & Mute Toggle
-- Event alert, feed fish, harvest, and consumable-apply sounds play at the appropriate moments.
 - A mute button in the top bar persists preference across sessions via `localStorage`.
+- Sounds play for each of the following player actions:
+
+| Trigger | Audio file |
+|---------|-----------|
+| Progress Day | `universfield-video-game-bonus-323603.mp3` |
+| Progress 3 Days | `ribhavagrawal-achievement-video-game-type-1-230515.mp3` |
+| Event alert popup | `floraphonic-8-bit-game-1-186975.mp3` |
+| Feed fish | `pwlpl-power-up-game-sound-effect-359227.mp3` |
+| Harvest plants or fish | `freesound_community-win-short-38508.mp3` |
+| Apply consumable (non-food) | `dammafra-virtual-pet-happy-458154.mp3` |
 
 ---
 

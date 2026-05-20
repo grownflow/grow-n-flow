@@ -3,10 +3,12 @@
 // Mute preference is persisted in localStorage under 'gnf_muted'.
 
 const SOUNDS = {
-  eventAlert: '/audio/floraphonic-8-bit-game-1-186975.mp3',
-  feedFish:   '/audio/pwlpl-power-up-game-sound-effect-359227.mp3',
-  harvest:    '/audio/freesound_community-win-short-38508.mp3',
-  consumable: '/audio/dammafra-virtual-pet-happy-458154.mp3',
+  eventAlert:   '/audio/floraphonic-8-bit-game-1-186975.mp3',
+  feedFish:     '/audio/pwlpl-power-up-game-sound-effect-359227.mp3',
+  harvest:      '/audio/freesound_community-win-short-38508.mp3',
+  consumable:   '/audio/dammafra-virtual-pet-happy-458154.mp3',
+  progressDay:  '/audio/universfield-video-game-bonus-323603.mp3',
+  progress3Days: '/audio/ribhavagrawal-achievement-video-game-type-1-230515.mp3',
 };
 
 const STORAGE_KEY = 'gnf_muted';

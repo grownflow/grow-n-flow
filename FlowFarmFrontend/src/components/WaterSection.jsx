@@ -138,16 +138,6 @@ const WaterSection = ({gameState, loading}) => {
             <section className="water-section">
                 <h2>💧 Water Quality</h2>
 
-                <div className="wip-notice">
-                    <span className="wip-icon">🚧</span>
-                    <p>
-                        <strong>Work in Progress:</strong> Water chemistry simulation is currently under development. 
-                        We are following research literature to model the nitrogen cycle, nutrient dynamics, and 
-                        water parameter interactions with fidelity. Values shown are real game state but the 
-                        underlying simulation logic is still being refined.
-                    </p>
-                </div>
-
                 {Object.keys(eventEffects).length > 0 && (
                     <div className="water-issue-panel">
                         <h3>🔧 Active Event Effects</h3>

@@ -9,6 +9,12 @@
 // Harvest times are compressed for game pacing (real-world values are 6-10 months).
 // baseGrowthRate = (harvestWeight - 10g fingerling) / harvestTime, reflecting ideal
 // conditions; actual daily gain scales down with food ratio and environmental stress.
+// Harvest times are compressed to enable a first harvest within 7 required moves:
+//   1. Buy fish food  2. Buy fish  3. Plant seeds
+//   4. Progress 3 Days  5. Progress 3 Days  6. Harvest plants  7. Harvest fish
+// Tilapia reaches 80% harvest weight (480 g) by day 6 under normal feeding.
+// Events are suppressed for the first 7 game-days (grace period), so no
+// crisis management is required on the first-harvest path.
 const fishSpecies = {
   tilapia: {
     tempRange: { min: 4, max: 34, optimal: { min: 25, max: 30 } },
@@ -17,8 +23,8 @@ const fishSpecies = {
     oxygenMin: 4.0,
     proteinRequirement: { min: 28, max: 32 },
     harvestWeight: 600,
-    harvestTime: 30, // compressed game days (real-world ~210 days)
-    baseGrowthRate: (600 - 10) / 30, // ~19.7 g/day under ideal conditions
+    harvestTime: 6,  // compressed game days (real-world ~210 days)
+    baseGrowthRate: (600 - 10) / 6, // ~98.3 g/day under ideal conditions
     marketValue: 4.00,
     fingerlingCost: 2.50, // Cost per fingerling
     availability: 'year-round',
@@ -36,8 +42,8 @@ const fishSpecies = {
     oxygenMin: 4.0,
     proteinRequirement: { min: 38, max: 45 },
     harvestWeight: 400,
-    harvestTime: 45, // compressed game days (real-world ~285 days)
-    baseGrowthRate: (400 - 10) / 45, // ~8.7 g/day under ideal conditions
+    harvestTime: 14, // compressed game days (real-world ~285 days)
+    baseGrowthRate: (400 - 10) / 14, // ~27.9 g/day under ideal conditions
     marketValue: 8.50,
     fingerlingCost: 6.00, // Cost per fingerling
     availability: 'seasonal',
@@ -55,8 +61,8 @@ const fishSpecies = {
     oxygenMin: 4.0,
     proteinRequirement: { min: 30, max: 36 },
     harvestWeight: 700,
-    harvestTime: 40, // compressed game days (real-world ~240 days)
-    baseGrowthRate: (700 - 10) / 40, // ~17.3 g/day under ideal conditions
+    harvestTime: 12, // compressed game days (real-world ~240 days)
+    baseGrowthRate: (700 - 10) / 12, // ~57.5 g/day under ideal conditions
     marketValue: 6.00,
     fingerlingCost: 3.50,
     availability: 'year-round',

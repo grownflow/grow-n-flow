@@ -67,7 +67,10 @@ const FishTankSection = ({gameState, loading, handleAddFish, handleSellFish, han
                     </p>
                     {Array.isArray(lastProgress.fishDeaths) && lastProgress.fishDeaths.length > 0 && (
                         <p style={{ margin: 0 }}>
-                            <strong>Deaths:</strong> {lastProgress.fishDeaths.map((d) => d?.type || 'fish').join(', ')}
+                            <strong>Deaths:</strong>{' '}
+                            {lastProgress.fishDeaths.map((d) =>
+                              d?.reason ? `${d.type || 'fish'} (${d.reason})` : d?.type || 'fish'
+                            ).join(', ')}
                         </p>
                     )}
                 </div>

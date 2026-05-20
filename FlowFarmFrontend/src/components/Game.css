@@ -299,42 +299,72 @@ html, body, #root {
 
 .ui-panel-header {
   display: flex;
-  align-items: stretch;
-  gap: 8px;
-  padding: 10px;
-  border-bottom: 1px solid #ddd;
+  align-items: flex-end;
+  gap: 0;
+  padding: 8px 8px 0 8px;
+  background: #1e3a4f;
+  border-bottom: 3px solid #3b8fd6;
+  flex-shrink: 0;
 }
 
 .ui-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 3px;
   flex: 1;
+  align-items: flex-end;
 }
 
 .ui-tab {
-  padding: 8px 10px;
-  border-radius: 8px;
-  background: white;
-  border: 1px solid #ccc;
-  color: #333;
+  padding: 8px 13px;
+  border-radius: 6px 6px 0 0;
+  background: #2e5472;
+  border: 1px solid #3b6a8f;
+  border-bottom: 3px solid #3b8fd6;
+  color: #90b4c8;
   font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  margin-bottom: -3px;
+  position: relative;
+  z-index: 0;
+}
+
+.ui-tab:hover:not(.active) {
+  background: #3a6688;
+  color: #cce0f0;
 }
 
 .ui-tab.active {
-  background: #f8f9fa;
-  border-color: #999;
+  background: rgba(255, 255, 255, 0.96);
+  border-color: #3b8fd6;
+  border-bottom-color: rgba(255, 255, 255, 0.96);
+  color: #1a2f45;
+  font-weight: 700;
+  z-index: 1;
 }
 
 .ui-close {
-  width: 40px;
-  min-width: 40px;
-  border-radius: 8px;
-  background: white;
-  border: 1px solid #ccc;
-  color: #333;
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  align-self: center;
+  margin-bottom: 4px;
+  border-radius: 6px;
+  background: #2e5472;
+  border: 1px solid #3b6a8f;
+  color: #90b4c8;
   font-size: 18px;
   line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.ui-close:hover {
+  background: #3a6688;
+  color: #fff;
 }
 
 .ui-panel-body {
@@ -362,9 +392,8 @@ html, body, #root {
 
 /* Views tab */
 .viewpoint-fieldset {
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  padding: 10px;
+  border: none;
+  padding: 0;
   margin: 0;
   color: #333;
 }
@@ -373,7 +402,7 @@ html, body, #root {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 6px;
+  padding: 6px 0;
   border-radius: 8px;
   cursor: pointer;
   user-select: none;
@@ -1722,11 +1751,12 @@ button:disabled {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  width: min(280px, 86vw);
+  width: fit-content;
+  max-width: min(280px, 86vw);
 }
 
 .views-overlay {
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.60);
   border: 1px solid #ccc;
   border-radius: 12px;
   padding: 10px;
@@ -1797,19 +1827,21 @@ button:disabled {
   color: #333;
 }
 
-/* Turn event / death notification — non-blocking in-UI banner */
+/* Turn event / death notification — non-blocking in-UI banner.
+   Left edge clears the viewpoints panel (~177px); max-width keeps it
+   short enough that the close button stays visible even with the right
+   panel open. */
 .turn-notification {
   position: fixed;
   top: 56px; /* below topbar */
-  left: 50%;
-  transform: translateX(-50%);
+  left: 200px;
   z-index: 900;
   background: rgba(30, 30, 30, 0.93);
   color: #fff;
   border-radius: 10px;
   padding: 12px 16px 12px 20px;
   max-width: 480px;
-  width: calc(100vw - 32px);
+  width: calc(100vw - 212px);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
   display: flex;
   align-items: flex-start;
@@ -1818,8 +1850,8 @@ button:disabled {
 }
 
 @keyframes slideInDown {
-  from { opacity: 0; transform: translateX(-50%) translateY(-12px); }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0);    }
+  from { opacity: 0; transform: translateY(-12px); }
+  to   { opacity: 1; transform: translateY(0);     }
 }
 
 .turn-notification-body {

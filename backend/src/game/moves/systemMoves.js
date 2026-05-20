@@ -208,7 +208,7 @@ function applyPlantHealthAndMortality({ G, water, lightsAvailable }) {
     if (!Number.isFinite(Number(plant.health))) plant.health = 10;
 
     const species = plantSpecies[plant.type] || {};
-    const growthDays = Number(plant.growthDays || species.totalGrowthTime * 7 || 42);
+    const growthDays = Number(plant.growthDays || species.totalGrowthTime || 42);
     let healthPenalty = 0;
 
     if (nitrate < 3.0) {
@@ -243,7 +243,22 @@ function applyPlantHealthAndMortality({ G, water, lightsAvailable }) {
     }
 
     if (plant.health <= 0) {
-      plantDeaths.push({ id: String(plant.id ?? ''), type: String(plant.type ?? ''), age: Number(plant.age ?? 0) });
+      const reasons = [];
+      if (nitrate < 3.0) reasons.push('nitrate deficiency');
+      if (pH < 6.0 || pH > 7.5) reasons.push('pH out of range');
+      else if (pH < 6.2 || pH > 7.2) reasons.push('pH stress');
+      if (iron < 1.0) reasons.push('iron deficiency');
+      if (!lightsAvailable) reasons.push('insufficient lighting');
+      if (plant.age > growthDays * 2) reasons.push('over-aged');
+      else if (plant.age > growthDays * 1.5) reasons.push('aging');
+      if (G.activeEvent?.id === 'plantDiseaseOutbreak') reasons.push('plant disease');
+      if (reasons.length === 0) reasons.push('health decline');
+      plantDeaths.push({
+        id: String(plant.id ?? ''),
+        type: String(plant.type ?? ''),
+        age: Number(plant.age ?? 0),
+        reason: reasons.join(', '),
+      });
       plant._dead = true;
     }
   }
@@ -398,11 +413,25 @@ function applyDailyFishFeedingFromTank({ G, tank, water }) {
     }
 
     if (Number(fish.health) <= 0) {
+      const reasons = [];
+      if (daysUnfed >= 5) {
+        reasons.push('starvation');
+      } else {
+        if (ammonia >= 3.0) reasons.push('ammonia poisoning');
+        if (nitrite >= 2.0) reasons.push('nitrite toxicity');
+        if (oxygen <= 2.0) reasons.push('oxygen depletion');
+        if (Number(stress.overall || 0) > 0.5) reasons.push('water quality stress');
+        if (daysUnfed >= 2) reasons.push(`starvation (${daysUnfed}d unfed)`);
+        if (oldAgeDays > 0 && fish.age > oldAgeDays + 30) reasons.push('old age');
+        if (G.activeEvent?.id === 'fishDiseaseOutbreak') reasons.push('fish disease');
+      }
+      if (reasons.length === 0) reasons.push('health decline');
       fishDeaths.push({
         id: String(fish.id ?? ''),
         type: String(fish.type ?? ''),
         age: Number(fish.age ?? 0),
         weight: Number(fish.weight ?? 0),
+        reason: reasons.join(', '),
       });
       fish._dead = true;
     }
@@ -936,12 +965,13 @@ const systemMoves = {
     const waterSnapshots = [];
 
     for (let i = 0; i < days; i++) {
-      // Days 2+ of a multi-day progress: auto-feed fish from inventory so players
-      // don't have to manually re-feed between turns when using "Progress 3 Days".
-      // Day 1 uses whatever the player manually put in the tank before pressing the button.
-      if (i > 0 && Array.isArray(G.fish) && G.fish.length > 0 && Number(G.fishFood) > 0) {
+      // Auto-feed fish from inventory each day the tank is empty.
+      // This covers all days of "Progress 3 Days" — including day 1 — so the player
+      // does not need a separate feedFish move before pressing Progress 3 Days.
+      // If the player already manually fed (tank has food), that food is used as-is.
+      if (Array.isArray(G.fish) && G.fish.length > 0 && Number(G.fishFood) > 0) {
         const tank = G.aquaponicsSystem?.tank;
-        if (tank) {
+        if (tank && (tank.foodInTank || 0) <= 0) {
           const dailyNeed = G.fish.reduce((sum, fish) => {
             const sk = String(fish?.type || '').toLowerCase();
             const sp = fishSpecies[sk] || fishSpecies.tilapia;
@@ -949,7 +979,7 @@ const systemMoves = {
           }, 0);
           const feedAmt = Math.min(Math.ceil(dailyNeed), Number(G.fishFood));
           if (feedAmt > 0) {
-            tank.foodInTank = clampNumber((tank.foodInTank || 0) + feedAmt, 0, 1e9);
+            tank.foodInTank = clampNumber(feedAmt, 0, 1e9);
             G.fishFood = Math.max(0, G.fishFood - feedAmt);
           }
         }

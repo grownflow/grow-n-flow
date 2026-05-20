@@ -3,7 +3,7 @@
 
 const { plantSpecies } = require('../data/plantSpecies');
 
-const DEFAULT_MAX_PLANT_SLOTS = 4 * 9 + 2 * 4 * 11;
+const DEFAULT_MAX_PLANT_SLOTS = 4 * 9 + 4 * 15 + 4 * 11; // bed1:36 + bed2:60 + bed3:44 = 140
 
 function resolveMaxPlantSlots(G, slotCount) {
   const parsedSlotCount = Number(slotCount);
@@ -51,8 +51,6 @@ const plantMoves = {
 
     G.money -= cost;
 
-    // Total growth time in days (weeks * 7)
-    
     const occupiedSlots = buildOccupiedSlotSet(G.plants);
     let slotIndex = 0;
     while (occupiedSlots.has(slotIndex) && slotIndex < maxPlantSlots) {
@@ -65,7 +63,7 @@ const plantMoves = {
       return;
     }
 
-    const totalGrowthDays = (species.totalGrowthTime || 6) * 7;
+    const totalGrowthDays = species.totalGrowthTime || 6;
 
     G.plants.push({
       id: `plant_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
@@ -150,7 +148,7 @@ const plantMoves = {
     }
     G.money -= totalCost;
 
-    const totalGrowthDays = (species.totalGrowthTime || 6) * 7;
+    const totalGrowthDays = species.totalGrowthTime || 6;
     const now = Date.now();
     for (let i = 0; i < freeSlotIndices.length; i++) {
       const slotIndex = freeSlotIndices[i];

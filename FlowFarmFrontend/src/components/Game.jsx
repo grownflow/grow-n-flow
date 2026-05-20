@@ -1,5 +1,23 @@
 // src/components/Game.jsx
 import React, { useState, useEffect, useRef } from 'react';
+
+// Groups deaths by reason, counts by species type within each reason.
+// Example output: "3× tilapia (ammonia poisoning), 1× catfish (old age)"
+function summarizeDeaths(deaths, defaultType) {
+  const counts = {};
+  for (const d of deaths) {
+    const type = d?.type || defaultType;
+    const reason = d?.reason || 'health decline';
+    const key = `${type}||${reason}`;
+    counts[key] = (counts[key] || 0) + 1;
+  }
+  return Object.entries(counts)
+    .map(([key, n]) => {
+      const [type, reason] = key.split('||');
+      return n > 1 ? `${n}× ${type} (${reason})` : `${type} (${reason})`;
+    })
+    .join(', ');
+}
 import gameAPI from '../services/gameAPI';
 import soundManager from '../services/soundManager';
 import { PLANT_SLOT_COUNT } from '../config/plantSlots';
@@ -196,13 +214,13 @@ function Game({ onTitleClick }) {
     gameAPI.plantSeed(plantType, bedLocation, PLANT_SLOT_COUNT);
   };
 
-  const handleBuyAllSeeds = async (plantType) => {
+  const handleBuyAllSeeds = async (plantType, seedCost) => {
     if (!gameState?.G) return;
 
     const maxPlantSlots = Math.max(gameState.G.maxPlantSlots || 0, PLANT_SLOT_COUNT);
     const openSlots = Math.max(0, maxPlantSlots - (gameState.G.plants?.length || 0));
-    const seedCost = 0.3;
-    const affordableCount = Math.floor((gameState.G.money || 0) / seedCost);
+    const costPerSeed = Number(seedCost) > 0 ? Number(seedCost) : 0.3;
+    const affordableCount = Math.floor((gameState.G.money || 0) / costPerSeed);
     const buyCount = Math.min(openSlots, affordableCount);
 
     if (buyCount <= 0) return;
@@ -262,11 +280,13 @@ function Game({ onTitleClick }) {
 
   const handleProgressTurn = () => {
     console.log('[Game] handleProgressTurn clicked');
+    soundManager.play('progressDay');
     gameAPI.progressTurn();
   };
 
   const handleProgress3Days = async () => {
     console.log('[Game] handleProgress3Days clicked');
+    soundManager.play('progress3Days');
     setLoading(true);
     try {
       await gameAPI.progressMultipleTurns(3);
@@ -351,26 +371,12 @@ function Game({ onTitleClick }) {
 
     const fishDeaths = Array.isArray(action?.fishDeaths) ? action.fishDeaths : [];
     if (fishDeaths.length > 0) {
-      const lines = fishDeaths
-        .map((d) => {
-          const type = d?.type ? String(d.type) : 'fish';
-          const id = d?.id ? String(d.id) : '';
-          return id ? `${type} (${id})` : type;
-        })
-        .filter(Boolean);
-      messages.push(`Fish died: ${lines.join(', ')}`);
+      messages.push(`Fish died: ${summarizeDeaths(fishDeaths, 'fish')}`);
     }
 
     const plantDeaths = Array.isArray(action?.plantDeaths) ? action.plantDeaths : [];
     if (plantDeaths.length > 0) {
-      const lines = plantDeaths
-        .map((d) => {
-          const type = d?.type ? String(d.type) : 'plant';
-          const id = d?.id ? String(d.id) : '';
-          return id ? `${type} (${id})` : type;
-        })
-        .filter(Boolean);
-      messages.push(`Plants lost: ${lines.join(', ')}`);
+      messages.push(`Plants lost: ${summarizeDeaths(plantDeaths, 'plant')}`);
     }
 
     if (action?.eventTriggered) {

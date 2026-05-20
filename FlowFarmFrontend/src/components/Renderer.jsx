@@ -13,14 +13,24 @@ const DEFAULT_FISH_SCALE = 0.3;
 const DEFAULT_PLANT_ASSET = 'plants/lettuce1.glb';
 const DEFAULT_PLANT_SCALE = 1;
 
+// Derive a valid X3D DEF name from an asset path (e.g. "plants/basil.glb" → "PLANT_plants_basil_glb").
+// DEF names must start with a letter and contain only alphanumerics and underscores.
+function assetDefName(prefix, assetPath) {
+  return prefix + '_' + assetPath.replace(/[^a-zA-Z0-9]/g, '_');
+}
+
 export default function Renderer({ gameState, onPicked }) {
   const plants = gameState?.G?.plants || [];
   const fish = gameState?.G?.fish || [];
 
-  // Both plants and fish are rendered directly from the live game-state arrays.
-  // Using entity.id as the React key means only the dead entity's <transform> node
-  // is unmounted when it dies — surviving nodes are never touched, so X3DOM's
-  // MutationObserver never fires and no inline assets are reloaded.
+  // DEF/USE library pattern: one <inline def=NAME url=...> per unique asset lives in a
+  // scale="0 0 0" transform (invisible but loaded). Every entity instance uses
+  // <inline use=NAME> only — no URL on instance nodes.
+  // This avoids the fragile first-occurrence pattern where the DEF node could be
+  // unmounted (on fish/plant death) in the same React commit that promotes a USE
+  // node to DEF, leaving X3DOM with a briefly-dangling USE reference.
+  const uniquePlantAssets = [...new Set(plants.map(p => p.renderAsset || DEFAULT_PLANT_ASSET))];
+  const uniqueFishAssets  = [...new Set(fish.map(f => f.renderAsset || FISH_ASSET_BY_TYPE[f.type] || DEFAULT_FISH_ASSET))];
 
   return (
     <X3DViewer assetPath="MainSceneb.x3d" onPicked={onPicked}>
@@ -90,6 +100,19 @@ export default function Renderer({ gameState, onPicked }) {
         fieldofview="0.78540"
         description="Bed 3"
       />
+      {/* Asset library — one DEF per unique asset, hidden via scale="0 0 0".
+          All entity instances below reference these via USE only. */}
+      {(uniquePlantAssets.length > 0 || uniqueFishAssets.length > 0) && (
+        <transform scale="0 0 0">
+          {uniquePlantAssets.map(asset => (
+            <inline key={assetDefName('PLANT', asset)} def={assetDefName('PLANT', asset)} url={`"${asset}"`} />
+          ))}
+          {uniqueFishAssets.map(asset => (
+            <inline key={assetDefName('FISH', asset)} def={assetDefName('FISH', asset)} url={`"${asset}"`} />
+          ))}
+        </transform>
+      )}
+
       <transform>
         {plants.map((plant) => {
           if (!plant || plant.slotIndex == null) return null;
@@ -106,7 +129,7 @@ export default function Renderer({ gameState, onPicked }) {
               translation={`${slot.x} ${slot.y} ${slot.z}`}
               scale={`${plantScale} ${plantScale} ${plantScale}`}
             >
-              <inline url={`"${plantAsset}"`} />
+              <inline use={assetDefName('PLANT', plantAsset)} />
             </transform>
           );
         })}
@@ -134,7 +157,7 @@ export default function Renderer({ gameState, onPicked }) {
               scale={fishScale}
               rotation="0 1 0 0"
             >
-              <inline url={`"${assetPath}"`} />
+              <inline use={assetDefName('FISH', assetPath)} />
             </transform>
           </transform>
         );

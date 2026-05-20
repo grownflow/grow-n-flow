@@ -64,7 +64,7 @@ const PlantsSection = ({gameState, loading, handleHarvestPlant, handleHarvestAll
                                 {bedFull ? `Bed Full (Max ${maxPlantSlots})` : 'Plant 1'}
                             </button>
                             <button
-                                onClick={() => handleBuyAllSeeds(key)}
+                                onClick={() => handleBuyAllSeeds(key, seedCost)}
                                 disabled={loading || buyAllCount <= 0}
                                 className="btn-secondary btn-sm"
                             >
@@ -90,7 +90,10 @@ const PlantsSection = ({gameState, loading, handleHarvestPlant, handleHarvestAll
             <div className="plants-info">
                 {plantDeaths.length > 0 && (
                     <div className="plants-warning" style={{ marginBottom: 10, padding: 10, background: '#fff4e5', border: '1px solid #ffdca8', borderRadius: 8 }}>
-                        <strong>Plant losses:</strong> {plantDeaths.map((d) => d?.type || 'plant').join(', ')}
+                        <strong>Plant losses:</strong>{' '}
+                        {plantDeaths.map((d) =>
+                          d?.reason ? `${d.type || 'plant'} (${d.reason})` : d?.type || 'plant'
+                        ).join(', ')}
                     </div>
                 )}
                 {G.plants && G.plants.length > 0 ? (
