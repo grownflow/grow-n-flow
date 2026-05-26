@@ -162,6 +162,17 @@ Let's inspect the rate of health decline for both fish and plants and find a rea
 We are still seeing issues in the plant and fish stocks not updating properly in the game state or the 3D renderer. Please  trace the events and logic for truth and consistency.
 
 
+Let's check that fish and plant health can increase when good system paramaters are maintained.
+cck
+
+
+....
+
+There is no game path for a Partial water change move- is it necessary?
+
+
+
+
 
 
 📜 Recent History (from day 80)

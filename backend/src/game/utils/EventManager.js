@@ -18,11 +18,19 @@ class EventManager {
       return null;
     }
 
+    const hasFish   = Array.isArray(G.fish)   && G.fish.length   > 0;
+    const hasPlants = Array.isArray(G.plants) && G.plants.length > 0;
+
     // Roll for each possible event. Shuffle first so no event is systematically
     // preempted by earlier entries.
     const eventKeys = Object.keys(EVENTS).sort(() => Math.random() - 0.5);
     for (const key of eventKeys) {
       const event = EVENTS[key];
+
+      // Skip events that require entities the player doesn't currently have.
+      if (event.requiresFish   && !hasFish)   continue;
+      if (event.requiresPlants && !hasPlants) continue;
+
       if (Math.random() < event.probability) {
         // Return the raw event definition — the caller decides whether to store
         // it as pending (TECHNICAL) or trigger it immediately (SOCIAL).

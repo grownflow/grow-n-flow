@@ -37,7 +37,8 @@ const EVENTS = {
     },
     duration: 1,
     probability: 0.04,        // reduced from 0.06
-    severity: 'high'
+    severity: 'high',
+    requiresFish: true
   },
 
   nitriteSpike: {
@@ -52,7 +53,8 @@ const EVENTS = {
     },
     duration: 1,
     probability: 0.03,        // reduced from 0.05
-    severity: 'high'
+    severity: 'high',
+    requiresFish: true
   },
 
   lowDissolvedOxygen: {
@@ -86,7 +88,8 @@ const EVENTS = {
     },
     duration: 2,
     probability: 0.015,       // reduced from 0.02
-    severity: 'high'
+    severity: 'high',
+    requiresFish: true
   },
 
   plantDiseaseOutbreak: {
@@ -104,7 +107,8 @@ const EVENTS = {
     },
     duration: 3,
     probability: 0.015,       // reduced from 0.02
-    severity: 'medium'
+    severity: 'medium',
+    requiresPlants: true
   },
 
   pHCrash: {
@@ -164,7 +168,8 @@ const EVENTS = {
     duration: 999,
     probability: 0.03,        // reduced from 0.05
     severity: 'medium',
-    repairCost: 50
+    repairCost: 50,
+    requiresFish: true
   }
 };
 

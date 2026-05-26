@@ -12,6 +12,29 @@ function clampNumber(value, min, max) {
   return Math.max(min, Math.min(max, n));
 }
 
+// Maximum ammonia the biofilter can process per day at 100% efficiency (ppm/day).
+// At the default 80% starting efficiency the effective capacity is 2.0 ppm/day,
+// which comfortably handles 5 tilapia (~0.77 ppm/day) with room to grow to
+// ~13 fish before the player needs to purchase biofilter upgrades.
+const BASE_BIOFILTER_CAPACITY = 2.5;
+
+// Estimate daily ammonia production from the current fish population.
+// Formula must stay in sync with the feeding-waste calculation in
+// applyDailyFishFeedingFromTank so capacity alerts reflect actual chemistry.
+function estimateDailyAmmoniaLoad(fishArray) {
+  if (!Array.isArray(fishArray) || fishArray.length === 0) return 0;
+  let total = 0;
+  for (const fish of fishArray) {
+    if (!fish) continue;
+    const sk = String(fish.type || '').toLowerCase();
+    const sp = fishSpecies[sk] || fishSpecies.tilapia;
+    const rate = Number(fish.ammoniaProductionRate ?? sp.ammoniaProductionRate ?? 0.1);
+    const fcr  = Number(fish.foodConsumptionRate  ?? sp.foodConsumptionRate  ?? 0.2);
+    total += fcr * (0.25 + 0.15 * rate) + rate * 1.0;
+  }
+  return total;
+}
+
 function ensureTankAndWaterState(G) {
   if (!G.aquaponicsSystem) {
     G.aquaponicsSystem = { tank: {}, growBeds: {}, light: { isOn: true } };
@@ -179,6 +202,21 @@ function createSystemAlerts({ water, tank, G }) {
 
   if (G && Array.isArray(G.fish) && G.fish.length === 0 && water.nitrate < 5.0) {
     alerts.push('Low nitrate with no fish present indicates insufficient nutrient production or too much plant biomass.');
+  }
+
+  // Biofilter capacity check — warn before ammonia starts to build.
+  // Only relevant once there are fish generating waste.
+  if (G && Array.isArray(G.fish) && G.fish.length > 0) {
+    const dailyLoad = estimateDailyAmmoniaLoad(G.fish);
+    const bioCapacity = BASE_BIOFILTER_CAPACITY * clampNumber(tank.biofilterEfficiency ?? 0.8, 0, 1);
+    if (bioCapacity > 0) {
+      const loadPct = Math.round((dailyLoad / bioCapacity) * 100);
+      if (loadPct > 100) {
+        alerts.push(`Biofilter is over capacity (${loadPct}% — producing ${dailyLoad.toFixed(2)} ppm/day, capacity ${bioCapacity.toFixed(2)} ppm/day). Ammonia will keep rising until you apply biofilter units or reduce fish load.`);
+      } else if (loadPct >= 80) {
+        alerts.push(`Biofilter is at ${loadPct}% capacity (${dailyLoad.toFixed(2)}/${bioCapacity.toFixed(2)} ppm/day). Purchase and apply a biofilter unit before adding more fish.`);
+      }
+    }
   }
 
   // Starvation warning — fires before the fatal day-5 threshold so the player can act.
@@ -529,26 +567,32 @@ function estimateDailyAmmoniaFromFish(fishArray) {
 }
 
 function applyNitrificationStep({ water, biofilterEfficiency, circulationStopped, circulationEfficiency }) {
-  // Simple 1-day step: ammonia -> nitrite -> nitrate.
-  // Keep ammonia/nitrite persistent (do NOT zero them out).
+  // Capacity-based model: a mature biofilter removes up to `capacity` ppm/day.
+  // Within capacity → ammonia and nitrite drain to near-zero each day (matching
+  // real aquaponics behaviour once the nitrogen cycle is established).
+  // Over capacity → excess accumulates until the player upgrades the biofilter.
+  // Spikes from events or dead-fish decay still temporarily raise levels, but a
+  // healthy system recovers within 1-2 days rather than climbing indefinitely.
   const eff = clampNumber(biofilterEfficiency, 0, 1);
-  const circulationMult = circulationStopped ? 0.15 : 1.0;
+  const circulationMult = circulationStopped ? 0.15 : 1.0; // pump failure guts throughput
   const circEff = clampNumber(circulationEfficiency ?? 1.0, 0.5, 2.0);
   const oxygenFactor = water.dissolvedOxygen < 5.0 ? clampNumber(water.dissolvedOxygen / 5.0, 0.1, 1.0) : 1.0;
-  const k = 0.80 * eff * circulationMult * circEff * oxygenFactor; // fraction converted per day
 
-  const ammoniaToNitrite = Math.min(water.ammonia, water.ammonia * k);
+  // Effective capacity this turn (ppm removed per day)
+  const capacity = BASE_BIOFILTER_CAPACITY * eff * circulationMult * circEff * oxygenFactor;
+
+  const ammoniaToNitrite = Math.min(water.ammonia, capacity);
   water.ammonia = Math.max(0, water.ammonia - ammoniaToNitrite);
   water.nitrite += ammoniaToNitrite;
 
-  const nitriteToNitrate = Math.min(water.nitrite, water.nitrite * k);
+  const nitriteToNitrate = Math.min(water.nitrite, capacity);
   water.nitrite = Math.max(0, water.nitrite - nitriteToNitrate);
   water.nitrate += nitriteToNitrate;
 
   // Nitrification acidifies water a bit.
   water.pH = clampNumber(water.pH - 0.01 * (ammoniaToNitrite + nitriteToNitrate), 6.0, 8.0);
 
-  return { ammoniaToNitrite, nitriteToNitrate, k };
+  return { ammoniaToNitrite, nitriteToNitrate, capacity };
 }
 
 function applyPlantNitrateUptake({ G, water, lightsAvailable }) {
@@ -818,7 +862,7 @@ function runOneTurn(G, { skipPromotion = false } = {}) {
         ammoniaToNitrite: Number(nitrification.ammoniaToNitrite.toFixed(3)),
         nitriteToNitrate: Number(nitrification.nitriteToNitrate.toFixed(3)),
         nitrateUptake: Number((uptake.nitrateUptake || 0).toFixed(3)),
-        effectiveConversionFraction: Number(nitrification.k.toFixed(3))
+        biofilterCapacity: Number(nitrification.capacity.toFixed(3))
       },
       fishFeeding: {
         tankFoodBefore: dailyFeeding.tankFoodBefore,

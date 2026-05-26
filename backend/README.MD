@@ -161,16 +161,19 @@ Grow-n-Flow simulates a recirculating aquaponics system where fish waste feeds p
 
 ### Nitrogen Cycle
 
-Fish excrete ammonia, which a biofilter colony converts first to nitrite (toxic) and then to nitrate (plant fertilizer). Each day the simulation applies:
+Fish excrete ammonia, which a biofilter colony converts first to nitrite (toxic) and then to nitrate (plant fertilizer). The simulation uses a **capacity-based model** that matches real aquaponics behaviour: a mature biofilter removes up to its full daily capacity each turn, so ammonia and nitrite stay near zero as long as fish load is within limits. Only when production exceeds capacity does ammonia accumulate.
 
 ```
-k = 0.80 × biofilterEfficiency × circulationEfficiency × oxygenFactor
-ammonia converted to nitrite = ammonia × k
-nitrite converted to nitrate  = nitrite  × k
+capacity = BASE_BIOFILTER_CAPACITY × biofilterEfficiency × circulationEfficiency × oxygenFactor
+
+ammonia removed = min(ammonia, capacity)
+nitrite removed = min(nitrite, capacity)
 ```
 
-- Default biofilter efficiency: **80%** (k ≈ 0.64/day)
-- Maximum biofilter efficiency: **100%** (k = 0.80/day)
+- `BASE_BIOFILTER_CAPACITY` = **2.5 ppm/day** at 100% efficiency
+- Default biofilter efficiency: **80%** → effective capacity **2.0 ppm/day**
+- Maximum biofilter efficiency: **100%** → effective capacity **2.5 ppm/day**
+- Pump failure reduces throughput to 15% of normal (bacteria need circulation)
 - Nitrification is suppressed when dissolved oxygen drops below 5.0 mg/L
 - Nitrification slightly acidifies the water (−0.01 pH per mg/L converted)
 
@@ -180,7 +183,7 @@ nitrite converted to nitrate  = nitrite  × k
 ammoniaDelta = portion × (0.25 + 0.15 × ammoniaRate) + ammoniaRate × 1.0
 ```
 
-`ammoniaRate` is the species-specific coefficient (tilapia 0.10, barramundi 0.08, catfish 0.11). With 5 tilapia fully fed (each consuming 0.2 food units/day), this produces roughly **0.77 ppm/day** total (5 × [0.2 × (0.25 + 0.015) + 0.10]). At default biofilter efficiency (k ≈ 0.64/day), ammonia reaches a steady state of ~0.43 ppm — safely below the 1.0 mg/L alert threshold. Nitrate starts at **5 mg/L** (the game's initial default) and builds as the nitrogen cycle matures (net of plant uptake).
+`ammoniaRate` is the species-specific coefficient (tilapia 0.10, barramundi 0.08, catfish 0.11). With 5 tilapia fully fed (each consuming 0.2 food units/day), this produces roughly **0.77 ppm/day** total (5 × [0.2 × (0.25 + 0.015) + 0.10]) — well within the 2.0 ppm/day default capacity, so ammonia stays at 0. A player can add up to ~13 tilapia before approaching capacity; beyond that, purchasing biofilter units raises efficiency (and therefore capacity) up to the 2.5 ppm/day maximum. Nitrate starts at **5 mg/L** (the game's initial default) and builds steadily as the nitrogen cycle matures (net of plant uptake).
 
 **Safe target ranges:**
 

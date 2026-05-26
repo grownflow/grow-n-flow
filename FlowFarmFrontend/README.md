@@ -61,6 +61,47 @@ Basic workflow:
 
 ---
 
+## Simulation Overview
+
+### Nitrogen Cycle
+
+Fish produce ammonia as waste. A biofilter colony of nitrifying bacteria converts ammonia → nitrite → nitrate each game day. Plants absorb nitrate as fertilizer, completing the cycle.
+
+The simulation uses a **capacity-based biofilter model**: the biofilter removes up to its rated capacity (ppm/day) each turn. As long as your fish load stays within that capacity, ammonia and nitrite remain near zero — only nitrate builds up over time (which is the normal, healthy state of an established aquaponics system). Ammonia and nitrite only accumulate when:
+
+- Fish load exceeds biofilter capacity (too many fish or not enough biofilter)
+- The pump fails (reduces throughput to ~15%)
+- The biofilter clogs (reduces efficiency by 50%)
+- An event spikes water chemistry directly (disease, ammonia surge)
+
+**Default capacity:** 2.0 ppm/day (80% efficiency × 2.5 ppm/day base). This handles ~13 tilapia before capacity alerts appear. Purchasing and applying biofilter units raises efficiency toward 100% (2.5 ppm/day maximum).
+
+### Biofilter Capacity Alerts
+
+The system alerts panel will warn you when:
+
+| Load | Alert |
+|------|-------|
+| ≥ 80% | "Purchase a biofilter unit before adding more fish" |
+| > 100% | "Ammonia will keep rising — apply biofilter units or reduce fish load" |
+
+### Water Chemistry Targets
+
+| Parameter | Safe Range | Danger Threshold |
+|-----------|------------|------------------|
+| Ammonia | < 1.0 mg/L | ≥ 2.0 mg/L |
+| Nitrite | < 0.5 mg/L | ≥ 1.0 mg/L |
+| Nitrate | 5–80 mg/L | < 1.0 mg/L |
+| pH | 6.5–7.5 | < 6.5 or > 7.5 |
+| Dissolved Oxygen | ≥ 5.0 mg/L | < 4.0 mg/L |
+| Iron | ≥ 1.0 mg/L | < 1.0 mg/L |
+
+### Events
+
+Events are blocked for the first 7 game days (grace period). After that, technical events (water leaks, pump failures, disease outbreaks) are announced one day in advance as a **Pending Event**, giving you one turn to prepare before effects apply. Fish-specific events (disease, ammonia spike) only trigger when fish are present; plant-specific events only trigger when plants are growing.
+
+---
+
 ## Backend Integration
 - The frontend relies on the backend API (see `../gnf-backend/README.MD` for backend setup).
 - Make sure CORS is enabled on the backend (package is included by default).
