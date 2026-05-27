@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-const FishTankSection = ({gameState, loading, handleAddFish, handleSellFish, handleFeedFish, feedFishStatus}) => {
+const FishTankSection = ({gameState, loading, handleAddFish, handleSellFish, handleFeedFish, feedFishStatus, handleSetAutoFeed}) => {
 
     const [feedAmount, setFeedAmount] = useState(10);
 
@@ -8,7 +8,7 @@ const FishTankSection = ({gameState, loading, handleAddFish, handleSellFish, han
         return;
     }
 
-    const { G, ctx } = gameState;
+    const { G } = gameState;
 
     const tank = G?.aquaponicsSystem?.tank;
     const water = tank?.water;
@@ -41,6 +41,23 @@ const FishTankSection = ({gameState, loading, handleAddFish, handleSellFish, han
             <div className="tank-info" style={{ marginTop: 8 }}>
                 <p style={{ margin: 0 }}>
                     <strong>Fish food (inventory):</strong> {Math.floor(Number(G.fishFood) || 0)}
+                    {' '}
+                    <button
+                        onClick={() => handleSetAutoFeed && handleSetAutoFeed(G.autoFeed === false ? true : false)}
+                        style={{ marginLeft: 8, padding: '1px 8px', fontSize: 12, cursor: 'pointer',
+                            background: G.autoFeed === false ? '#555' : '#2a7a2a',
+                            color: '#fff', border: 'none', borderRadius: 4 }}
+                        title={G.autoFeed === false
+                            ? 'Auto-feed is OFF — fish must be fed manually each day before Progress'
+                            : 'Auto-feed is ON — one day\'s food is drawn from inventory automatically on each Progress'}
+                    >
+                        Auto-feed: {G.autoFeed === false ? 'OFF' : 'ON'}
+                    </button>
+                    {G.autoFeed !== false && Math.floor(Number(G.fishFood) || 0) === 0 && fishArray.length > 0 && (
+                        <span style={{ marginLeft: 8, color: '#c0392b', fontSize: 12 }}>
+                            ⚠ No food in inventory — buy Fish Food from Market
+                        </span>
+                    )}
                 </p>
                 <p style={{ margin: 0 }}>
                     <strong>Tank food (in water):</strong> {Number(tank?.foodInTank ?? 0).toFixed(2)}

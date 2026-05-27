@@ -179,3 +179,11 @@ There is no game path for a Partial water change move- is it necessary?
 nitrite Spike:  Day 79
 ammonia Spike: Day 73
 p H Crash: Day 69
+
+
+
+Let's work on some bugs. First, about Pop-up alerts
+I got an alert that I had a plant disease issue without any plants growing in the system!  Check to trigger certain popups only if you actually have certain activities or species growing.
+
+
+Let's consider the flow of game play: there is an issue where Alarms go off but the player can’t address them same day – its confusing.

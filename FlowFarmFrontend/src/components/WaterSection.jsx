@@ -220,8 +220,9 @@ const WaterSection = ({gameState, loading}) => {
                         value={water.nitrate}
                         unit="ppm"
                         decimals={2}
-                        rangeWarning={{ low: 20, high: 100 }}
-                        idealLabel="20–100"
+                        rangeWarning={{ low: 5, high: 80 }}
+                        rangeDanger={{ low: 1 }}
+                        idealLabel="5–80"
                     />
                 </div>
 
@@ -260,8 +261,9 @@ const WaterSection = ({gameState, loading}) => {
                         value={water.pH}
                         unit=""
                         decimals={1}
-                        rangeWarning={{ low: 6.5, high: 7.0 }}
-                        idealLabel="6.5–7.0"
+                        rangeWarning={{ low: 6.5, high: 7.5 }}
+                        rangeDanger={{ low: 6.2, high: 7.8 }}
+                        idealLabel="6.5–7.5"
                     />
                     <WaterStat
                         label="Temperature"
@@ -463,7 +465,7 @@ const WaterTrendChart = ({ title, data, series = DEFAULT_NH_SERIES, showDeaths =
     );
 };
 
-const WaterStat = ({ label, value, unit, decimals = 2, thresholds, rangeWarning, idealLabel, invertWarning }) => {
+const WaterStat = ({ label, value, unit, decimals = 2, thresholds, rangeWarning, rangeDanger, idealLabel, invertWarning }) => {
     let statusClass = '';
 
     if (thresholds && !invertWarning) {
@@ -472,20 +474,23 @@ const WaterStat = ({ label, value, unit, decimals = 2, thresholds, rangeWarning,
         else if (value >= thresholds.warning) statusClass = 'warning';
         else statusClass = 'good';
     } else if (thresholds && invertWarning) {
-        // Lower is worse (dissolved oxygen, nitrate in useful range)
+        // Lower is worse (dissolved oxygen, iron)
         if (value <= thresholds.danger) statusClass = 'danger';
         else if (value <= thresholds.warning) statusClass = 'warning';
         else statusClass = 'good';
     } else if (rangeWarning) {
-        // Outside range is bad (pH, temperature)
-        if (value < rangeWarning.low || value > rangeWarning.high) statusClass = 'warning';
+        // Outside range is problematic (pH, temperature, nitrate)
+        const belowDanger = rangeDanger?.low != null && value < rangeDanger.low;
+        const aboveDanger = rangeDanger?.high != null && value > rangeDanger.high;
+        if (belowDanger || aboveDanger) statusClass = 'danger';
+        else if (value < rangeWarning.low || value > rangeWarning.high) statusClass = 'warning';
         else statusClass = 'good';
     }
 
     const displayValue = typeof value === 'number' ? value.toFixed(decimals) : value;
 
     return (
-        <div className="stat-item">
+        <div className={`stat-item${statusClass ? ` stat-${statusClass}` : ''}`}>
             <label>{label}</label>
             <span className={statusClass}>
                 {displayValue} {unit}

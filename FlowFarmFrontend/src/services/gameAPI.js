@@ -161,6 +161,7 @@ class GameAPI {
   progressTurn() { return this.makeMove('progressTurn', []); }
   progressMultipleTurns(count = 3) { return this.makeMove('progressMultipleTurns', [count]); }
   repairSystem() { return this.makeMove('repairSystem', []); }
+  setAutoFeed(enabled) { return this.makeMove('setAutoFeed', [Boolean(enabled)]); }
 
   disconnect() {
     this.stopPolling();

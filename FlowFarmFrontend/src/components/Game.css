@@ -895,6 +895,10 @@ button:disabled {
   color: #28a745;
 }
 
+.stat-item.stat-danger  { border-color: #dc3545; background: rgba(220, 53, 69, 0.05); }
+.stat-item.stat-warning { border-color: #ffc107; background: rgba(255, 193, 7, 0.05); }
+.stat-item.stat-good    { border-color: #28a745; background: rgba(40, 167, 69, 0.05); }
+
 .stat-ideal {
   font-size: 11px;
   color: #adb5bd;
@@ -1894,4 +1898,77 @@ button:disabled {
 
 .turn-notification-close:hover {
   background: rgba(255,255,255,0.15);
+}
+
+/* === Tutorial banner === */
+.tutorial-banner {
+  position: fixed;
+  bottom: 16px;
+  left: 200px;
+  z-index: 800;
+  background: rgba(15, 60, 15, 0.95);
+  color: #e8f5e9;
+  border: 1px solid #4caf50;
+  border-radius: 10px;
+  padding: 10px 14px;
+  max-width: 500px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  animation: slideInUp 0.3s ease;
+}
+
+@keyframes slideInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.tutorial-step-label {
+  font-size: 0.7rem;
+  color: #81c784;
+  font-weight: 700;
+  white-space: nowrap;
+  border: 1px solid #4caf50;
+  border-radius: 4px;
+  padding: 2px 7px;
+}
+
+.tutorial-message {
+  flex: 1;
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.tutorial-tab-link {
+  background: none;
+  border: none;
+  color: #81c784;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.tutorial-tab-link:hover {
+  color: #a5d6a7;
+}
+
+.tutorial-skip {
+  background: none;
+  border: 1px solid rgba(255,255,255,0.25);
+  color: #aaa;
+  border-radius: 4px;
+  padding: 2px 9px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.tutorial-skip:hover {
+  background: rgba(255,255,255,0.1);
+  color: #fff;
 }

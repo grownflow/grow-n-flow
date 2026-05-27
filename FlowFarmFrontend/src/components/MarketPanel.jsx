@@ -59,6 +59,14 @@ const MarketPanel = ({ gameState, loading, matchId }) => {
 
   const pretty = (key) => String(key || '').replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim();
 
+  const BIOFILTER_EDUCATION = (
+    <div style={{ marginTop: 6, padding: '8px 10px', background: 'rgba(40,167,69,0.08)', borderRadius: 6, border: '1px solid #28a74544', fontSize: 12, lineHeight: 1.5, color: '#1a3a1a' }}>
+      <strong>How the biofilter works:</strong> Fish waste produces ammonia. Nitrifying bacteria in the biofilter convert it to harmless nitrate (which fertilizes your plants). Each unit you apply permanently boosts biofilter efficiency by +5%, up to a maximum of 100% (2.5 ppm/day capacity).
+      <br />
+      <strong>When to buy:</strong> The Water tab will alert you when your fish load reaches 80% of capacity — buy and apply a unit before adding more fish. You start with 1 free unit in your inventory; go to the Water tab → Supplements to apply it.
+    </div>
+  );
+
   const getQty = (key) => {
     const q = Math.floor(Number(quantities[key] ?? 1) || 1);
     return Math.max(1, q);
@@ -134,6 +142,7 @@ const MarketPanel = ({ gameState, loading, matchId }) => {
                   {item.description && (
                     <div className="market-item-desc" title={item.description}>{item.description}</div>
                   )}
+                  {item.key === 'biofilter' && BIOFILTER_EDUCATION}
                 </div>
 
                 <div className="market-item-actions">

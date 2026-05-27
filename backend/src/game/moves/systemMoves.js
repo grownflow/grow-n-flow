@@ -713,6 +713,23 @@ function runOneTurn(G, { skipPromotion = false } = {}) {
       });
     }
 
+    // Auto-feed: draw one day's supply from inventory into the tank when enabled
+    // and no food is already waiting (manual feed takes precedence).
+    if (G.autoFeed !== false && Array.isArray(G.fish) && G.fish.length > 0 && Number(G.fishFood) > 0) {
+      if ((tank.foodInTank || 0) <= 0) {
+        const dailyNeed = G.fish.reduce((sum, fish) => {
+          const sk = String(fish?.type || '').toLowerCase();
+          const sp = fishSpecies[sk] || fishSpecies.tilapia;
+          return sum + clampNumber(fish.foodConsumptionRate ?? sp.foodConsumptionRate ?? 0.2, 0.05, 10);
+        }, 0);
+        const feedAmt = Math.min(Math.ceil(dailyNeed), Number(G.fishFood));
+        if (feedAmt > 0) {
+          tank.foodInTank = clampNumber(feedAmt, 0, 1e9);
+          G.fishFood = Math.max(0, G.fishFood - feedAmt);
+        }
+      }
+    }
+
     // Fish eat from tank food pool. Leftovers remain in the tank.
     const dailyFeeding = applyDailyFishFeedingFromTank({ G, tank, water });
 
@@ -1014,26 +1031,6 @@ const systemMoves = {
     let daysCompleted      = days;
 
     for (let i = 0; i < days; i++) {
-      // Auto-feed fish from inventory each day the tank is empty.
-      // This covers all days of "Progress 3 Days" — including day 1 — so the player
-      // does not need a separate feedFish move before pressing Progress 3 Days.
-      // If the player already manually fed (tank has food), that food is used as-is.
-      if (Array.isArray(G.fish) && G.fish.length > 0 && Number(G.fishFood) > 0) {
-        const tank = G.aquaponicsSystem?.tank;
-        if (tank && (tank.foodInTank || 0) <= 0) {
-          const dailyNeed = G.fish.reduce((sum, fish) => {
-            const sk = String(fish?.type || '').toLowerCase();
-            const sp = fishSpecies[sk] || fishSpecies.tilapia;
-            return sum + clampNumber(fish.foodConsumptionRate ?? sp.foodConsumptionRate ?? 0.2, 0.05, 10);
-          }, 0);
-          const feedAmt = Math.min(Math.ceil(dailyNeed), Number(G.fishFood));
-          if (feedAmt > 0) {
-            tank.foodInTank = clampNumber(feedAmt, 0, 1e9);
-            G.fishFood = Math.max(0, G.fishFood - feedAmt);
-          }
-        }
-      }
-
       // Only promote a pending event if it existed BEFORE this batch started.
       // A pending event detected on day 1 of a 3-day press must NOT be promoted
       // on day 2 of that same press — the player hasn't had a chance to react yet.
@@ -1130,6 +1127,11 @@ const systemMoves = {
     }
 
     console.log(`[progressMultipleTurns] done, now day ${G.gameTime}. fishDeaths=${allFishDeaths.length} plantDeaths=${allPlantDeaths.length}`);
+  },
+
+  setAutoFeed: ({ G }, enabled) => {
+    G.autoFeed = Boolean(enabled);
+    G.lastAction = { type: 'setAutoFeed', autoFeed: G.autoFeed };
   },
 
   // Repair system damage from events (leaks, pump failures, etc.)

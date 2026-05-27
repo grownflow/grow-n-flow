@@ -20,6 +20,15 @@ function summarizeDeaths(deaths, defaultType) {
 }
 import gameAPI from '../services/gameAPI';
 import soundManager from '../services/soundManager';
+
+const TUTORIAL_KEY = 'gnf_tutorial_dismissed';
+const TUTORIAL_STEPS = [
+  { message: 'Go to the Market tab and buy 1 pack of Fish Food ($20 → 10 units).', tab: 'market' },
+  { message: 'Go to the Fish tab and click Add Tilapia to stock your tank.', tab: 'fish' },
+  { message: 'Go to the Plants tab and plant some seeds in the grow beds.', tab: 'plants' },
+  { message: 'Click Progress Day or Progress 3 Days to advance the simulation. Fish will be fed automatically from your inventory.', tab: null },
+  { message: 'Check the Plants tab to harvest mature crops, and the Fish tab to sell fish once they reach harvest weight.', tab: 'plants' },
+];
 import { PLANT_SLOT_COUNT } from '../config/plantSlots';
 import Renderer from './Renderer';
 import StatsSection from './StatsSection';
@@ -57,6 +66,19 @@ function Game({ onTitleClick }) {
 
   const [feedFishStatus, setFeedFishStatus] = useState({ pending: false, message: null, ok: null, at: null });
   const [muted, setMutedState] = useState(() => soundManager.isMuted());
+  const [repairTipShown, setRepairTipShown] = useState(() => {
+    try { return Boolean(localStorage.getItem('gnf_repair_tip_shown')); } catch { return false; }
+  });
+
+  const [tutorialStep, setTutorialStep] = useState(() => {
+    try { if (localStorage.getItem(TUTORIAL_KEY)) return null; } catch { /* ignore */ }
+    return 1;
+  });
+
+  const dismissTutorial = () => {
+    try { localStorage.setItem(TUTORIAL_KEY, '1'); } catch { /* ignore */ }
+    setTutorialStep(null);
+  };
 
   const toggleMute = () => {
     const next = !muted;
@@ -311,6 +333,10 @@ function Game({ onTitleClick }) {
     gameAPI.repairSystem();
   };
 
+  const handleSetAutoFeed = (enabled) => {
+    gameAPI.setAutoFeed(enabled);
+  };
+
   const tabs = [
     { id: 'market', label: 'Market' },
     { id: 'water', label: 'Water' },
@@ -403,11 +429,36 @@ function Game({ onTitleClick }) {
       soundManager.play('eventAlert');
     }
 
+    // First-time repair discovery: tell the player about the Events tab when a
+    // damage event (pump failure, water leak, filter clog) activates.
+    const activeEv = gameState?.G?.activeEvent;
+    if (activeEv?.repairCost && !repairTipShown) {
+      const cost = activeEv.repairCost;
+      messages.push(
+        `Repair tip: Go to the Events tab to fix "${activeEv.name}" for $${cost}. ` +
+        `Until repaired the system operates at reduced capacity.`
+      );
+      setRepairTipShown(true);
+      try { localStorage.setItem('gnf_repair_tip_shown', '1'); } catch { /* ignore */ }
+    }
+
     if (messages.length > 0) {
       setTurnNotification({ messages, turn: gameDay });
       setLastTurnAlerted(gameDay);
     }
   }, [gameState?.G?.gameTime, gameState?.G?.lastAction, lastTurnAlerted]);
+
+  useEffect(() => {
+    if (!tutorialStep || !gameState?.G) return;
+    const G = gameState.G;
+    // Hide tutorial for games that already have significant progress
+    if (tutorialStep === 1 && Number(G.gameTime) >= 5) { setTutorialStep(null); return; }
+    if (tutorialStep === 1 && Number(G.fishFood) > 0) { setTutorialStep(2); return; }
+    if (tutorialStep === 2 && Array.isArray(G.fish) && G.fish.length > 0) { setTutorialStep(3); return; }
+    if (tutorialStep === 3 && Array.isArray(G.plants) && G.plants.length > 0) { setTutorialStep(4); return; }
+    if (tutorialStep === 4 && Number(G.gameTime) >= 1) { setTutorialStep(5); return; }
+    if (tutorialStep === 5 && Number(G.gameTime) >= 5) { setTutorialStep(null); return; }
+  }, [gameState?.G?.fishFood, gameState?.G?.fish?.length, gameState?.G?.plants?.length, gameState?.G?.gameTime, tutorialStep]);
 
   const handlePicked = ({ label }) => {
     if (!label) return;
@@ -608,6 +659,32 @@ function Game({ onTitleClick }) {
             onClick={() => setTurnNotification(null)}
           >
             ×
+          </button>
+        </div>
+      )}
+
+      {tutorialStep && TUTORIAL_STEPS[tutorialStep - 1] && (
+        <div className="tutorial-banner" role="status" aria-live="polite">
+          <span className="tutorial-step-label">{tutorialStep}/5</span>
+          <span className="tutorial-message">
+            {TUTORIAL_STEPS[tutorialStep - 1].tab && (
+              <button
+                type="button"
+                className="tutorial-tab-link"
+                onClick={() => switchTab(TUTORIAL_STEPS[tutorialStep - 1].tab)}
+              >
+                [{TUTORIAL_STEPS[tutorialStep - 1].tab.charAt(0).toUpperCase() + TUTORIAL_STEPS[tutorialStep - 1].tab.slice(1)}]
+              </button>
+            )}{' '}
+            {TUTORIAL_STEPS[tutorialStep - 1].message}
+          </span>
+          <button
+            type="button"
+            className="tutorial-skip"
+            onClick={dismissTutorial}
+            aria-label="Dismiss tutorial"
+          >
+            Skip ×
           </button>
         </div>
       )}
@@ -814,6 +891,7 @@ function Game({ onTitleClick }) {
               handleSellFish={handleSellFish}
               handleFeedFish={handleFeedFish}
               feedFishStatus={feedFishStatus}
+              handleSetAutoFeed={handleSetAutoFeed}
             />
           )}
 

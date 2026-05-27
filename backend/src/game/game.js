@@ -54,12 +54,19 @@ const AquaponicsGame = {
     // Core aquaponics system state (plain object, not class instance)
     aquaponicsSystem: createInitialSystemState(),
 
+    // Player inventory
+    fishFood: 0,    // units of fish food (10 units per pack purchased)
+
     // Game mechanics and player resources
     gameTime: 0,    // DAYS since game start
     money: 1000,    // Player currency for purchases and upgrades
 
+    // Settings
+    autoFeed: true, // automatically feed fish from inventory each day during Progress
+
     // Purchased equipment / supplies (counts by key from data/equipment.js)
-    equipment: {},
+    // New players start with 1 free biofilter unit so they can see how it works.
+    equipment: { biofilter: 1 },
 
     // Player-held inventory (harvested goods, etc.)
     inventory: {
