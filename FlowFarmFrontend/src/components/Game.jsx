@@ -362,12 +362,24 @@ function Game({ onTitleClick }) {
   }, [activeViewpoint]);
 
   useEffect(() => {
-    const turn = gameState?.ctx?.turn;
+    const gameDay = gameState?.G?.gameTime;
     const action = gameState?.G?.lastAction;
-    if (!turn || !action || action.type !== 'progressTurn') return;
-    if (turn === lastTurnAlerted) return;
+    if (!gameDay || !action || action.type !== 'progressTurn') return;
+    if (gameDay === lastTurnAlerted) return;
 
     const messages = [];
+
+    // Stopped-early banner goes first so the player immediately understands why
+    // the 3-day progress didn't run all the way.
+    if (action?.stoppedEarly) {
+      const completed = action.daysCompleted ?? '?';
+      const requested = action.daysRequested ?? '?';
+      const day       = action.stoppedOnDay   ?? '?';
+      messages.push(
+        `Progress paused after ${completed} of ${requested} days (day ${day}): ${action.stoppedReason}. ` +
+        `Take action now, then press Progress to continue.`
+      );
+    }
 
     const fishDeaths = Array.isArray(action?.fishDeaths) ? action.fishDeaths : [];
     if (fishDeaths.length > 0) {
@@ -392,10 +404,10 @@ function Game({ onTitleClick }) {
     }
 
     if (messages.length > 0) {
-      setTurnNotification({ messages, turn });
-      setLastTurnAlerted(turn);
+      setTurnNotification({ messages, turn: gameDay });
+      setLastTurnAlerted(gameDay);
     }
-  }, [gameState?.ctx?.turn, gameState?.G?.lastAction, lastTurnAlerted]);
+  }, [gameState?.G?.gameTime, gameState?.G?.lastAction, lastTurnAlerted]);
 
   const handlePicked = ({ label }) => {
     if (!label) return;
@@ -561,7 +573,15 @@ function Game({ onTitleClick }) {
             )}
           </div>
           <button onClick={handleProgressTurn} disabled={loading || !connected} className="btn-progress" type="button">Progress Day</button>
-          <button onClick={handleProgress3Days} disabled={loading || !connected} className="btn-progress" type="button">Progress 3 Days</button>
+          <button
+            onClick={handleProgress3Days}
+            disabled={loading || !connected}
+            className={`btn-progress${pendingEvent ? ' btn-progress-warn' : ''}`}
+            title={pendingEvent ? `Upcoming event: "${pendingEvent.name}" — will activate on the next Progress. Consider progressing one day at a time so you can respond.` : undefined}
+            type="button"
+          >
+            Progress 3 Days{pendingEvent ? ' ⚠' : ''}
+          </button>
           <button
             type="button"
             className={`btn-mute ${muted ? 'muted' : ''}`}

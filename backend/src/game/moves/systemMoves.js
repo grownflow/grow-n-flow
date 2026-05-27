@@ -1008,6 +1008,11 @@ const systemMoves = {
     const allPlantDeaths = [];
     const waterSnapshots = [];
 
+    // Early-exit tracking — set when a critical condition arises mid-batch.
+    let stoppedEarlyReason = null;
+    let stoppedEarlyDay    = null;
+    let daysCompleted      = days;
+
     for (let i = 0; i < days; i++) {
       // Auto-feed fish from inventory each day the tank is empty.
       // This covers all days of "Progress 3 Days" — including day 1 — so the player
@@ -1072,6 +1077,31 @@ const systemMoves = {
             : null,
         });
       }
+
+      // Early exit: stop the batch on the first day a critical condition arises
+      // so the player can take action before the situation compounds.
+      // Only check if there are more days left to run (no point breaking on the last).
+      if (i < days - 1) {
+        const stopReasons = [];
+        if (dayFishDeaths.length > 0) {
+          stopReasons.push(`${dayFishDeaths.length} fish died`);
+        }
+        if (w) {
+          if (Number(w.ammonia)         >= 2.0) stopReasons.push('critical ammonia');
+          if (Number(w.nitrite)         >= 1.0) stopReasons.push('critical nitrite');
+          if (Number(w.dissolvedOxygen) <= 4.0) stopReasons.push('critical low oxygen');
+        }
+        // A permanent-damage event (pump failure, water leak, filter clog) just activated.
+        if (G.activeEvent?.repairCost && G.activeEvent.triggeredAt === G.gameTime) {
+          stopReasons.push(`system damage: ${G.activeEvent.name}`);
+        }
+        if (stopReasons.length > 0) {
+          stoppedEarlyReason = stopReasons.join(', ');
+          stoppedEarlyDay    = G.gameTime;
+          daysCompleted      = i + 1;
+          break;
+        }
+      }
     }
 
     // Merge accumulated deaths and per-day snapshots back onto the final lastAction
@@ -1079,6 +1109,14 @@ const systemMoves = {
       G.lastAction.fishDeaths     = allFishDeaths;
       G.lastAction.plantDeaths    = allPlantDeaths;
       G.lastAction.waterSnapshots = waterSnapshots;
+
+      if (stoppedEarlyReason) {
+        G.lastAction.stoppedEarly    = true;
+        G.lastAction.stoppedOnDay    = stoppedEarlyDay;
+        G.lastAction.stoppedReason   = stoppedEarlyReason;
+        G.lastAction.daysCompleted   = daysCompleted;
+        G.lastAction.daysRequested   = days;
+      }
 
       // If a technical event is pending at the END of the batch (detected on the
       // last day), make sure the notification reflects it correctly.

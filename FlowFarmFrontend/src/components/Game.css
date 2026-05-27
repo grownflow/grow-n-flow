@@ -771,6 +771,16 @@ button:disabled {
   box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
 }
 
+.btn-progress-warn {
+  background: linear-gradient(135deg, #c0860a, #a05a00);
+  outline: 2px solid #ffc107;
+  outline-offset: 1px;
+}
+
+.btn-progress-warn:hover:not(:disabled) {
+  box-shadow: 0 5px 15px rgba(192, 134, 10, 0.5);
+}
+
 .btn-newgame {
   background: linear-gradient(135deg, #28a745, #20c997);
   color: white;
