@@ -269,14 +269,16 @@ System damage events persist until the player uses the **Repair System** action 
 
 Items are purchased from the Market and stored in inventory. Consumables are applied from the Water Chemistry panel.
 
-| Item                               | Cost  | Effect when applied                                              |
-|------------------------------------|-------|------------------------------------------------------------------|
-| Fish Food (10 units)               | $20   | Adds food to tank; fish consume daily based on species need      |
-| Biofilter                          | $120  | Instant: ammonia −1.5 mg/L, nitrite −0.8 mg/L. Permanent: biofilter efficiency +5% (max 100%) |
-| Buffering Solution — Ca Carbonate  | $15   | pH +0.2, calcium +20 mg/L                                       |
-| Buffering Solution — K Carbonate   | $15   | pH +0.2, potassium +20 mg/L                                     |
-| Chelated Iron (DTPA 11%)           | $12   | Iron +1.0 mg/L                                                   |
-| Aeration Stones (pack of 10)       | $25   | Dissolved oxygen +2.0 mg/L per stone applied                    |
+**Starting inventory:** Every new game begins with `{ biofilter: 1 }` pre-loaded in `G.equipment`. This gives new players a concrete reason to visit the Water tab and learn how to apply a biofilter unit before they need to buy one.
+
+| Item                               | Cost  | Starting qty | Effect when applied                                              |
+|------------------------------------|-------|-------------|------------------------------------------------------------------|
+| Fish Food (10 units)               | $20   | 0           | Adds food to tank; auto-feed draws from this each day when on   |
+| Biofilter                          | $120  | **1 (free)**| Instant: ammonia −1.5 mg/L, nitrite −0.8 mg/L. Permanent: biofilter efficiency +5% (max 100%) |
+| Buffering Solution — Ca Carbonate  | $15   | 0           | pH +0.2, calcium +20 mg/L                                       |
+| Buffering Solution — K Carbonate   | $15   | 0           | pH +0.2, potassium +20 mg/L                                     |
+| Chelated Iron (DTPA 11%)           | $12   | 0           | Iron +1.0 mg/L                                                   |
+| Aeration Stones (pack of 10)       | $25   | 0           | Dissolved oxygen +2.0 mg/L per stone applied                    |
 
 ---
 
@@ -284,8 +286,9 @@ Items are purchased from the Market and stored in inventory. Consumables are app
 
 | Action                  | Description                                                                 |
 |-------------------------|-----------------------------------------------------------------------------|
-| Progress Day            | Advances simulation by 1 day; runs the full nitrogen/growth/event cycle     |
-| Progress 3 Days         | Advances 3 days; auto-feeds fish from inventory each day the tank is empty  |
+| Progress Day            | Advances simulation by 1 day; runs the full nitrogen/growth/event cycle. Auto-feeds fish from inventory if auto-feed is enabled. |
+| Progress 3 Days         | Advances up to 3 days with early-exit on critical conditions; auto-feeds each day when auto-feed is on |
+| Set Auto-Feed           | Toggles `G.autoFeed` (default `true`). When on, draws one day's food from inventory before each simulated day if the tank is empty |
 | Stop Feeding            | Removes all food from tank; eliminates feeding-based ammonia immediately    |
 | Partial Water Change    | Dilutes water chemistry; primary tool for reducing ammonia and nitrite       |
 | Increase Aeration       | Boosts dissolved oxygen                                                     |
@@ -310,19 +313,34 @@ Both charts fetch from the `water_readings` MongoDB collection, which records on
 
 ### First-Harvest Path (7 Required Moves)
 
-An average player can achieve a first plant harvest **and** first fish harvest in exactly 7 actions. No water-chemistry management is required: the 7-day grace period blocks all events, and a 5-tilapia system stays within safe water parameters for the full 6 days.
+An average player can achieve a first plant harvest **and** first fish harvest in exactly 7 actions. No water-chemistry management is required: the 7-day grace period blocks all events, and a 5-tilapia system stays within safe water parameters for the full 6 days. Auto-feed (`G.autoFeed = true` by default) handles feeding on every Progress — no separate feed step is needed.
 
 | # | Move | Notes |
 |---|------|-------|
-| 1 | Buy Fish Food (1 pack) | $20 → 10 units in inventory |
+| 1 | Buy Fish Food (1 pack) | $20 → 10 units; auto-feed draws from this each day |
 | 2 | Add Fish — 5 Tilapia | $12.50; starting weight 10 g each |
 | 3 | Plant Seeds — Basil or Romaine | $0.25–$0.30/seed; any quantity affordable |
-| 4 | Progress 3 Days | Auto-feeds from inventory all 3 days; day 3 weight ≈ 305 g |
-| 5 | Progress 3 Days | Auto-feeds all 3 days; Basil mature day 5, Romaine day 6; tilapia ≈ 600 g |
+| 4 | Progress 3 Days | Auto-feed runs all 3 days; day 3 weight ≈ 305 g |
+| 5 | Progress 3 Days | Auto-feed continues; Basil mature day 5, Romaine day 6; tilapia ≈ 600 g |
 | 6 | Harvest All Plants | Sells all mature plants from inventory |
 | 7 | Sell Fish | All 5 tilapia ≥ 480 g (80% threshold) → harvestable |
 
 **Water chemistry at day 6 (5 tilapia, 80% biofilter):** ammonia ≈ 1.0 ppm (alert but safe), nitrite < 0.3 ppm, pH 7.0. No intervention needed. After day 7 the grace period ends and normal event probabilities apply.
+
+---
+
+### Initial Game State
+
+Every new match starts with the following defaults so players can begin playing immediately without being blocked by missing prerequisites:
+
+| Field | Default | Reason |
+|-------|---------|--------|
+| `G.money` | $1000 | Enough to buy fish, seeds, and supplies before first harvest |
+| `G.autoFeed` | `true` | Auto-feed on by default; toggle with `setAutoFeed` move |
+| `G.fishFood` | 0 | Players must buy food; auto-feed draws from this |
+| `G.equipment.biofilter` | 1 | Free starter unit so players can learn the nitrogen cycle hands-on |
+| `G.aquaponicsSystem.tank.biofilterEfficiency` | 0.8 (80%) | Established baseline; applying the starter unit raises it to 85% |
+| `G.aquaponicsSystem.tank.water.nitrate` | 5 mg/L | Small baseline so plants have initial nutrients |
 
 ---
 

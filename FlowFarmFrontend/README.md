@@ -3,6 +3,8 @@
 ## How It Works
 This is a React-based interface for managing a web hosted simulated aquaponics system. It connects to a Node.js backend through HTTP APIs to handle all the game logic. When you launch the app, it starts a new session by requesting a match (match id) from the server. From there, you can add fish, plant seeds, feed your fish, harvest crops, and move the simulation forward which then sends requests to update the system state. The interface shows you the tank, plant beds, and water chemistry in real time, with everything updating based on what's happening in the backend simulation.
 
+New players are guided by a **step-by-step tutorial banner** that appears at game start and auto-advances as each action is completed. Fish feeding is **automated by default** — the game draws daily food from your inventory before each Progress, so you never need to manually feed before advancing time.
+
 ## Technologies Used
 - React 19 (UI components and rendering)
 - Vite (development server and build tooling)
@@ -112,6 +114,15 @@ Events are blocked for the first 7 game days (grace period). After that, technic
 | **3D scene** | Live view of tank and grow beds; click fish or plants to inspect |
 | **Side panel tabs** | Market, Water, Plants, Inventory, Fish, Bills, Events |
 | **Notification banner** | Appears above the scene after each Progress action; shows deaths, events, and warnings |
+| **Tutorial banner** | Green banner at the bottom of the screen on first play; guides you through steps 1–5 |
+
+### Auto-Feed
+
+Auto-feed is **on by default**. Before each simulated day, if the tank contains no food and you have Fish Food in inventory, the game automatically draws exactly one day's supply for your fish and places it in the tank. This means you never need to manually feed before pressing Progress — as long as you keep Fish Food stocked.
+
+To disable auto-feed (for manual feeding control), use the **Auto-feed: ON / OFF** toggle in the Fish tab. When auto-feed is off and the tank is empty, fish begin accumulating starvation penalties after 2 unfed days and die on day 5.
+
+> **Note:** You start every new game with 1 free pack of Fish Food (10 units) — enough for about 5 days with a small tank.
 
 ### Turn Flow
 
@@ -152,6 +163,18 @@ Alarms appear in the notification banner and in the **Water** tab's system alert
 
 After taking corrective action, press **Progress Day** to see the effect.
 
+### Color-Coded Water Chemistry
+
+Every parameter card in the **Water** tab has a color-coded border and value:
+
+| Color | Meaning |
+|-------|---------|
+| **Green** | Within safe range |
+| **Yellow** | Approaching a threshold — monitor closely |
+| **Red** | At or past the danger threshold — take action now |
+
+The "Ideal" label on each card shows the target range. Parameters covered: Ammonia, Nitrite, Nitrate, pH, Dissolved Oxygen, Iron, Phosphorus, Potassium.
+
 ### Progress 3 Days — Safety Behaviour
 
 **Progress 3 Days** automatically stops early if a critical condition arises mid-batch:
@@ -167,28 +190,36 @@ When stopped early, the notification banner shows which day the problem occurred
 
 ### 7-Move Quick Start
 
-A first plant harvest and first fish harvest can be achieved in exactly 7 actions with no water management needed (the 7-day grace period blocks all events):
+A first plant harvest and first fish harvest can be achieved in exactly 7 actions with no water management needed (the 7-day grace period blocks all events). Auto-feed handles feeding automatically on every Progress — no separate feed step required.
 
 | # | Action | Notes |
 |---|--------|-------|
-| 1 | **Buy Fish Food** (1 pack, Market) | $20 → 10 units in inventory |
+| 1 | **Buy Fish Food** (1 pack, Market) | $20 → 10 units; auto-feed draws from this |
 | 2 | **Add Fish** — 5 Tilapia (Fish tab) | $12.50; fingerlings start at 10 g |
 | 3 | **Plant Seeds** — Basil or Romaine (Plants tab) | $0.25–$0.30/seed |
-| 4 | **Progress 3 Days** | Auto-feeds fish each day; tilapia ≈ 305 g by day 3 |
-| 5 | **Progress 3 Days** | Basil matures day 5, Romaine day 6; tilapia ≈ 600 g |
+| 4 | **Progress 3 Days** | Auto-feed runs each day; tilapia ≈ 305 g by day 3 |
+| 5 | **Progress 3 Days** | Auto-feed continues; Basil matures day 5, Romaine day 6; tilapia ≈ 600 g |
 | 6 | **Harvest All Plants** | Sells all mature plants to inventory |
 | 7 | **Sell Fish** (Fish tab) | All 5 tilapia ≥ 480 g → harvestable |
+
+> The tutorial banner walks you through steps 1–3 automatically. It dismisses itself once you have progressed past day 5.
 
 ### Managing the Biofilter
 
 A healthy, established system keeps ammonia and nitrite near zero — **only nitrate should rise** over time (this is normal and good; plants use it). The biofilter can process up to **2.0 ppm/day** of ammonia at default 80% efficiency.
+
+**You start every new game with 1 free Biofilter unit in your inventory.** Open the Market tab to read how it works, then go to the Water tab → Supplements to apply it and boost your efficiency to 85% right away.
 
 Watch the **biofilter load** alerts in the Water tab:
 - < 80% load → system is healthy, ammonia stays near zero
 - 80–100% load → buy and apply a Biofilter unit before adding more fish
 - > 100% load → ammonia will start building every day; reduce fish or upgrade immediately
 
-Buying each Biofilter unit (Market) increases efficiency by 5%, up to 100% (2.5 ppm/day max capacity).
+Buying each additional Biofilter unit (Market, $120) increases efficiency by 5%, up to 100% (2.5 ppm/day max capacity).
+
+### Repair System Tip
+
+The first time a **system-damage event** activates (pump failure, water leak, or filter clog), the notification banner shows a one-time tip: *"Go to the Events tab to repair this for $X."* Events with a repair cost persist and reduce system performance until repaired — they do not clear on their own.
 
 ---
 

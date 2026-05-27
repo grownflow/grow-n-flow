@@ -6,21 +6,36 @@ A turn-based aquaponics farm management game built with React, Node.js, boardgam
 
 ## Quick Start: 7-Move First-Harvest Path
 
-An average player can achieve a first **plant harvest and fish harvest in exactly 7 moves**. No water-chemistry management is needed: the 7-day grace period blocks all events, and a 5-tilapia system stays within safe water parameters for the entire 6-day run.
+An average player can achieve a first **plant harvest and fish harvest in exactly 7 moves**. No water-chemistry management is needed: the 7-day grace period blocks all events, and a 5-tilapia system stays within safe water parameters for the entire 6-day run. **Auto-feed is on by default** — fish are fed automatically from inventory before each simulated day, so no separate feed step is required.
 
 | # | Move | Notes |
 |---|------|-------|
-| 1 | **Buy Fish Food** (1 pack) | $20 → 10 units in inventory |
+| 1 | **Buy Fish Food** (1 pack) | $20 → 10 units; auto-feed draws from this each day |
 | 2 | **Add Fish** — 5 Tilapia | $12.50 total; each fingerling starts at 10 g |
 | 3 | **Plant Seeds** — Basil or Romaine | $0.25–$0.30/seed; fill as many slots as cash allows |
-| 4 | **Progress 3 Days** | Auto-feeds fish from inventory all 3 days; tilapia weight ≈ 305 g by day 3 |
-| 5 | **Progress 3 Days** | Auto-feeds all 3 days; Basil matures day 5, Romaine matures day 6; tilapia ≈ 600 g |
+| 4 | **Progress 3 Days** | Auto-feed runs all 3 days; tilapia weight ≈ 305 g by day 3 |
+| 5 | **Progress 3 Days** | Auto-feed continues; Basil matures day 5, Romaine matures day 6; tilapia ≈ 600 g |
 | 6 | **Harvest All Plants** | Moves all mature plants to inventory for sale |
 | 7 | **Sell Fish** | All 5 tilapia ≥ 480 g (80% threshold) → harvestable at full market value |
 
-**Water chemistry at day 6** (5 tilapia, 80% default biofilter): ammonia ≈ 1.0 ppm (alert, not danger), nitrite < 0.3 ppm, pH 7.0. No intervention needed.
+> A **step-by-step tutorial banner** appears at the bottom of the screen for new players and guides you through moves 1–3.
+> You also start with **1 free Biofilter unit** in inventory — apply it from the Water tab to reach 85% efficiency before adding more fish.
+
+**Water chemistry at day 6** (5 tilapia, 80% default biofilter): ammonia ≈ 0 ppm (near zero within capacity), nitrite ≈ 0 ppm, nitrate rising, pH 7.0. No intervention needed.
 
 After day 7 the grace period ends and normal event probabilities apply — see the [Events](#events) section to prepare.
+
+---
+
+## New Player Features
+
+| Feature | Where | What it does |
+|---------|-------|-------------|
+| **Onboarding tutorial** | Bottom banner | 5-step guide at game start; auto-advances as you complete each action; dismissable; stored in browser `localStorage` so it only shows once |
+| **Auto-feed toggle** | Fish tab | Automatically draws one day's food from inventory before each simulated day (default on); toggle OFF for manual control |
+| **Color-coded water stats** | Water tab | Each parameter card has a colored border: green = safe, yellow = warning, red = danger |
+| **Repair tip notification** | Turn banner | First time a system-damage event activates, the notification banner explains the Events tab repair action |
+| **Free starter biofilter** | Inventory | Every new game begins with 1 Biofilter unit; the Market tab explains what it does and when to buy more |
 
 ---
 
@@ -50,7 +65,7 @@ Harvest times are compressed from real-world months (6–10 months per species) 
 
 - Buy fingerlings, feed fish (consumes fish food inventory), and sell mature fish to market.
 - Fish health degrades from poor water quality (ammonia, nitrite, low oxygen), starvation, and disease events.
-- Fish not fed for 5 consecutive days die from starvation. When using **Progress 3 Days**, fish are automatically fed from inventory each day the tank is empty — ensure you have fish food in stock.
+- Fish not fed for 5 consecutive days die from starvation. **Auto-feed (default on)** draws one day's supply from inventory before every simulated day — for both **Progress Day** and **Progress 3 Days** — as long as the tank is empty and fish food is in stock. Toggle it off from the Fish tab for manual control.
 - Feeding is permitted even when ammonia or nitrite is elevated — the game shows a warning but does not block the action. In poor water, the player must decide whether to continue feeding (more ammonia risk) or hold off while fixing chemistry.
 
 ### Plant Management
@@ -93,13 +108,16 @@ Nitrite (NO₂⁻)  ← toxic intermediate
 Nitrate (NO₃⁻)  ← plant nutrient; absorbed by roots
 ```
 
-Fish waste and uneaten food produce ammonia in the tank each day. The biofilter converts a fraction of ammonia to nitrite and nitrite to nitrate using:
+Fish waste and uneaten food produce ammonia in the tank each day. The biofilter uses a **capacity-based model** that matches real aquaponics behaviour: the filter removes up to its rated daily capacity each turn, so ammonia and nitrite drain to near-zero as long as fish load is within limits. Only when production exceeds capacity does ammonia start to accumulate.
 
 ```
-k = 0.80 × biofilterEfficiency × circulationEfficiency × oxygenFactor
+capacity = 2.5 ppm/day × biofilterEfficiency × circulationEfficiency × oxygenFactor
+
+ammonia removed per day = min(ammonia, capacity)
+nitrite removed per day = min(nitrite, capacity)
 ```
 
-Default biofilter efficiency is **0.80** (k ≈ 0.64/day); maximum is **1.0** (k = 0.80/day). Each fish contributes passive metabolic excretion (species `ammoniaRate` ppm/day) plus feeding waste proportional to food consumed. With 5 tilapia fully fed (each consuming 0.2 food units/day), total daily ammonia production is roughly **0.77 ppm**, reaching a steady-state ammonia of ~0.43 ppm — comfortably below the 1.0 mg/L alert threshold. Nitrate starts at **5 mg/L** (the game's initial default) and builds visibly as the nitrogen cycle matures (net of plant uptake). Plants draw down nitrate based on growth stage; if the biofilter is damaged or fish load exceeds processing capacity, ammonia and nitrite accumulate to toxic levels.
+Default biofilter efficiency is **80%** → effective capacity **2.0 ppm/day**; maximum is **100%** → **2.5 ppm/day**. Each fish contributes passive metabolic excretion (species `ammoniaRate` ppm/day) plus feeding waste proportional to food consumed. With 5 tilapia fully fed (each consuming 0.2 food units/day), total daily ammonia production is roughly **0.77 ppm** — well within the 2.0 ppm/day default capacity, so **ammonia stays near zero**. Nitrate starts at **5 mg/L** (the game's initial default) and builds visibly as the nitrogen cycle matures (net of plant uptake), which is the healthy and expected behaviour of an established system. Plants draw down nitrate based on growth stage. Pump failure reduces throughput to 15% of normal; nitrification is suppressed when dissolved oxygen drops below 5.0 mg/L.
 
 ### Tracked Water Parameters
 
@@ -138,7 +156,7 @@ Fish health is reduced each day proportional to overall stress. A fish with heal
 
 ### System Hardware Parameters
 
-- **Biofilter efficiency** (0–1.0): Scales the daily ammonia→nitrite and nitrite→nitrate conversion rate (`k = 0.80 × efficiency × circulation`). Default 0.80; permanently increased by +5% each time a Biofilter consumable is applied (max 1.0). Reduced to 50% of its current value by the Filter Clog event; requires explicit repair ($50) to restore it.
+- **Biofilter efficiency** (0–1.0): Scales the daily nitrification capacity (`capacity = 2.5 ppm/day × efficiency × circulation × oxygenFactor`). Default 0.80 (2.0 ppm/day); permanently increased by +5% each time a Biofilter consumable is applied (max 1.0 → 2.5 ppm/day). New games start with 1 free Biofilter unit in inventory. Reduced to 50% of its current value by the Filter Clog event; requires explicit repair ($50) to restore it.
 - **Circulation efficiency** (0.5–2.0): Governs how quickly dissolved oxygen is replenished each day. Each turn, circulation pulls DO toward the 8 mg/L saturation point at a rate of `25% of deficit × circulationEfficiency`. Stopping circulation (Pump Failure) halts all replenishment. The Low DO event temporarily reduces circulation efficiency; it is **automatically restored** when that event expires.
 - **Water level** (0–1000 L): The Water Leak event drains 50 L per turn until repaired. Repairing the leak refills the tank with fresh water, which **dilutes all dissolved pollutants** in proportion to how much new water was added (e.g. repairing at 200 L remaining dilutes ammonia to 20% of its pre-repair value).
 
@@ -239,8 +257,8 @@ Every action the player can take is listed below. Actions take effect immediatel
 
 | Action | Button | Effect |
 |--------|--------|--------|
-| Progress 1 Day | Progress 1 Day | Runs one full simulation day: fish feed, chemistry updates, plants age, event rolls |
-| Progress 3 Days | Progress 3 Days | Runs three simulation days in sequence; deaths and events from all three days are reported together |
+| Progress 1 Day | Progress Day | Runs one full simulation day: auto-feeds fish from inventory (if auto-feed on), fish eat, chemistry updates, plants age, event rolls |
+| Progress 3 Days | Progress 3 Days | Runs up to 3 days; auto-feeds each day; stops early on critical conditions (fish deaths, danger-level chemistry, system damage event); turns amber ⚠ when a pending event is queued |
 
 **7-Move First-Harvest Path**: An average player can achieve a first plant harvest and first fish harvest in 7 moves. The 7-day grace period blocks all events, so no water-chemistry management is required on this path:
 
@@ -254,7 +272,7 @@ Every action the player can take is listed below. Actions take effect immediatel
 | 6 | Harvest All Plants | All mature plants moved to inventory |
 | 7 | Sell Fish | All 5 tilapia ≥ 480 g → harvestable |
 
-**Important**: When using **Progress 3 Days**, fish are automatically fed from inventory each day the tank is empty. Ensure you have fish food in stock before progressing multiple days.
+**Auto-feed**: When auto-feed is on (default), fish are automatically fed from inventory before every simulated day — both **Progress Day** and **Progress 3 Days**. Keep Fish Food in stock; the Fish tab shows a warning when inventory is empty.
 
 ### Fish Actions
 
@@ -318,9 +336,9 @@ The **Market panel** sells fingerlings (by species), fish food, and water treatm
 
 ### Stocking Strategy
 
-- **Fish Food**: Progress 3 Days auto-feeds fish from inventory every day the tank is empty, including day 1. Keep at least 10 units in stock. Use **Feed Fish** manually before **Progress Day** (single day) — single-day progress does not auto-feed.
+- **Fish Food**: Auto-feed (default on) draws one day's supply from inventory before every simulated day — both single and 3-day progress. Keep at least 10 units in stock at all times. The Fish tab shows a red warning when inventory is empty and auto-feed is on. Toggle auto-feed off from the Fish tab if you want full manual control.
 - **Aeration Stones**: Keep at least 5 in reserve. Low DO events, pump failures, and disease outbreaks all demand immediate oxygen correction. The Water Chemistry panel shows a one-click Quick Fix when oxygen is critical.
-- **Biofilter units**: Each application gives an immediate ammonia/nitrite reduction **and** permanently raises biofilter efficiency by 5% (up to 100%). Buying 4 units raises efficiency from the default 80% to 100%, which is the maximum the filter can achieve — beyond that, reducing fish load or doing water changes is necessary. Keep 1–2 in stock; the Ammonia Spike (4%/turn) and Nitrite Rise (3%/turn) events are the most common hazards.
+- **Biofilter units**: You start with **1 free unit** in inventory — apply it from the Water tab's Supplements section to immediately raise efficiency from 80% to 85%. Each additional unit ($120) gives an immediate ammonia/nitrite reduction **and** permanently raises efficiency by another 5%, up to 100% (2.5 ppm/day capacity). Buying 4 total units gets you to 100%. Beyond that, reducing fish load or doing partial water changes is the only way to manage excess ammonia. Keep 1–2 in stock; Ammonia Spike (4%/turn) and Nitrite Rise (3%/turn) are the most common hazards. The Market tab includes an explanation of how the biofilter works.
 - **Buffering solutions**: pH Drop occurs at 2.5% per turn; over a long game it will strike multiple times. Keep 2–3 units stocked. CaCO₃ is preferred when calcium is also low; K₂CO₃ when potassium is the limiting plant nutrient.
 - **Chelated iron**: Consumed slowly by plants and depleted sharply by the Plant Disease event. Apply proactively when iron falls below 1.0 mg/L rather than waiting for a deficiency crisis.
 - **Cash reserve**: Keep at least $100 in reserve at all times to cover emergency repairs. Pump Failure ($100) and Water Leak ($75) can arrive without warning and block all other events until repaired.
