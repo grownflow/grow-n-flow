@@ -69,14 +69,32 @@ Basic workflow:
 
 Fish produce ammonia as waste. A biofilter colony of nitrifying bacteria converts ammonia → nitrite → nitrate each game day. Plants absorb nitrate as fertilizer, completing the cycle.
 
-The simulation uses a **capacity-based biofilter model**: the biofilter removes up to its rated capacity (ppm/day) each turn. As long as your fish load stays within that capacity, ammonia and nitrite remain near zero — only nitrate builds up over time (which is the normal, healthy state of an established aquaponics system). Ammonia and nitrite only accumulate when:
+The simulation uses a **capacity-based biofilter model**: the biofilter removes up to its rated capacity (ppm/day) each turn. As long as your fish load stays within that capacity, ammonia and nitrite remain near zero — only nitrate builds up over time (the normal, healthy state of an established aquaponics system). Ammonia and nitrite only accumulate when:
 
 - Fish load exceeds biofilter capacity (too many fish or not enough biofilter)
 - The pump fails (reduces throughput to ~15%)
 - The biofilter clogs (reduces efficiency by 50%)
 - An event spikes water chemistry directly (disease, ammonia surge)
 
-**Default capacity:** 2.0 ppm/day (80% efficiency × 2.5 ppm/day base). This handles ~13 tilapia before capacity alerts appear. Purchasing and applying biofilter units raises efficiency toward 100% (2.5 ppm/day maximum).
+**Biofilter maturation:** A new tank starts at 55% efficiency. Nitrifying bacteria establish over the first 14 game days, reaching 80% naturally. Apply the free starter Biofilter unit early to reach 85% immediately and accelerate the process.
+
+**Capacity at maturity:** 2.0 ppm/day (80% efficiency × 2.5 ppm/day base). Purchasing and applying additional Biofilter units raises efficiency toward 100% (2.5 ppm/day maximum).
+
+### Ammonia and Fish Growth
+
+Sublethal ammonia (below the health-alert threshold) still suppresses fish growth. At 0.5 ppm fish grow ~11% slower; at 2.0 ppm they grow ~56% slower. This is the primary reason to maintain clean water even before fish start dying — faster growth means earlier harvests and better revenue.
+
+### Nitrate and Plant Growth
+
+Plants grow faster in nitrate-rich water (reflecting the real fertilisation mechanism). At 5 ppm nitrate plants grow at 85% of their base rate; at 80 ppm they grow at 115%. Stocking more fish — within biofilter capacity — accelerates plant maturation, creating a direct virtuous cycle between fish biomass and plant revenue.
+
+### Stable Ecosystem Bonus
+
+Maintain ammonia < 0.8 ppm, dissolved oxygen > 6.5 mg/L, and pH between 6.8–7.2 for 10 consecutive days to unlock the **Stable Ecosystem** productivity bonus: +15% fish growth rate, +10% plant growth rate, and a one-time **$100 cash reward**. The notification banner announces when this milestone is reached. The Water tab shows a live "X / 10 days" streak counter.
+
+### Temperature
+
+Water temperature drifts daily using a mean-reverting process (±0.5 °C/day, returning toward 25 °C). Purchasing a **Heater/Chiller** unit from the Market reduces the daily swing to ±0.15 °C, keeping fish in their optimal growth range and improving nitrification consistency.
 
 ### Biofilter Capacity Alerts
 
@@ -100,7 +118,9 @@ The system alerts panel will warn you when:
 
 ### Events
 
-Events are blocked for the first 7 game days (grace period). After that, technical events (water leaks, pump failures, disease outbreaks) are announced one day in advance as a **Pending Event**, giving you one turn to prepare before effects apply. Fish-specific events (disease, ammonia spike) only trigger when fish are present; plant-specific events only trigger when plants are growing.
+Events are blocked for the first 7 game days (grace period). After that, technical events (water leaks, pump failures, disease outbreaks) are announced one day in advance as a **Pending Event**, giving you one turn to prepare before effects apply. Fish-specific events (disease, ammonia spike) only trigger when fish are present; plant-specific events only trigger when plants are growing — and are automatically cancelled if those entities are gone by the activation turn.
+
+When a new pending event is detected, the UI **automatically switches to the Events tab** and shows an **"Act now" action guide** specific to that event type (e.g., "Save $50 for Quick Repair" for pump failure, "Apply Buffering Solution" for pH drop). The **Events tab** shows a colored dot badge: amber for a pending event, red for an active event requiring repair.
 
 ---
 
@@ -157,7 +177,7 @@ Alarms appear in the notification banner and in the **Water** tab's system alert
 | Low dissolved oxygen | Increase Aeration → Water tab |
 | Biofilter at 80–100% | Buy and apply a Biofilter unit → Market tab |
 | Fish unfed for 3+ days | Feed Fish → Fish tab; buy Fish Food from Market |
-| Pump Failure / Water Leak / Filter Clog | Repair System → Events tab (costs money) |
+| Pump Failure / Water Leak / Filter Clog | **Full Repair** (Events tab, full cost, 100% restoration) or **Quick Repair** (half cost, 70% restoration) |
 | Low iron | Apply Chelated Iron → Water tab (buy from Market first) |
 | pH out of range | Apply Buffering Solution → Water tab |
 
@@ -195,7 +215,7 @@ A first plant harvest and first fish harvest can be achieved in exactly 7 action
 | # | Action | Notes |
 |---|--------|-------|
 | 1 | **Buy Fish Food** (1 pack, Market) | $20 → 10 units; auto-feed draws from this |
-| 2 | **Add Fish** — 5 Tilapia (Fish tab) | $12.50; fingerlings start at 10 g |
+| 2 | **Add Fish** — 5 Tilapia (Fish tab) | $10.50; fingerlings start at 10 g |
 | 3 | **Plant Seeds** — Basil or Romaine (Plants tab) | $0.25–$0.30/seed |
 | 4 | **Progress 3 Days** | Auto-feed runs each day; tilapia ≈ 305 g by day 3 |
 | 5 | **Progress 3 Days** | Auto-feed continues; Basil matures day 5, Romaine day 6; tilapia ≈ 600 g |
@@ -203,23 +223,57 @@ A first plant harvest and first fish harvest can be achieved in exactly 7 action
 | 7 | **Sell Fish** (Fish tab) | All 5 tilapia ≥ 480 g → harvestable |
 
 > The tutorial banner walks you through steps 1–3 automatically. It dismisses itself once you have progressed past day 5.
+> **Tip:** Also apply your free Biofilter unit from the Water tab on day 1 to boost efficiency from 55% → 60% immediately, accelerating the 14-day maturation curve.
 
 ### Managing the Biofilter
 
 A healthy, established system keeps ammonia and nitrite near zero — **only nitrate should rise** over time (this is normal and good; plants use it). The biofilter can process up to **2.0 ppm/day** of ammonia at default 80% efficiency.
 
-**You start every new game with 1 free Biofilter unit in your inventory.** Open the Market tab to read how it works, then go to the Water tab → Supplements to apply it and boost your efficiency to 85% right away.
+**Your tank starts at 55% biofilter efficiency** and rises naturally to 80% over the first 14 days as nitrifying bacteria establish. Apply the **free starter Biofilter unit** (already in your inventory) immediately from the Water tab → Supplements to jump to 60% on day 1 and accelerate the process.
 
 Watch the **biofilter load** alerts in the Water tab:
 - < 80% load → system is healthy, ammonia stays near zero
 - 80–100% load → buy and apply a Biofilter unit before adding more fish
 - > 100% load → ammonia will start building every day; reduce fish or upgrade immediately
 
-Buying each additional Biofilter unit (Market, $120) increases efficiency by 5%, up to 100% (2.5 ppm/day max capacity).
+Buying each additional Biofilter unit (Market, $120) increases efficiency by 5%, up to 100% (2.5 ppm/day max capacity). Apply units as you buy them — units stockpiled in inventory have no effect until applied.
 
-### Repair System Tip
+### Temperature and the Heater/Chiller
 
-The first time a **system-damage event** activates (pump failure, water leak, or filter clog), the notification banner shows a one-time tip: *"Go to the Events tab to repair this for $X."* Events with a repair cost persist and reduce system performance until repaired — they do not clear on their own.
+Water temperature drifts up to ±0.5 °C per day in a random walk that returns toward 25 °C. This matters for **barramundi** (optimal 26–29 °C) — excursions below 23 °C add stress and slow growth. Purchasing a **Heater/Chiller unit** ($150, Market tab) tightens the daily drift to ±0.15 °C, keeping barramundi in range and making the [Stable Ecosystem bonus](#stable-ecosystem-bonus) much easier to maintain.
+
+### Stable Ecosystem Bonus
+
+Keep ammonia below 0.8 ppm, dissolved oxygen above 6.5 mg/L, and pH between 6.8 and 7.2 for **10 consecutive days**. When reached, the notification banner announces the bonus: **+15% fish growth rate, +10% plant growth rate, and a one-time $100 cash reward**. The counter resets if any single day falls outside these thresholds. A "X / 10 days" progress indicator in the Water tab tracks your current streak.
+
+### Bulk Harvest Bonus
+
+When you use **Harvest All Plants** and collect 15 or more plants in a single action, the game automatically applies a **15% market premium** to every plant in that batch. The turn banner announces the bonus so you know it triggered.
+
+To earn it consistently: fill your grow beds with fast-cycling species (Basil every 5 days, Romaine every 6 days), wait until all plants in a bed are mature at the same time, and harvest in one action. A single bed of 18 Basil earns the bonus every cycle.
+
+### Repairing System Damage
+
+When a pump failure, water leak, or filter clog activates, the **Events tab** shows two repair options:
+
+| Option | Cost | What you get |
+|--------|------|-------------|
+| **Quick Repair** | ~50% of full cost | ~70% of function restored immediately — stops the damage, gets the system running, slight lasting impairment |
+| **Full Repair** | Full cost | 100% restoration to pre-event state |
+
+Use Quick Repair when cash is tight and the event is actively compounding (e.g., pump stopped). Save up for Full Repair when the situation is less urgent.
+
+### Success Milestones
+
+The game tracks three progression milestones as your money grows:
+
+| Milestone | Target | What it means |
+|-----------|--------|--------------|
+| **Established** | $1,500 | System is self-sustaining with consistent revenue |
+| **Profitable** | $2,500 | Infrastructure investment is paying back |
+| **Thriving** | $5,000 | Expert balance of fish load, water quality, and plant diversity |
+
+A notification fires when each milestone is first reached.
 
 ---
 

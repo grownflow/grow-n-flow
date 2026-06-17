@@ -15,7 +15,12 @@
     "smoke:harvest": "node scripts/test-harvest-inventory-sell.js",
     "smoke:harvest:local": "node scripts/test-harvest-inventory-sell-local.js",
     "smoke:buyall": "node scripts/test-buy-all-seeds-bulk.js",
-    "smoke:feedfish": "node scripts/test-feed-fish.js"
+    "smoke:feedfish": "node scripts/test-feed-fish.js",
+    "simulate": "node scripts/run-simulations.js",
+    "simulate:quick": "node scripts/run-simulations.js -c 20 -s conservative,aggressive,balanced,reactive -t 60",
+    "simulate:full": "node scripts/run-simulations.js -c 100 -s conservative,aggressive,balanced,reactive -t 100 -o simulation-results.json",
+    "sensitivity": "node scripts/run-sensitivity-analysis.js",
+    "sensitivity:quick": "node scripts/run-sensitivity-analysis.js --quick"
   },
   "keywords": [
     "aquaponics",

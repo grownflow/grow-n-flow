@@ -254,12 +254,26 @@ const plantMoves = {
       return;
     }
 
+    // Bulk harvest bonus: 15+ plants in one harvest earns a 15% market premium.
+    const BULK_THRESHOLD = 15;
+    const BULK_BONUS_MULT = 1.15;
+    const bulkBonus = harvestedCount >= BULK_THRESHOLD;
+    if (bulkBonus) {
+      for (const key of Object.keys(harvestedByType)) {
+        const entry = G.inventory.produce[key];
+        if (entry) {
+          entry.unitPrice = Math.round(entry.unitPrice * BULK_BONUS_MULT * 100) / 100;
+        }
+      }
+    }
+
     G.plants = remaining;
     G.lastAction = {
       type: 'harvestAllMaturePlants',
       success: true,
       harvestedCount,
       harvestedByType,
+      bulkBonus,
     };
   },
 

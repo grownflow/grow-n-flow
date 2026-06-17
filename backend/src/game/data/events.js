@@ -136,9 +136,10 @@ const EVENTS = {
       waterLossPerTurn: 50
     },
     duration: 999,
-    probability: 0.025,       // reduced from 0.04
+    probability: 0.020,       // reduced from 0.025 — ~every 50 days is still challenging
     severity: 'high',
-    repairCost: 75
+    repairCost: 75,
+    quickRepairCost: 37       // stops the leak but does not refill the tank
   },
 
   pumpFailure: {
@@ -151,9 +152,10 @@ const EVENTS = {
       circulationStopped: true
     },
     duration: 999,
-    probability: 0.02,        // reduced from 0.03
+    probability: 0.015,       // reduced from 0.020 — dominant sensitivity driver, now ~every 67 days
     severity: 'high',
-    repairCost: 100
+    repairCost: 100,
+    quickRepairCost: 50       // restores circulation to 70%; full repair restores to 100%
   },
 
   filterClog: {
@@ -166,9 +168,10 @@ const EVENTS = {
       biofilterEfficiencyReduction: 0.5
     },
     duration: 999,
-    probability: 0.03,        // reduced from 0.05
+    probability: 0.020,       // reduced from 0.030 — was the second-biggest difficulty driver
     severity: 'medium',
     repairCost: 50,
+    quickRepairCost: 25,      // restores biofilter to 70% of pre-clog value; full repair restores 100%
     requiresFish: true
   }
 };

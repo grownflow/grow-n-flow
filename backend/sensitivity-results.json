@@ -1,0 +1,1949 @@
+{
+  "meta": {
+    "timestamp": "2026-06-16T22:41:08.642Z",
+    "eventsCount": 9,
+    "deltaSteps": [
+      -0.1,
+      -0.08,
+      -0.06,
+      -0.04,
+      -0.02,
+      0,
+      0.02,
+      0.04,
+      0.06,
+      0.08,
+      0.1
+    ],
+    "gamesPerConfig": 40,
+    "maxTurns": 100,
+    "strategies": [
+      "conservative",
+      "aggressive",
+      "balanced",
+      "reactive"
+    ],
+    "totalGames": 3960
+  },
+  "rankings": [
+    {
+      "eventId": "pumpFailure",
+      "name": "Pump Failure",
+      "baseProb": 0.02,
+      "slope": -42.618900000000004
+    },
+    {
+      "eventId": "filterClog",
+      "name": "Filter Clog",
+      "baseProb": 0.03,
+      "slope": -37.8812
+    },
+    {
+      "eventId": "waterLeak",
+      "name": "Water Leak",
+      "baseProb": 0.025,
+      "slope": -24.601999999999997
+    },
+    {
+      "eventId": "plantDiseaseOutbreak",
+      "name": "Plant Disease Outbreak",
+      "baseProb": 0.015,
+      "slope": -9.2655
+    },
+    {
+      "eventId": "fishDiseaseOutbreak",
+      "name": "Fish Disease Outbreak",
+      "baseProb": 0.015,
+      "slope": -7.4572
+    },
+    {
+      "eventId": "pHCrash",
+      "name": "pH Drop",
+      "baseProb": 0.025,
+      "slope": 7.013
+    },
+    {
+      "eventId": "lowDissolvedOxygen",
+      "name": "Low Dissolved Oxygen",
+      "baseProb": 0.03,
+      "slope": -2.1759
+    },
+    {
+      "eventId": "nitriteSpike",
+      "name": "Nitrite Rise",
+      "baseProb": 0.03,
+      "slope": -1.6381000000000001
+    },
+    {
+      "eventId": "ammoniaSpike",
+      "name": "Sudden Ammonia Spike",
+      "baseProb": 0.04,
+      "slope": -1.5416999999999998
+    }
+  ],
+  "results": [
+    {
+      "eventId": "ammoniaSpike",
+      "eventName": "Sudden Ammonia Spike",
+      "eventType": "technical",
+      "baseProb": 0.04,
+      "sensitivitySlope": -1.5416999999999998,
+      "steps": [
+        {
+          "delta": -0.1,
+          "testProb": 0,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1199.09,
+            "avgRevenue": 1810.49,
+            "avgRepairCosts": 360,
+            "avgFishDeaths": 3.4,
+            "avgPlantDeaths": 32.1,
+            "avgPeakAmmonia": 1.289,
+            "eventRepairRatePct": 58,
+            "avgBiofiltersBought": 0.6,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": -0.08,
+          "testProb": 0,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1181.61,
+            "avgRevenue": 1815.9,
+            "avgRepairCosts": 339.38,
+            "avgFishDeaths": 6.7,
+            "avgPlantDeaths": 25.8,
+            "avgPeakAmmonia": 1.325,
+            "eventRepairRatePct": 57,
+            "avgBiofiltersBought": 1.1,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": -0.06,
+          "testProb": 0,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1215.5,
+            "avgRevenue": 1833.37,
+            "avgRepairCosts": 368.75,
+            "avgFishDeaths": 3.3,
+            "avgPlantDeaths": 20.9,
+            "avgPeakAmmonia": 1.42,
+            "eventRepairRatePct": 60,
+            "avgBiofiltersBought": 0.8,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": -0.04,
+          "testProb": 0,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1235.68,
+            "avgRevenue": 1813.7,
+            "avgRepairCosts": 316.25,
+            "avgFishDeaths": 0.8,
+            "avgPlantDeaths": 32.3,
+            "avgPeakAmmonia": 1.253,
+            "eventRepairRatePct": 54,
+            "avgBiofiltersBought": 0.9,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": -0.02,
+          "testProb": 0.02,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1209.18,
+            "avgRevenue": 1795.92,
+            "avgRepairCosts": 310.63,
+            "avgFishDeaths": 6.9,
+            "avgPlantDeaths": 28.5,
+            "avgPeakAmmonia": 1.384,
+            "eventRepairRatePct": 55,
+            "avgBiofiltersBought": 0.7,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0,
+          "testProb": 0.04,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1131.55,
+            "avgRevenue": 1797.83,
+            "avgRepairCosts": 357.5,
+            "avgFishDeaths": 5,
+            "avgPlantDeaths": 36.1,
+            "avgPeakAmmonia": 1.426,
+            "eventRepairRatePct": 56,
+            "avgBiofiltersBought": 0.9,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.02,
+          "testProb": 0.06,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1179.49,
+            "avgRevenue": 1752.28,
+            "avgRepairCosts": 320,
+            "avgFishDeaths": 2.7,
+            "avgPlantDeaths": 48.6,
+            "avgPeakAmmonia": 1.391,
+            "eventRepairRatePct": 57,
+            "avgBiofiltersBought": 0.8,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.04,
+          "testProb": 0.08,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1204.55,
+            "avgRevenue": 1749.2,
+            "avgRepairCosts": 295,
+            "avgFishDeaths": 1.7,
+            "avgPlantDeaths": 52.4,
+            "avgPeakAmmonia": 1.37,
+            "eventRepairRatePct": 54,
+            "avgBiofiltersBought": 0.7,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.06,
+          "testProb": 0.1,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1127.1,
+            "avgRevenue": 1729.3,
+            "avgRepairCosts": 323.75,
+            "avgFishDeaths": 2.5,
+            "avgPlantDeaths": 59.5,
+            "avgPeakAmmonia": 1.434,
+            "eventRepairRatePct": 59,
+            "avgBiofiltersBought": 0.8,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.08,
+          "testProb": 0.12,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1218.09,
+            "avgRevenue": 1720.56,
+            "avgRepairCosts": 281.88,
+            "avgFishDeaths": 5.1,
+            "avgPlantDeaths": 52.8,
+            "avgPeakAmmonia": 1.415,
+            "eventRepairRatePct": 54,
+            "avgBiofiltersBought": 0.6,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.1,
+          "testProb": 0.14,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1173.5,
+            "avgRevenue": 1717.21,
+            "avgRepairCosts": 298.13,
+            "avgFishDeaths": 3.5,
+            "avgPlantDeaths": 57.5,
+            "avgPeakAmmonia": 1.427,
+            "eventRepairRatePct": 56,
+            "avgBiofiltersBought": 0.6,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        }
+      ]
+    },
+    {
+      "eventId": "nitriteSpike",
+      "eventName": "Nitrite Rise",
+      "eventType": "technical",
+      "baseProb": 0.03,
+      "sensitivitySlope": -1.6381000000000001,
+      "steps": [
+        {
+          "delta": -0.1,
+          "testProb": 0,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1138.92,
+            "avgRevenue": 1784.25,
+            "avgRepairCosts": 366.25,
+            "avgFishDeaths": 2.3,
+            "avgPlantDeaths": 39,
+            "avgPeakAmmonia": 1.411,
+            "eventRepairRatePct": 57,
+            "avgBiofiltersBought": 0.8,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": -0.08,
+          "testProb": 0,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1177.12,
+            "avgRevenue": 1823.94,
+            "avgRepairCosts": 371.88,
+            "avgFishDeaths": 2.6,
+            "avgPlantDeaths": 28.3,
+            "avgPeakAmmonia": 1.402,
+            "eventRepairRatePct": 60,
+            "avgBiofiltersBought": 0.8,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": -0.06,
+          "testProb": 0,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1217.29,
+            "avgRevenue": 1829.23,
+            "avgRepairCosts": 340,
+            "avgFishDeaths": 1.5,
+            "avgPlantDeaths": 29.6,
+            "avgPeakAmmonia": 1.375,
+            "eventRepairRatePct": 57,
+            "avgBiofiltersBought": 0.8,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": -0.04,
+          "testProb": 0,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1155.23,
+            "avgRevenue": 1819.09,
+            "avgRepairCosts": 368.75,
+            "avgFishDeaths": 1.8,
+            "avgPlantDeaths": 36.5,
+            "avgPeakAmmonia": 1.393,
+            "eventRepairRatePct": 61,
+            "avgBiofiltersBought": 0.9,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": -0.02,
+          "testProb": 0.009999999999999998,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1148.03,
+            "avgRevenue": 1778.8,
+            "avgRepairCosts": 358.13,
+            "avgFishDeaths": 2.9,
+            "avgPlantDeaths": 41.5,
+            "avgPeakAmmonia": 1.423,
+            "eventRepairRatePct": 60,
+            "avgBiofiltersBought": 0.8,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0,
+          "testProb": 0.03,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1167.2,
+            "avgRevenue": 1780.76,
+            "avgRepairCosts": 335,
+            "avgFishDeaths": 3.8,
+            "avgPlantDeaths": 37.9,
+            "avgPeakAmmonia": 1.366,
+            "eventRepairRatePct": 58,
+            "avgBiofiltersBought": 0.8,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.02,
+          "testProb": 0.05,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1136.19,
+            "avgRevenue": 1730.73,
+            "avgRepairCosts": 321.88,
+            "avgFishDeaths": 3.7,
+            "avgPlantDeaths": 51.8,
+            "avgPeakAmmonia": 1.384,
+            "eventRepairRatePct": 59,
+            "avgBiofiltersBought": 0.9,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.04,
+          "testProb": 0.07,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1122.92,
+            "avgRevenue": 1761.41,
+            "avgRepairCosts": 360,
+            "avgFishDeaths": 6.4,
+            "avgPlantDeaths": 38.2,
+            "avgPeakAmmonia": 1.418,
+            "eventRepairRatePct": 62,
+            "avgBiofiltersBought": 0.8,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.06,
+          "testProb": 0.09,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1176.43,
+            "avgRevenue": 1739.23,
+            "avgRepairCosts": 296.88,
+            "avgFishDeaths": 7.3,
+            "avgPlantDeaths": 46.9,
+            "avgPeakAmmonia": 1.346,
+            "eventRepairRatePct": 59,
+            "avgBiofiltersBought": 0.7,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.08,
+          "testProb": 0.11,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1112.11,
+            "avgRevenue": 1693.09,
+            "avgRepairCosts": 308.13,
+            "avgFishDeaths": 14,
+            "avgPlantDeaths": 56.3,
+            "avgPeakAmmonia": 1.369,
+            "eventRepairRatePct": 60,
+            "avgBiofiltersBought": 0.7,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.1,
+          "testProb": 0.13,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1158.66,
+            "avgRevenue": 1714.52,
+            "avgRepairCosts": 283.75,
+            "avgFishDeaths": 14.8,
+            "avgPlantDeaths": 44.3,
+            "avgPeakAmmonia": 1.372,
+            "eventRepairRatePct": 57,
+            "avgBiofiltersBought": 0.7,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        }
+      ]
+    },
+    {
+      "eventId": "lowDissolvedOxygen",
+      "eventName": "Low Dissolved Oxygen",
+      "eventType": "technical",
+      "baseProb": 0.03,
+      "sensitivitySlope": -2.1759,
+      "steps": [
+        {
+          "delta": -0.1,
+          "testProb": 0,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1263.47,
+            "avgRevenue": 1821.02,
+            "avgRepairCosts": 329.38,
+            "avgFishDeaths": 2.3,
+            "avgPlantDeaths": 18.4,
+            "avgPeakAmmonia": 1.408,
+            "eventRepairRatePct": 58,
+            "avgBiofiltersBought": 0.6,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": -0.08,
+          "testProb": 0,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1172.2,
+            "avgRevenue": 1784.38,
+            "avgRepairCosts": 351.25,
+            "avgFishDeaths": 2.3,
+            "avgPlantDeaths": 43.8,
+            "avgPeakAmmonia": 1.384,
+            "eventRepairRatePct": 57,
+            "avgBiofiltersBought": 0.8,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": -0.06,
+          "testProb": 0,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1157.87,
+            "avgRevenue": 1794.95,
+            "avgRepairCosts": 361.25,
+            "avgFishDeaths": 2.5,
+            "avgPlantDeaths": 28.8,
+            "avgPeakAmmonia": 1.423,
+            "eventRepairRatePct": 59,
+            "avgBiofiltersBought": 0.8,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": -0.04,
+          "testProb": 0,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1250.42,
+            "avgRevenue": 1811.13,
+            "avgRepairCosts": 303.75,
+            "avgFishDeaths": 1.3,
+            "avgPlantDeaths": 32.9,
+            "avgPeakAmmonia": 1.369,
+            "eventRepairRatePct": 53,
+            "avgBiofiltersBought": 0.8,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": -0.02,
+          "testProb": 0.009999999999999998,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1192.36,
+            "avgRevenue": 1795.61,
+            "avgRepairCosts": 338.13,
+            "avgFishDeaths": 4.4,
+            "avgPlantDeaths": 31.6,
+            "avgPeakAmmonia": 1.423,
+            "eventRepairRatePct": 58,
+            "avgBiofiltersBought": 0.8,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0,
+          "testProb": 0.03,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1222.62,
+            "avgRevenue": 1788.38,
+            "avgRepairCosts": 296.88,
+            "avgFishDeaths": 5,
+            "avgPlantDeaths": 34.9,
+            "avgPeakAmmonia": 1.363,
+            "eventRepairRatePct": 55,
+            "avgBiofiltersBought": 0.8,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.02,
+          "testProb": 0.05,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1243.84,
+            "avgRevenue": 1783.43,
+            "avgRepairCosts": 283.13,
+            "avgFishDeaths": 1.7,
+            "avgPlantDeaths": 40.9,
+            "avgPeakAmmonia": 1.334,
+            "eventRepairRatePct": 56,
+            "avgBiofiltersBought": 0.6,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.04,
+          "testProb": 0.07,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1198.34,
+            "avgRevenue": 1765.24,
+            "avgRepairCosts": 315.63,
+            "avgFishDeaths": 1.5,
+            "avgPlantDeaths": 53.5,
+            "avgPeakAmmonia": 1.354,
+            "eventRepairRatePct": 55,
+            "avgBiofiltersBought": 0.6,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.06,
+          "testProb": 0.09,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1237.29,
+            "avgRevenue": 1811.19,
+            "avgRepairCosts": 307.5,
+            "avgFishDeaths": 3.4,
+            "avgPlantDeaths": 37.6,
+            "avgPeakAmmonia": 1.353,
+            "eventRepairRatePct": 57,
+            "avgBiofiltersBought": 0.7,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.08,
+          "testProb": 0.11,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1216.33,
+            "avgRevenue": 1789.55,
+            "avgRepairCosts": 288.75,
+            "avgFishDeaths": 0.9,
+            "avgPlantDeaths": 42.8,
+            "avgPeakAmmonia": 1.331,
+            "eventRepairRatePct": 53,
+            "avgBiofiltersBought": 0.8,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.1,
+          "testProb": 0.13,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1095.31,
+            "avgRevenue": 1650.47,
+            "avgRepairCosts": 290.63,
+            "avgFishDeaths": 2.7,
+            "avgPlantDeaths": 99,
+            "avgPeakAmmonia": 1.389,
+            "eventRepairRatePct": 54,
+            "avgBiofiltersBought": 0.7,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        }
+      ]
+    },
+    {
+      "eventId": "fishDiseaseOutbreak",
+      "eventName": "Fish Disease Outbreak",
+      "eventType": "technical",
+      "baseProb": 0.015,
+      "sensitivitySlope": -7.4572,
+      "steps": [
+        {
+          "delta": -0.1,
+          "testProb": 0,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1277.63,
+            "avgRevenue": 1855.43,
+            "avgRepairCosts": 340.63,
+            "avgFishDeaths": 1.1,
+            "avgPlantDeaths": 19.7,
+            "avgPeakAmmonia": 1.383,
+            "eventRepairRatePct": 61,
+            "avgBiofiltersBought": 0.7,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": -0.08,
+          "testProb": 0,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1147.63,
+            "avgRevenue": 1841.63,
+            "avgRepairCosts": 383.13,
+            "avgFishDeaths": 0.4,
+            "avgPlantDeaths": 24.7,
+            "avgPeakAmmonia": 1.347,
+            "eventRepairRatePct": 64,
+            "avgBiofiltersBought": 1.1,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": -0.06,
+          "testProb": 0,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1160.17,
+            "avgRevenue": 1775.66,
+            "avgRepairCosts": 343.75,
+            "avgFishDeaths": 0.4,
+            "avgPlantDeaths": 52.9,
+            "avgPeakAmmonia": 1.395,
+            "eventRepairRatePct": 71,
+            "avgBiofiltersBought": 0.9,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": -0.04,
+          "testProb": 0,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1259.13,
+            "avgRevenue": 1851.51,
+            "avgRepairCosts": 328.75,
+            "avgFishDeaths": 0.1,
+            "avgPlantDeaths": 24.1,
+            "avgPeakAmmonia": 1.342,
+            "eventRepairRatePct": 64,
+            "avgBiofiltersBought": 0.7,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": -0.02,
+          "testProb": 0,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1275.71,
+            "avgRevenue": 1874.96,
+            "avgRepairCosts": 333.13,
+            "avgFishDeaths": 0.8,
+            "avgPlantDeaths": 10.7,
+            "avgPeakAmmonia": 1.342,
+            "eventRepairRatePct": 62,
+            "avgBiofiltersBought": 0.7,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0,
+          "testProb": 0.015,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1196,
+            "avgRevenue": 1797.06,
+            "avgRepairCosts": 342.5,
+            "avgFishDeaths": 1.1,
+            "avgPlantDeaths": 42.3,
+            "avgPeakAmmonia": 1.376,
+            "eventRepairRatePct": 59,
+            "avgBiofiltersBought": 0.7,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.02,
+          "testProb": 0.035,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1147.07,
+            "avgRevenue": 1733.84,
+            "avgRepairCosts": 321.88,
+            "avgFishDeaths": 5.1,
+            "avgPlantDeaths": 52.8,
+            "avgPeakAmmonia": 1.396,
+            "eventRepairRatePct": 51,
+            "avgBiofiltersBought": 0.8,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.04,
+          "testProb": 0.055,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1111.22,
+            "avgRevenue": 1683.32,
+            "avgRepairCosts": 312.5,
+            "avgFishDeaths": 10.2,
+            "avgPlantDeaths": 58.5,
+            "avgPeakAmmonia": 1.408,
+            "eventRepairRatePct": 46,
+            "avgBiofiltersBought": 0.6,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.06,
+          "testProb": 0.075,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1160.74,
+            "avgRevenue": 1698.95,
+            "avgRepairCosts": 301.88,
+            "avgFishDeaths": 11.9,
+            "avgPlantDeaths": 45.8,
+            "avgPeakAmmonia": 1.401,
+            "eventRepairRatePct": 36,
+            "avgBiofiltersBought": 0.6,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.08,
+          "testProb": 0.095,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1105.61,
+            "avgRevenue": 1652.62,
+            "avgRepairCosts": 275,
+            "avgFishDeaths": 14.5,
+            "avgPlantDeaths": 57.6,
+            "avgPeakAmmonia": 1.386,
+            "eventRepairRatePct": 34,
+            "avgBiofiltersBought": 0.7,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.1,
+          "testProb": 0.115,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1067.68,
+            "avgRevenue": 1598.3,
+            "avgRepairCosts": 281.25,
+            "avgFishDeaths": 13.3,
+            "avgPlantDeaths": 85,
+            "avgPeakAmmonia": 1.357,
+            "eventRepairRatePct": 33,
+            "avgBiofiltersBought": 0.6,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        }
+      ]
+    },
+    {
+      "eventId": "plantDiseaseOutbreak",
+      "eventName": "Plant Disease Outbreak",
+      "eventType": "technical",
+      "baseProb": 0.015,
+      "sensitivitySlope": -9.2655,
+      "steps": [
+        {
+          "delta": -0.1,
+          "testProb": 0,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1194.75,
+            "avgRevenue": 1771.27,
+            "avgRepairCosts": 298.13,
+            "avgFishDeaths": 6.1,
+            "avgPlantDeaths": 33,
+            "avgPeakAmmonia": 1.384,
+            "eventRepairRatePct": 59,
+            "avgBiofiltersBought": 0.9,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": -0.08,
+          "testProb": 0,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1233.79,
+            "avgRevenue": 1818.1,
+            "avgRepairCosts": 346.88,
+            "avgFishDeaths": 3.6,
+            "avgPlantDeaths": 22.5,
+            "avgPeakAmmonia": 1.391,
+            "eventRepairRatePct": 64,
+            "avgBiofiltersBought": 0.5,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": -0.06,
+          "testProb": 0,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1262.66,
+            "avgRevenue": 1822.38,
+            "avgRepairCosts": 318.13,
+            "avgFishDeaths": 2.7,
+            "avgPlantDeaths": 21,
+            "avgPeakAmmonia": 1.408,
+            "eventRepairRatePct": 63,
+            "avgBiofiltersBought": 0.8,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": -0.04,
+          "testProb": 0,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1181.92,
+            "avgRevenue": 1809.82,
+            "avgRepairCosts": 344.38,
+            "avgFishDeaths": 5.6,
+            "avgPlantDeaths": 22.5,
+            "avgPeakAmmonia": 1.42,
+            "eventRepairRatePct": 64,
+            "avgBiofiltersBought": 1,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": -0.02,
+          "testProb": 0,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1205.46,
+            "avgRevenue": 1827.04,
+            "avgRepairCosts": 362.5,
+            "avgFishDeaths": 1.9,
+            "avgPlantDeaths": 25.5,
+            "avgPeakAmmonia": 1.453,
+            "eventRepairRatePct": 67,
+            "avgBiofiltersBought": 0.7,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0,
+          "testProb": 0.015,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1287.46,
+            "avgRevenue": 1813.32,
+            "avgRepairCosts": 301.88,
+            "avgFishDeaths": 2.7,
+            "avgPlantDeaths": 25.7,
+            "avgPeakAmmonia": 1.324,
+            "eventRepairRatePct": 55,
+            "avgBiofiltersBought": 0.6,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.02,
+          "testProb": 0.035,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1138,
+            "avgRevenue": 1714.11,
+            "avgRepairCosts": 310.63,
+            "avgFishDeaths": 2.7,
+            "avgPlantDeaths": 72.2,
+            "avgPeakAmmonia": 1.331,
+            "eventRepairRatePct": 48,
+            "avgBiofiltersBought": 0.7,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.04,
+          "testProb": 0.055,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1102.74,
+            "avgRevenue": 1688.53,
+            "avgRepairCosts": 310,
+            "avgFishDeaths": 4.6,
+            "avgPlantDeaths": 75.1,
+            "avgPeakAmmonia": 1.409,
+            "eventRepairRatePct": 43,
+            "avgBiofiltersBought": 0.7,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.06,
+          "testProb": 0.075,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1119.49,
+            "avgRevenue": 1684.07,
+            "avgRepairCosts": 303.75,
+            "avgFishDeaths": 1.6,
+            "avgPlantDeaths": 89.6,
+            "avgPeakAmmonia": 1.345,
+            "eventRepairRatePct": 42,
+            "avgBiofiltersBought": 0.6,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.08,
+          "testProb": 0.095,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1090.13,
+            "avgRevenue": 1589.43,
+            "avgRepairCosts": 251.25,
+            "avgFishDeaths": 3.4,
+            "avgPlantDeaths": 120.4,
+            "avgPeakAmmonia": 1.3,
+            "eventRepairRatePct": 33,
+            "avgBiofiltersBought": 0.6,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.1,
+          "testProb": 0.115,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1033.06,
+            "avgRevenue": 1520.34,
+            "avgRepairCosts": 250.63,
+            "avgFishDeaths": 1.2,
+            "avgPlantDeaths": 165.6,
+            "avgPeakAmmonia": 1.266,
+            "eventRepairRatePct": 31,
+            "avgBiofiltersBought": 0.6,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        }
+      ]
+    },
+    {
+      "eventId": "pHCrash",
+      "eventName": "pH Drop",
+      "eventType": "technical",
+      "baseProb": 0.025,
+      "sensitivitySlope": 7.013,
+      "steps": [
+        {
+          "delta": -0.1,
+          "testProb": 0,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1136.72,
+            "avgRevenue": 1731.59,
+            "avgRepairCosts": 330.63,
+            "avgFishDeaths": 2.6,
+            "avgPlantDeaths": 57.9,
+            "avgPeakAmmonia": 1.384,
+            "eventRepairRatePct": 69,
+            "avgBiofiltersBought": 0.8,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": -0.08,
+          "testProb": 0,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1166.2,
+            "avgRevenue": 1749.63,
+            "avgRepairCosts": 331.88,
+            "avgFishDeaths": 4.2,
+            "avgPlantDeaths": 46.5,
+            "avgPeakAmmonia": 1.405,
+            "eventRepairRatePct": 69,
+            "avgBiofiltersBought": 0.8,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": -0.06,
+          "testProb": 0,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1044.03,
+            "avgRevenue": 1662.05,
+            "avgRepairCosts": 381.25,
+            "avgFishDeaths": 1.5,
+            "avgPlantDeaths": 87.2,
+            "avgPeakAmmonia": 1.403,
+            "eventRepairRatePct": 69,
+            "avgBiofiltersBought": 0.7,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": -0.04,
+          "testProb": 0,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1177.83,
+            "avgRevenue": 1778.35,
+            "avgRepairCosts": 341.25,
+            "avgFishDeaths": 3.4,
+            "avgPlantDeaths": 36.5,
+            "avgPeakAmmonia": 1.34,
+            "eventRepairRatePct": 74,
+            "avgBiofiltersBought": 0.9,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": -0.02,
+          "testProb": 0.005000000000000001,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1200.84,
+            "avgRevenue": 1795.47,
+            "avgRepairCosts": 348.13,
+            "avgFishDeaths": 2.6,
+            "avgPlantDeaths": 35.1,
+            "avgPeakAmmonia": 1.418,
+            "eventRepairRatePct": 69,
+            "avgBiofiltersBought": 0.7,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0,
+          "testProb": 0.025,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1136.45,
+            "avgRevenue": 1773.83,
+            "avgRepairCosts": 346.88,
+            "avgFishDeaths": 3.6,
+            "avgPlantDeaths": 43.5,
+            "avgPeakAmmonia": 1.351,
+            "eventRepairRatePct": 58,
+            "avgBiofiltersBought": 0.9,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.02,
+          "testProb": 0.045,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1184.72,
+            "avgRevenue": 1806.37,
+            "avgRepairCosts": 323.75,
+            "avgFishDeaths": 3,
+            "avgPlantDeaths": 30.3,
+            "avgPeakAmmonia": 1.354,
+            "eventRepairRatePct": 51,
+            "avgBiofiltersBought": 1,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.04,
+          "testProb": 0.065,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1247.82,
+            "avgRevenue": 1816.5,
+            "avgRepairCosts": 285,
+            "avgFishDeaths": 3.1,
+            "avgPlantDeaths": 29.8,
+            "avgPeakAmmonia": 1.361,
+            "eventRepairRatePct": 40,
+            "avgBiofiltersBought": 0.7,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.06,
+          "testProb": 0.08499999999999999,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1207.25,
+            "avgRevenue": 1807.28,
+            "avgRepairCosts": 309.38,
+            "avgFishDeaths": 1.7,
+            "avgPlantDeaths": 34.2,
+            "avgPeakAmmonia": 1.363,
+            "eventRepairRatePct": 39,
+            "avgBiofiltersBought": 0.7,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.08,
+          "testProb": 0.10500000000000001,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1253.46,
+            "avgRevenue": 1838.05,
+            "avgRepairCosts": 286.25,
+            "avgFishDeaths": 5,
+            "avgPlantDeaths": 19.8,
+            "avgPeakAmmonia": 1.344,
+            "eventRepairRatePct": 34,
+            "avgBiofiltersBought": 0.7,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.1,
+          "testProb": 0.125,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1252.78,
+            "avgRevenue": 1833.68,
+            "avgRepairCosts": 280.63,
+            "avgFishDeaths": 2.9,
+            "avgPlantDeaths": 18.9,
+            "avgPeakAmmonia": 1.349,
+            "eventRepairRatePct": 33,
+            "avgBiofiltersBought": 0.7,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        }
+      ]
+    },
+    {
+      "eventId": "waterLeak",
+      "eventName": "Water Leak",
+      "eventType": "technical",
+      "baseProb": 0.025,
+      "sensitivitySlope": -24.601999999999997,
+      "steps": [
+        {
+          "delta": -0.1,
+          "testProb": 0,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1327.38,
+            "avgRevenue": 1794.97,
+            "avgRepairCosts": 212.5,
+            "avgFishDeaths": 1.3,
+            "avgPlantDeaths": 37.6,
+            "avgPeakAmmonia": 1.4,
+            "eventRepairRatePct": 44,
+            "avgBiofiltersBought": 0.7,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": -0.08,
+          "testProb": 0,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1269.58,
+            "avgRevenue": 1755.02,
+            "avgRepairCosts": 232.5,
+            "avgFishDeaths": 5,
+            "avgPlantDeaths": 45.6,
+            "avgPeakAmmonia": 1.402,
+            "eventRepairRatePct": 46,
+            "avgBiofiltersBought": 0.7,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": -0.06,
+          "testProb": 0,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1293.97,
+            "avgRevenue": 1788.19,
+            "avgRepairCosts": 270,
+            "avgFishDeaths": 2.9,
+            "avgPlantDeaths": 35.1,
+            "avgPeakAmmonia": 1.423,
+            "eventRepairRatePct": 50,
+            "avgBiofiltersBought": 0.7,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": -0.04,
+          "testProb": 0,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1278.99,
+            "avgRevenue": 1759.95,
+            "avgRepairCosts": 227.5,
+            "avgFishDeaths": 4.1,
+            "avgPlantDeaths": 43.6,
+            "avgPeakAmmonia": 1.385,
+            "eventRepairRatePct": 46,
+            "avgBiofiltersBought": 0.8,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": -0.02,
+          "testProb": 0.005000000000000001,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1293.46,
+            "avgRevenue": 1795.12,
+            "avgRepairCosts": 263.75,
+            "avgFishDeaths": 4.8,
+            "avgPlantDeaths": 31.8,
+            "avgPeakAmmonia": 1.446,
+            "eventRepairRatePct": 55,
+            "avgBiofiltersBought": 0.7,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0,
+          "testProb": 0.025,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1188.14,
+            "avgRevenue": 1769.9,
+            "avgRepairCosts": 328.75,
+            "avgFishDeaths": 2.8,
+            "avgPlantDeaths": 44.3,
+            "avgPeakAmmonia": 1.382,
+            "eventRepairRatePct": 56,
+            "avgBiofiltersBought": 0.8,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.02,
+          "testProb": 0.045,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1108.33,
+            "avgRevenue": 1787.66,
+            "avgRepairCosts": 402.5,
+            "avgFishDeaths": 2.1,
+            "avgPlantDeaths": 41.9,
+            "avgPeakAmmonia": 1.405,
+            "eventRepairRatePct": 62,
+            "avgBiofiltersBought": 0.7,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.04,
+          "testProb": 0.065,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1120.22,
+            "avgRevenue": 1833.29,
+            "avgRepairCosts": 455.63,
+            "avgFishDeaths": 3,
+            "avgPlantDeaths": 20.6,
+            "avgPeakAmmonia": 1.384,
+            "eventRepairRatePct": 65,
+            "avgBiofiltersBought": 0.7,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.06,
+          "testProb": 0.08499999999999999,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 916.42,
+            "avgRevenue": 1764.06,
+            "avgRepairCosts": 546.88,
+            "avgFishDeaths": 2.7,
+            "avgPlantDeaths": 47.1,
+            "avgPeakAmmonia": 1.378,
+            "eventRepairRatePct": 70,
+            "avgBiofiltersBought": 0.7,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.08,
+          "testProb": 0.10500000000000001,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 913.51,
+            "avgRevenue": 1803.58,
+            "avgRepairCosts": 611.25,
+            "avgFishDeaths": 3,
+            "avgPlantDeaths": 33.9,
+            "avgPeakAmmonia": 1.355,
+            "eventRepairRatePct": 74,
+            "avgBiofiltersBought": 0.7,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.1,
+          "testProb": 0.125,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 856.81,
+            "avgRevenue": 1809.41,
+            "avgRepairCosts": 636.88,
+            "avgFishDeaths": 2.4,
+            "avgPlantDeaths": 29.1,
+            "avgPeakAmmonia": 1.338,
+            "eventRepairRatePct": 71,
+            "avgBiofiltersBought": 0.8,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        }
+      ]
+    },
+    {
+      "eventId": "pumpFailure",
+      "eventName": "Pump Failure",
+      "eventType": "technical",
+      "baseProb": 0.02,
+      "sensitivitySlope": -42.618900000000004,
+      "steps": [
+        {
+          "delta": -0.1,
+          "testProb": 0,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1318.87,
+            "avgRevenue": 1779.27,
+            "avgRepairCosts": 185.63,
+            "avgFishDeaths": 6.5,
+            "avgPlantDeaths": 36.4,
+            "avgPeakAmmonia": 1.207,
+            "eventRepairRatePct": 46,
+            "avgBiofiltersBought": 0.8,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": -0.08,
+          "testProb": 0,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1357.96,
+            "avgRevenue": 1806.97,
+            "avgRepairCosts": 183.75,
+            "avgFishDeaths": 5.6,
+            "avgPlantDeaths": 19.5,
+            "avgPeakAmmonia": 1.193,
+            "eventRepairRatePct": 47,
+            "avgBiofiltersBought": 0.8,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": -0.06,
+          "testProb": 0,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1295.62,
+            "avgRevenue": 1801.61,
+            "avgRepairCosts": 218.75,
+            "avgFishDeaths": 4.5,
+            "avgPlantDeaths": 28.8,
+            "avgPeakAmmonia": 1.195,
+            "eventRepairRatePct": 53,
+            "avgBiofiltersBought": 0.9,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": -0.04,
+          "testProb": 0,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1338.67,
+            "avgRevenue": 1806.65,
+            "avgRepairCosts": 221.88,
+            "avgFishDeaths": 5.6,
+            "avgPlantDeaths": 28.7,
+            "avgPeakAmmonia": 1.209,
+            "eventRepairRatePct": 52,
+            "avgBiofiltersBought": 0.7,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": -0.02,
+          "testProb": 0,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1287.12,
+            "avgRevenue": 1755.52,
+            "avgRepairCosts": 208.13,
+            "avgFishDeaths": 4,
+            "avgPlantDeaths": 44.6,
+            "avgPeakAmmonia": 1.23,
+            "eventRepairRatePct": 49,
+            "avgBiofiltersBought": 0.7,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0,
+          "testProb": 0.02,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1142.21,
+            "avgRevenue": 1737.1,
+            "avgRepairCosts": 330,
+            "avgFishDeaths": 2.7,
+            "avgPlantDeaths": 60.8,
+            "avgPeakAmmonia": 1.392,
+            "eventRepairRatePct": 59,
+            "avgBiofiltersBought": 0.8,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.02,
+          "testProb": 0.04,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1110.29,
+            "avgRevenue": 1784.63,
+            "avgRepairCosts": 397.5,
+            "avgFishDeaths": 1.9,
+            "avgPlantDeaths": 43.3,
+            "avgPeakAmmonia": 1.422,
+            "eventRepairRatePct": 60,
+            "avgBiofiltersBought": 0.7,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.04,
+          "testProb": 0.06,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 890.93,
+            "avgRevenue": 1711.88,
+            "avgRepairCosts": 561.88,
+            "avgFishDeaths": 5.2,
+            "avgPlantDeaths": 63.9,
+            "avgPeakAmmonia": 1.509,
+            "eventRepairRatePct": 66,
+            "avgBiofiltersBought": 0.8,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.06,
+          "testProb": 0.08,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 773.83,
+            "avgRevenue": 1714.39,
+            "avgRepairCosts": 706.25,
+            "avgFishDeaths": 0.4,
+            "avgPlantDeaths": 69.1,
+            "avgPeakAmmonia": 1.539,
+            "eventRepairRatePct": 74,
+            "avgBiofiltersBought": 0.6,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.08,
+          "testProb": 0.1,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 633.88,
+            "avgRevenue": 1681.99,
+            "avgRepairCosts": 802.5,
+            "avgFishDeaths": 2.7,
+            "avgPlantDeaths": 75.5,
+            "avgPeakAmmonia": 1.605,
+            "eventRepairRatePct": 77,
+            "avgBiofiltersBought": 0.6,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.1,
+          "testProb": 0.12000000000000001,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 550.44,
+            "avgRevenue": 1670.21,
+            "avgRepairCosts": 883.13,
+            "avgFishDeaths": 0.8,
+            "avgPlantDeaths": 90.2,
+            "avgPeakAmmonia": 1.739,
+            "eventRepairRatePct": 77,
+            "avgBiofiltersBought": 0.7,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        }
+      ]
+    },
+    {
+      "eventId": "filterClog",
+      "eventName": "Filter Clog",
+      "eventType": "technical",
+      "baseProb": 0.03,
+      "sensitivitySlope": -37.8812,
+      "steps": [
+        {
+          "delta": -0.1,
+          "testProb": 0,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1385.48,
+            "avgRevenue": 1834.66,
+            "avgRepairCosts": 257.5,
+            "avgFishDeaths": 5.6,
+            "avgPlantDeaths": 13,
+            "avgPeakAmmonia": 1.372,
+            "eventRepairRatePct": 43,
+            "avgBiofiltersBought": 0.3,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": -0.08,
+          "testProb": 0,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1384.79,
+            "avgRevenue": 1845.68,
+            "avgRepairCosts": 236.88,
+            "avgFishDeaths": 7.1,
+            "avgPlantDeaths": 6.8,
+            "avgPeakAmmonia": 1.347,
+            "eventRepairRatePct": 42,
+            "avgBiofiltersBought": 0.3,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": -0.06,
+          "testProb": 0,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1377.74,
+            "avgRevenue": 1849.29,
+            "avgRepairCosts": 247.5,
+            "avgFishDeaths": 9.3,
+            "avgPlantDeaths": 7.7,
+            "avgPeakAmmonia": 1.315,
+            "eventRepairRatePct": 43,
+            "avgBiofiltersBought": 0.3,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": -0.04,
+          "testProb": 0,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1345.85,
+            "avgRevenue": 1836.15,
+            "avgRepairCosts": 268.13,
+            "avgFishDeaths": 6,
+            "avgPlantDeaths": 13.2,
+            "avgPeakAmmonia": 1.344,
+            "eventRepairRatePct": 44,
+            "avgBiofiltersBought": 0.3,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": -0.02,
+          "testProb": 0.009999999999999998,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1281.98,
+            "avgRevenue": 1808.99,
+            "avgRepairCosts": 306.25,
+            "avgFishDeaths": 5.2,
+            "avgPlantDeaths": 18.5,
+            "avgPeakAmmonia": 1.406,
+            "eventRepairRatePct": 50,
+            "avgBiofiltersBought": 0.3,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0,
+          "testProb": 0.03,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1176.68,
+            "avgRevenue": 1783.14,
+            "avgRepairCosts": 348.75,
+            "avgFishDeaths": 5.7,
+            "avgPlantDeaths": 29.8,
+            "avgPeakAmmonia": 1.408,
+            "eventRepairRatePct": 59,
+            "avgBiofiltersBought": 0.6,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.02,
+          "testProb": 0.05,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 963.96,
+            "avgRevenue": 1700.93,
+            "avgRepairCosts": 443.13,
+            "avgFishDeaths": 4.6,
+            "avgPlantDeaths": 70.3,
+            "avgPeakAmmonia": 1.471,
+            "eventRepairRatePct": 66,
+            "avgBiofiltersBought": 1.1,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.04,
+          "testProb": 0.07,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 1002.01,
+            "avgRevenue": 1742.71,
+            "avgRepairCosts": 450.63,
+            "avgFishDeaths": 1.2,
+            "avgPlantDeaths": 64.6,
+            "avgPeakAmmonia": 1.38,
+            "eventRepairRatePct": 69,
+            "avgBiofiltersBought": 1.1,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.06,
+          "testProb": 0.09,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 916.07,
+            "avgRevenue": 1733.77,
+            "avgRepairCosts": 480,
+            "avgFishDeaths": 1.9,
+            "avgPlantDeaths": 65.8,
+            "avgPeakAmmonia": 1.378,
+            "eventRepairRatePct": 69,
+            "avgBiofiltersBought": 1.4,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.08,
+          "testProb": 0.11,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 752.29,
+            "avgRevenue": 1601.18,
+            "avgRepairCosts": 530.63,
+            "avgFishDeaths": 2.6,
+            "avgPlantDeaths": 104.1,
+            "avgPeakAmmonia": 1.458,
+            "eventRepairRatePct": 77,
+            "avgBiofiltersBought": 1.5,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        },
+        {
+          "delta": 0.1,
+          "testProb": 0.13,
+          "overall": {
+            "n": 40,
+            "avgFinalMoney": 702.85,
+            "avgRevenue": 1614.2,
+            "avgRepairCosts": 592.5,
+            "avgFishDeaths": 3.1,
+            "avgPlantDeaths": 97,
+            "avgPeakAmmonia": 1.482,
+            "eventRepairRatePct": 75,
+            "avgBiofiltersBought": 1.5,
+            "avgFirstHarvestDay": 5,
+            "successRatePct": 0,
+            "survivalRatePct": 100
+          }
+        }
+      ]
+    }
+  ]
+}

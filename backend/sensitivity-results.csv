@@ -1,0 +1,100 @@
+event_id,event_name,event_type,base_prob,delta,test_prob,n_games,avg_final_money,avg_revenue,avg_repair_costs,avg_fish_deaths,avg_plant_deaths,avg_peak_ammonia_ppm,event_repair_rate_pct,avg_biofilters_bought,avg_first_harvest_day,success_rate_pct,survival_rate_pct
+ammoniaSpike,"Sudden Ammonia Spike",technical,0.0400,-0.10,0.0000,40,1199.09,1810.49,360,3.4,32.1,1.289,58,0.6,5,0,100
+ammoniaSpike,"Sudden Ammonia Spike",technical,0.0400,-0.08,0.0000,40,1181.61,1815.9,339.38,6.7,25.8,1.325,57,1.1,5,0,100
+ammoniaSpike,"Sudden Ammonia Spike",technical,0.0400,-0.06,0.0000,40,1215.5,1833.37,368.75,3.3,20.9,1.42,60,0.8,5,0,100
+ammoniaSpike,"Sudden Ammonia Spike",technical,0.0400,-0.04,0.0000,40,1235.68,1813.7,316.25,0.8,32.3,1.253,54,0.9,5,0,100
+ammoniaSpike,"Sudden Ammonia Spike",technical,0.0400,-0.02,0.0200,40,1209.18,1795.92,310.63,6.9,28.5,1.384,55,0.7,5,0,100
+ammoniaSpike,"Sudden Ammonia Spike",technical,0.0400,0.00,0.0400,40,1131.55,1797.83,357.5,5,36.1,1.426,56,0.9,5,0,100
+ammoniaSpike,"Sudden Ammonia Spike",technical,0.0400,0.02,0.0600,40,1179.49,1752.28,320,2.7,48.6,1.391,57,0.8,5,0,100
+ammoniaSpike,"Sudden Ammonia Spike",technical,0.0400,0.04,0.0800,40,1204.55,1749.2,295,1.7,52.4,1.37,54,0.7,5,0,100
+ammoniaSpike,"Sudden Ammonia Spike",technical,0.0400,0.06,0.1000,40,1127.1,1729.3,323.75,2.5,59.5,1.434,59,0.8,5,0,100
+ammoniaSpike,"Sudden Ammonia Spike",technical,0.0400,0.08,0.1200,40,1218.09,1720.56,281.88,5.1,52.8,1.415,54,0.6,5,0,100
+ammoniaSpike,"Sudden Ammonia Spike",technical,0.0400,0.10,0.1400,40,1173.5,1717.21,298.13,3.5,57.5,1.427,56,0.6,5,0,100
+nitriteSpike,"Nitrite Rise",technical,0.0300,-0.10,0.0000,40,1138.92,1784.25,366.25,2.3,39,1.411,57,0.8,5,0,100
+nitriteSpike,"Nitrite Rise",technical,0.0300,-0.08,0.0000,40,1177.12,1823.94,371.88,2.6,28.3,1.402,60,0.8,5,0,100
+nitriteSpike,"Nitrite Rise",technical,0.0300,-0.06,0.0000,40,1217.29,1829.23,340,1.5,29.6,1.375,57,0.8,5,0,100
+nitriteSpike,"Nitrite Rise",technical,0.0300,-0.04,0.0000,40,1155.23,1819.09,368.75,1.8,36.5,1.393,61,0.9,5,0,100
+nitriteSpike,"Nitrite Rise",technical,0.0300,-0.02,0.0100,40,1148.03,1778.8,358.13,2.9,41.5,1.423,60,0.8,5,0,100
+nitriteSpike,"Nitrite Rise",technical,0.0300,0.00,0.0300,40,1167.2,1780.76,335,3.8,37.9,1.366,58,0.8,5,0,100
+nitriteSpike,"Nitrite Rise",technical,0.0300,0.02,0.0500,40,1136.19,1730.73,321.88,3.7,51.8,1.384,59,0.9,5,0,100
+nitriteSpike,"Nitrite Rise",technical,0.0300,0.04,0.0700,40,1122.92,1761.41,360,6.4,38.2,1.418,62,0.8,5,0,100
+nitriteSpike,"Nitrite Rise",technical,0.0300,0.06,0.0900,40,1176.43,1739.23,296.88,7.3,46.9,1.346,59,0.7,5,0,100
+nitriteSpike,"Nitrite Rise",technical,0.0300,0.08,0.1100,40,1112.11,1693.09,308.13,14,56.3,1.369,60,0.7,5,0,100
+nitriteSpike,"Nitrite Rise",technical,0.0300,0.10,0.1300,40,1158.66,1714.52,283.75,14.8,44.3,1.372,57,0.7,5,0,100
+lowDissolvedOxygen,"Low Dissolved Oxygen",technical,0.0300,-0.10,0.0000,40,1263.47,1821.02,329.38,2.3,18.4,1.408,58,0.6,5,0,100
+lowDissolvedOxygen,"Low Dissolved Oxygen",technical,0.0300,-0.08,0.0000,40,1172.2,1784.38,351.25,2.3,43.8,1.384,57,0.8,5,0,100
+lowDissolvedOxygen,"Low Dissolved Oxygen",technical,0.0300,-0.06,0.0000,40,1157.87,1794.95,361.25,2.5,28.8,1.423,59,0.8,5,0,100
+lowDissolvedOxygen,"Low Dissolved Oxygen",technical,0.0300,-0.04,0.0000,40,1250.42,1811.13,303.75,1.3,32.9,1.369,53,0.8,5,0,100
+lowDissolvedOxygen,"Low Dissolved Oxygen",technical,0.0300,-0.02,0.0100,40,1192.36,1795.61,338.13,4.4,31.6,1.423,58,0.8,5,0,100
+lowDissolvedOxygen,"Low Dissolved Oxygen",technical,0.0300,0.00,0.0300,40,1222.62,1788.38,296.88,5,34.9,1.363,55,0.8,5,0,100
+lowDissolvedOxygen,"Low Dissolved Oxygen",technical,0.0300,0.02,0.0500,40,1243.84,1783.43,283.13,1.7,40.9,1.334,56,0.6,5,0,100
+lowDissolvedOxygen,"Low Dissolved Oxygen",technical,0.0300,0.04,0.0700,40,1198.34,1765.24,315.63,1.5,53.5,1.354,55,0.6,5,0,100
+lowDissolvedOxygen,"Low Dissolved Oxygen",technical,0.0300,0.06,0.0900,40,1237.29,1811.19,307.5,3.4,37.6,1.353,57,0.7,5,0,100
+lowDissolvedOxygen,"Low Dissolved Oxygen",technical,0.0300,0.08,0.1100,40,1216.33,1789.55,288.75,0.9,42.8,1.331,53,0.8,5,0,100
+lowDissolvedOxygen,"Low Dissolved Oxygen",technical,0.0300,0.10,0.1300,40,1095.31,1650.47,290.63,2.7,99,1.389,54,0.7,5,0,100
+fishDiseaseOutbreak,"Fish Disease Outbreak",technical,0.0150,-0.10,0.0000,40,1277.63,1855.43,340.63,1.1,19.7,1.383,61,0.7,5,0,100
+fishDiseaseOutbreak,"Fish Disease Outbreak",technical,0.0150,-0.08,0.0000,40,1147.63,1841.63,383.13,0.4,24.7,1.347,64,1.1,5,0,100
+fishDiseaseOutbreak,"Fish Disease Outbreak",technical,0.0150,-0.06,0.0000,40,1160.17,1775.66,343.75,0.4,52.9,1.395,71,0.9,5,0,100
+fishDiseaseOutbreak,"Fish Disease Outbreak",technical,0.0150,-0.04,0.0000,40,1259.13,1851.51,328.75,0.1,24.1,1.342,64,0.7,5,0,100
+fishDiseaseOutbreak,"Fish Disease Outbreak",technical,0.0150,-0.02,0.0000,40,1275.71,1874.96,333.13,0.8,10.7,1.342,62,0.7,5,0,100
+fishDiseaseOutbreak,"Fish Disease Outbreak",technical,0.0150,0.00,0.0150,40,1196,1797.06,342.5,1.1,42.3,1.376,59,0.7,5,0,100
+fishDiseaseOutbreak,"Fish Disease Outbreak",technical,0.0150,0.02,0.0350,40,1147.07,1733.84,321.88,5.1,52.8,1.396,51,0.8,5,0,100
+fishDiseaseOutbreak,"Fish Disease Outbreak",technical,0.0150,0.04,0.0550,40,1111.22,1683.32,312.5,10.2,58.5,1.408,46,0.6,5,0,100
+fishDiseaseOutbreak,"Fish Disease Outbreak",technical,0.0150,0.06,0.0750,40,1160.74,1698.95,301.88,11.9,45.8,1.401,36,0.6,5,0,100
+fishDiseaseOutbreak,"Fish Disease Outbreak",technical,0.0150,0.08,0.0950,40,1105.61,1652.62,275,14.5,57.6,1.386,34,0.7,5,0,100
+fishDiseaseOutbreak,"Fish Disease Outbreak",technical,0.0150,0.10,0.1150,40,1067.68,1598.3,281.25,13.3,85,1.357,33,0.6,5,0,100
+plantDiseaseOutbreak,"Plant Disease Outbreak",technical,0.0150,-0.10,0.0000,40,1194.75,1771.27,298.13,6.1,33,1.384,59,0.9,5,0,100
+plantDiseaseOutbreak,"Plant Disease Outbreak",technical,0.0150,-0.08,0.0000,40,1233.79,1818.1,346.88,3.6,22.5,1.391,64,0.5,5,0,100
+plantDiseaseOutbreak,"Plant Disease Outbreak",technical,0.0150,-0.06,0.0000,40,1262.66,1822.38,318.13,2.7,21,1.408,63,0.8,5,0,100
+plantDiseaseOutbreak,"Plant Disease Outbreak",technical,0.0150,-0.04,0.0000,40,1181.92,1809.82,344.38,5.6,22.5,1.42,64,1,5,0,100
+plantDiseaseOutbreak,"Plant Disease Outbreak",technical,0.0150,-0.02,0.0000,40,1205.46,1827.04,362.5,1.9,25.5,1.453,67,0.7,5,0,100
+plantDiseaseOutbreak,"Plant Disease Outbreak",technical,0.0150,0.00,0.0150,40,1287.46,1813.32,301.88,2.7,25.7,1.324,55,0.6,5,0,100
+plantDiseaseOutbreak,"Plant Disease Outbreak",technical,0.0150,0.02,0.0350,40,1138,1714.11,310.63,2.7,72.2,1.331,48,0.7,5,0,100
+plantDiseaseOutbreak,"Plant Disease Outbreak",technical,0.0150,0.04,0.0550,40,1102.74,1688.53,310,4.6,75.1,1.409,43,0.7,5,0,100
+plantDiseaseOutbreak,"Plant Disease Outbreak",technical,0.0150,0.06,0.0750,40,1119.49,1684.07,303.75,1.6,89.6,1.345,42,0.6,5,0,100
+plantDiseaseOutbreak,"Plant Disease Outbreak",technical,0.0150,0.08,0.0950,40,1090.13,1589.43,251.25,3.4,120.4,1.3,33,0.6,5,0,100
+plantDiseaseOutbreak,"Plant Disease Outbreak",technical,0.0150,0.10,0.1150,40,1033.06,1520.34,250.63,1.2,165.6,1.266,31,0.6,5,0,100
+pHCrash,"pH Drop",technical,0.0250,-0.10,0.0000,40,1136.72,1731.59,330.63,2.6,57.9,1.384,69,0.8,5,0,100
+pHCrash,"pH Drop",technical,0.0250,-0.08,0.0000,40,1166.2,1749.63,331.88,4.2,46.5,1.405,69,0.8,5,0,100
+pHCrash,"pH Drop",technical,0.0250,-0.06,0.0000,40,1044.03,1662.05,381.25,1.5,87.2,1.403,69,0.7,5,0,100
+pHCrash,"pH Drop",technical,0.0250,-0.04,0.0000,40,1177.83,1778.35,341.25,3.4,36.5,1.34,74,0.9,5,0,100
+pHCrash,"pH Drop",technical,0.0250,-0.02,0.0050,40,1200.84,1795.47,348.13,2.6,35.1,1.418,69,0.7,5,0,100
+pHCrash,"pH Drop",technical,0.0250,0.00,0.0250,40,1136.45,1773.83,346.88,3.6,43.5,1.351,58,0.9,5,0,100
+pHCrash,"pH Drop",technical,0.0250,0.02,0.0450,40,1184.72,1806.37,323.75,3,30.3,1.354,51,1,5,0,100
+pHCrash,"pH Drop",technical,0.0250,0.04,0.0650,40,1247.82,1816.5,285,3.1,29.8,1.361,40,0.7,5,0,100
+pHCrash,"pH Drop",technical,0.0250,0.06,0.0850,40,1207.25,1807.28,309.38,1.7,34.2,1.363,39,0.7,5,0,100
+pHCrash,"pH Drop",technical,0.0250,0.08,0.1050,40,1253.46,1838.05,286.25,5,19.8,1.344,34,0.7,5,0,100
+pHCrash,"pH Drop",technical,0.0250,0.10,0.1250,40,1252.78,1833.68,280.63,2.9,18.9,1.349,33,0.7,5,0,100
+waterLeak,"Water Leak",technical,0.0250,-0.10,0.0000,40,1327.38,1794.97,212.5,1.3,37.6,1.4,44,0.7,5,0,100
+waterLeak,"Water Leak",technical,0.0250,-0.08,0.0000,40,1269.58,1755.02,232.5,5,45.6,1.402,46,0.7,5,0,100
+waterLeak,"Water Leak",technical,0.0250,-0.06,0.0000,40,1293.97,1788.19,270,2.9,35.1,1.423,50,0.7,5,0,100
+waterLeak,"Water Leak",technical,0.0250,-0.04,0.0000,40,1278.99,1759.95,227.5,4.1,43.6,1.385,46,0.8,5,0,100
+waterLeak,"Water Leak",technical,0.0250,-0.02,0.0050,40,1293.46,1795.12,263.75,4.8,31.8,1.446,55,0.7,5,0,100
+waterLeak,"Water Leak",technical,0.0250,0.00,0.0250,40,1188.14,1769.9,328.75,2.8,44.3,1.382,56,0.8,5,0,100
+waterLeak,"Water Leak",technical,0.0250,0.02,0.0450,40,1108.33,1787.66,402.5,2.1,41.9,1.405,62,0.7,5,0,100
+waterLeak,"Water Leak",technical,0.0250,0.04,0.0650,40,1120.22,1833.29,455.63,3,20.6,1.384,65,0.7,5,0,100
+waterLeak,"Water Leak",technical,0.0250,0.06,0.0850,40,916.42,1764.06,546.88,2.7,47.1,1.378,70,0.7,5,0,100
+waterLeak,"Water Leak",technical,0.0250,0.08,0.1050,40,913.51,1803.58,611.25,3,33.9,1.355,74,0.7,5,0,100
+waterLeak,"Water Leak",technical,0.0250,0.10,0.1250,40,856.81,1809.41,636.88,2.4,29.1,1.338,71,0.8,5,0,100
+pumpFailure,"Pump Failure",technical,0.0200,-0.10,0.0000,40,1318.87,1779.27,185.63,6.5,36.4,1.207,46,0.8,5,0,100
+pumpFailure,"Pump Failure",technical,0.0200,-0.08,0.0000,40,1357.96,1806.97,183.75,5.6,19.5,1.193,47,0.8,5,0,100
+pumpFailure,"Pump Failure",technical,0.0200,-0.06,0.0000,40,1295.62,1801.61,218.75,4.5,28.8,1.195,53,0.9,5,0,100
+pumpFailure,"Pump Failure",technical,0.0200,-0.04,0.0000,40,1338.67,1806.65,221.88,5.6,28.7,1.209,52,0.7,5,0,100
+pumpFailure,"Pump Failure",technical,0.0200,-0.02,0.0000,40,1287.12,1755.52,208.13,4,44.6,1.23,49,0.7,5,0,100
+pumpFailure,"Pump Failure",technical,0.0200,0.00,0.0200,40,1142.21,1737.1,330,2.7,60.8,1.392,59,0.8,5,0,100
+pumpFailure,"Pump Failure",technical,0.0200,0.02,0.0400,40,1110.29,1784.63,397.5,1.9,43.3,1.422,60,0.7,5,0,100
+pumpFailure,"Pump Failure",technical,0.0200,0.04,0.0600,40,890.93,1711.88,561.88,5.2,63.9,1.509,66,0.8,5,0,100
+pumpFailure,"Pump Failure",technical,0.0200,0.06,0.0800,40,773.83,1714.39,706.25,0.4,69.1,1.539,74,0.6,5,0,100
+pumpFailure,"Pump Failure",technical,0.0200,0.08,0.1000,40,633.88,1681.99,802.5,2.7,75.5,1.605,77,0.6,5,0,100
+pumpFailure,"Pump Failure",technical,0.0200,0.10,0.1200,40,550.44,1670.21,883.13,0.8,90.2,1.739,77,0.7,5,0,100
+filterClog,"Filter Clog",technical,0.0300,-0.10,0.0000,40,1385.48,1834.66,257.5,5.6,13,1.372,43,0.3,5,0,100
+filterClog,"Filter Clog",technical,0.0300,-0.08,0.0000,40,1384.79,1845.68,236.88,7.1,6.8,1.347,42,0.3,5,0,100
+filterClog,"Filter Clog",technical,0.0300,-0.06,0.0000,40,1377.74,1849.29,247.5,9.3,7.7,1.315,43,0.3,5,0,100
+filterClog,"Filter Clog",technical,0.0300,-0.04,0.0000,40,1345.85,1836.15,268.13,6,13.2,1.344,44,0.3,5,0,100
+filterClog,"Filter Clog",technical,0.0300,-0.02,0.0100,40,1281.98,1808.99,306.25,5.2,18.5,1.406,50,0.3,5,0,100
+filterClog,"Filter Clog",technical,0.0300,0.00,0.0300,40,1176.68,1783.14,348.75,5.7,29.8,1.408,59,0.6,5,0,100
+filterClog,"Filter Clog",technical,0.0300,0.02,0.0500,40,963.96,1700.93,443.13,4.6,70.3,1.471,66,1.1,5,0,100
+filterClog,"Filter Clog",technical,0.0300,0.04,0.0700,40,1002.01,1742.71,450.63,1.2,64.6,1.38,69,1.1,5,0,100
+filterClog,"Filter Clog",technical,0.0300,0.06,0.0900,40,916.07,1733.77,480,1.9,65.8,1.378,69,1.4,5,0,100
+filterClog,"Filter Clog",technical,0.0300,0.08,0.1100,40,752.29,1601.18,530.63,2.6,104.1,1.458,77,1.5,5,0,100
+filterClog,"Filter Clog",technical,0.0300,0.10,0.1300,40,702.85,1614.2,592.5,3.1,97,1.482,75,1.5,5,0,100

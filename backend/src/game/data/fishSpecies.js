@@ -25,8 +25,8 @@ const fishSpecies = {
     harvestWeight: 600,
     harvestTime: 6,  // compressed game days (real-world ~210 days)
     baseGrowthRate: (600 - 10) / 6, // ~98.3 g/day under ideal conditions
-    marketValue: 4.00,
-    fingerlingCost: 2.50, // Cost per fingerling
+    marketValue: 5.00,    // raised from $4.00 — 25% increase so Established milestone reachable in 100 days
+    fingerlingCost: 2.10, // Cost per fingerling
     availability: 'year-round',
     consumerAcceptance: 'good',
     ammoniaProductionRate: 0.1,
@@ -44,8 +44,8 @@ const fishSpecies = {
     harvestWeight: 400,
     harvestTime: 14, // compressed game days (real-world ~285 days)
     baseGrowthRate: (400 - 10) / 14, // ~27.9 g/day under ideal conditions
-    marketValue: 8.50,
-    fingerlingCost: 6.00, // Cost per fingerling
+    marketValue: 13.00,   // raised from $8.50
+    fingerlingCost: 5.10, // Cost per fingerling
     availability: 'seasonal',
     consumerAcceptance: 'good',
     ammoniaProductionRate: 0.08,
@@ -63,8 +63,8 @@ const fishSpecies = {
     harvestWeight: 700,
     harvestTime: 12, // compressed game days (real-world ~240 days)
     baseGrowthRate: (700 - 10) / 12, // ~57.5 g/day under ideal conditions
-    marketValue: 6.00,
-    fingerlingCost: 3.50,
+    marketValue: 7.50,    // raised from $6.00
+    fingerlingCost: 3.00,
     availability: 'year-round',
     consumerAcceptance: 'good',
     ammoniaProductionRate: 0.11,

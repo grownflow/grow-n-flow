@@ -85,6 +85,8 @@ const WaterSection = ({gameState, loading}) => {
     const equipment = G.equipment || {};
     const eventEffects = G.eventEffects || {};
     const systemAlerts = Array.isArray(G.systemAlerts) ? G.systemAlerts : [];
+    const ecosystemStreakDays = G.stableEcosystemDays || 0;
+    const ecosystemBonus = Boolean(G.systemModifiers?.ecosystemBonus);
     const aerationStock = Number(equipment.aerationStones) || 0;
     const biofilterStock = Number(equipment.biofilter) || 0;
     const money = Number(G.money || 0);
@@ -161,6 +163,45 @@ const WaterSection = ({gameState, loading}) => {
                         </ul>
                     </div>
                 )}
+
+                {/* Stable Ecosystem Streak */}
+                <div style={{
+                    marginBottom: 10,
+                    padding: '8px 12px',
+                    borderRadius: 8,
+                    background: ecosystemBonus
+                        ? 'rgba(40,167,69,0.12)'
+                        : ecosystemStreakDays >= 5
+                            ? 'rgba(40,167,69,0.06)'
+                            : 'rgba(0,0,0,0.03)',
+                    border: `1px solid ${ecosystemBonus ? '#28a745' : '#dee2e6'}`,
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: ecosystemBonus ? '#28a745' : '#495057' }}>
+                            {ecosystemBonus ? '🌿 Stable Ecosystem' : '🌱 Ecosystem Streak'}
+                        </span>
+                        <span style={{
+                            fontSize: 12,
+                            padding: '1px 8px',
+                            borderRadius: 10,
+                            background: ecosystemBonus ? '#28a745' : '#6c757d',
+                            color: '#fff',
+                            fontWeight: 700,
+                        }}>
+                            {ecosystemStreakDays} / 10 days
+                        </span>
+                        {ecosystemBonus && (
+                            <span style={{ fontSize: 11, color: '#28a745' }}>
+                                +15% fish growth · +10% plant growth
+                            </span>
+                        )}
+                    </div>
+                    {!ecosystemBonus && (
+                        <div style={{ fontSize: 11, color: '#6c757d', marginTop: 3 }}>
+                            Keep NH₃ &lt; 0.8 ppm · DO &gt; 6.5 · pH 6.8–7.2 for 10 days to unlock productivity bonus
+                        </div>
+                    )}
+                </div>
 
                 {/* Tank Volume Bar */}
                 <div className="tank-volume">

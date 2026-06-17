@@ -48,6 +48,24 @@ class EventManager {
   static promoteToActive(G) {
     if (!G.pendingEvent) return;
     const eventId = G.pendingEvent.id;
+    const eventDef = EVENTS[eventId];
+
+    // Re-check entity requirements: the player may have lost all fish/plants
+    // between when the event was queued and when it is about to activate.
+    // Promoting a plant disease with no plants (or fish disease with no fish)
+    // would produce a confusing alarm with nothing to affect.
+    const hasFish   = Array.isArray(G.fish)   && G.fish.length   > 0;
+    const hasPlants = Array.isArray(G.plants) && G.plants.length > 0;
+
+    if (eventDef?.requiresFish && !hasFish) {
+      G.pendingEvent = null;
+      return;
+    }
+    if (eventDef?.requiresPlants && !hasPlants) {
+      G.pendingEvent = null;
+      return;
+    }
+
     G.pendingEvent = null; // clear before triggerEvent to avoid guard conflicts
     EventManager.triggerEvent(G, eventId);
   }

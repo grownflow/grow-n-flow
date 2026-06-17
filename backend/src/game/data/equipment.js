@@ -68,6 +68,17 @@ const equipment = {
     }
   },
 
+  // Temperature control — permanent system upgrade
+  // Reduces daily temperature drift from ±0.5 °C to ±0.15 °C and pulls
+  // water back toward 25 °C three times faster.  Fish grow faster and
+  // nitrifying bacteria work more consistently at stable temperature.
+  heaterChiller: {
+    cost: 150,
+    type: 'equipment',
+    description: 'Heater/Chiller unit. Stabilises water temperature near 25 °C, reducing daily drift from ±0.5 °C to ±0.15 °C. Fish grow faster and nitrification is more consistent at stable temperature.',
+    dailyElectricityCost: 0.15,
+  },
+
 };
 
 module.exports = { equipment };

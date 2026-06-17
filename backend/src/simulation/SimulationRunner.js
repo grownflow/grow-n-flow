@@ -1,301 +1,300 @@
-// Simulation Runner
-// Runs batches of games with AI bots and collects results
+// Headless batch simulation runner.
+// Runs games without Express or boardgame.io server — state is a plain object
+// mutated directly by move functions, exactly as the server does it.
 
 const { AquaponicsGame } = require('../game/game');
 const { createBot } = require('./BotStrategies');
 const { GameAnalytics } = require('./GameAnalytics');
+const moves = require('../game/moves');
+
+// Suppress per-day console.log spam from moves when not in verbose mode.
+function quietly(fn, verbose) {
+  if (verbose) return fn();
+  const noop = () => {};
+  const saved = { log: console.log, warn: console.warn, error: console.error };
+  console.log = noop;
+  console.warn = noop;
+  try {
+    fn();
+  } finally {
+    console.log  = saved.log;
+    console.warn = saved.warn;
+  }
+}
 
 class SimulationRunner {
   constructor(config = {}) {
     this.config = {
-      maxTurns: config.maxTurns || 365, // Default: 1 year
-      bankruptcyThreshold: config.bankruptcyThreshold || -500,
-      successThreshold: config.successThreshold || 10000,
-      saveToDb: config.saveToDb || false,
-      verbose: config.verbose || false,
-      batchSize: config.batchSize || 100, // Process N games at a time
-      ...config
+      maxTurns:            config.maxTurns            ?? 100,
+      bankruptcyThreshold: config.bankruptcyThreshold ?? -500,
+      successThreshold:    config.successThreshold    ?? 5000,
+      maxActionsPerDay:    config.maxActionsPerDay    ?? 15,
+      batchSize:           config.batchSize           ?? 50,
+      verbose:             config.verbose             ?? false,
+      silent:              config.silent              ?? false, // suppress all batch progress output
+      ...config,
     };
     this.results = [];
   }
 
-  /**
-   * Run a single game simulation
-   * @param {string} strategy - Bot strategy name
-   * @param {Object} botConfig - Bot configuration
-   * @returns {Object} Game results
-   */
-  async runSingleGame(strategy = 'balanced', botConfig = {}) {
-    const startTime = Date.now();
-    const gameId = `sim_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
-    // Initialize game
-    let G = AquaponicsGame.setup();
-    let ctx = {
-      currentPlayer: '0',
-      turn: 1,
-      numPlayers: 1,
-      playOrder: ['0'],
-      playOrderPos: 0
-    };
+  // ── Single game ────────────────────────────────────────────────────────────
 
-    // Create bot
-    const bot = createBot(strategy, { ...botConfig, verbose: this.config.verbose });
-    
-    // Analytics collector
+  async runSingleGame(strategy = 'balanced', botConfig = {}) {
+    const t0     = Date.now();
+    const gameId = `sim_${t0}_${Math.random().toString(36).slice(2, 9)}`;
+
+    // Fresh game state — plain mutable object, no server required.
+    const G   = AquaponicsGame.setup();
+    const ctx = { currentPlayer: '0', turn: 1, numPlayers: 1,
+                  playOrder: ['0'], playOrderPos: 0 };
+
+    const bot       = createBot(strategy, { ...botConfig, verbose: this.config.verbose });
     const analytics = new GameAnalytics(gameId, strategy);
     analytics.recordInitialState(G);
 
-    let outcome = 'in_progress';
+    let outcome       = 'in_progress';
     let outcomeReason = '';
-    
-    // Game loop - one iteration per day
+
     while (outcome === 'in_progress' && G.gameTime < this.config.maxTurns) {
       try {
-        // Bot can make multiple decisions per day
-        const maxActionsPerDay = 10; // Prevent infinite loops
+        // Pre-turn actions: bots make decisions until they return null (= "progress day").
+        // trackTransaction is called after each action because progressTurn will
+        // overwrite G.lastAction before recordDay has a chance to see buy/sell actions.
         let actionsThisTurn = 0;
-        
-        while (actionsThisTurn < maxActionsPerDay) {
+        while (actionsThisTurn < this.config.maxActionsPerDay) {
           const decision = await bot.makeDecision(G, ctx);
-          
-          // If bot wants to progress turn, break out of action loop
-          if (!decision || decision.moveName === 'progressTurn') {
-            break;
-          }
-          
-          // Execute bot's move
-          G = await bot.executeMove(G, ctx, decision.moveName, decision.args);
+          if (!decision) break;
+          await bot.executeMove(G, ctx, decision.moveName, decision.args);
+          analytics.trackTransaction(G.lastAction, G.gameTime);
           actionsThisTurn++;
         }
-        
-        // Always progress turn at end of day
-        const moves = require('../game/moves');
-        G = moves.progressTurn(G, ctx);
+
+        // Advance one game day.  All moves mutate G in place and return nothing.
+        // progressTurn({ G, ctx }) is the correct boardgame.io-style call.
+        quietly(() => moves.progressTurn({ G, ctx }), this.config.verbose);
         ctx.turn++;
 
-        // Record analytics snapshot every 10 days
-        if (G.gameTime % 10 === 0) {
-          analytics.recordSnapshot(G, ctx);
+        // Record analytics.
+        analytics.recordDay(G);
+        if (G.gameTime % 10 === 0) analytics.recordSnapshot(G, ctx);
+
+        const end = this.checkEndConditions(G);
+        if (end.ended) {
+          outcome       = end.outcome;
+          outcomeReason = end.reason;
         }
 
-        // Check end conditions
-        const endCheck = this.checkEndConditions(G, ctx);
-        if (endCheck.ended) {
-          outcome = endCheck.outcome;
-          outcomeReason = endCheck.reason;
-          break;
-        }
-
-      } catch (error) {
-        console.error(`[SimulationRunner] Error in game ${gameId}:`, error.message);
-        outcome = 'error';
-        outcomeReason = error.message;
+      } catch (err) {
+        console.error(`[Sim] Error in ${gameId} day ${G.gameTime}:`, err.message);
+        outcome       = 'error';
+        outcomeReason = err.message;
         break;
       }
     }
 
-    // If we hit turn limit without other outcome
     if (outcome === 'in_progress') {
-      outcome = 'time_limit';
-      outcomeReason = `Reached day limit (${G.gameTime} days)`;
+      outcome       = 'time_limit';
+      outcomeReason = `Reached day ${G.gameTime}`;
     }
 
-    // Finalize results
-    const duration = Date.now() - startTime;
     analytics.recordFinalState(G, outcome, outcomeReason);
-    
+
     const result = {
       gameId,
       strategy,
       outcome,
       outcomeReason,
-      duration: G.gameTime, // Game days
-      turns: ctx.turn,
-      executionTimeMs: duration,
-      finalState: this.extractFinalState(G),
-      analytics: analytics.getReport(),
-      botStats: bot.getStats()
+      gameDays:        G.gameTime,
+      executionTimeMs: Date.now() - t0,
+      finalState:      this.extractFinalState(G),
+      analytics:       analytics.getReport(),
+      botStats:        bot.getStats(),
     };
 
     if (this.config.verbose) {
-      console.log(`\n[Game ${gameId}] Complete:`);
-      console.log(`  Strategy: ${strategy}`);
-      console.log(`  Outcome: ${outcome} (${outcomeReason})`);
-      console.log(`  Duration: ${G.gameTime} days, ${ctx.turn} turns`);
-      console.log(`  Final Money: $${G.money.toFixed(2)}`);
+      console.log(
+        `[${gameId}] ${strategy} | ${outcome} (${outcomeReason}) | ` +
+        `day ${G.gameTime} | $${Number(G.money).toFixed(2)}`
+      );
     }
 
     return result;
   }
 
-  /**
-   * Check if game should end
-   */
-  checkEndConditions(G, ctx) {
-    // Bankruptcy
+  // ── End conditions ─────────────────────────────────────────────────────────
+
+  checkEndConditions(G) {
     if (G.money < this.config.bankruptcyThreshold) {
-      return { 
-        ended: true, 
-        outcome: 'bankruptcy', 
-        reason: `Money fell below $${this.config.bankruptcyThreshold}` 
-      };
+      return { ended: true, outcome: 'bankruptcy',
+               reason: `Money below $${this.config.bankruptcyThreshold}` };
     }
-
-    // Success
     if (G.money >= this.config.successThreshold) {
-      return { 
-        ended: true, 
-        outcome: 'success', 
-        reason: `Reached $${this.config.successThreshold}` 
-      };
+      return { ended: true, outcome: 'success',
+               reason: `Reached $${this.config.successThreshold}` };
     }
-
-    // All fish died
-    if (G.fish && G.fish.length > 0) {
-      const allDead = G.fish.every(f => f.health <= 0);
-      if (allDead) {
-        return { 
-          ended: true, 
-          outcome: 'fish_death', 
-          reason: 'All fish died' 
-        };
-      }
-    }
-
-    // Time limit (days, not turns)
     if (G.gameTime >= this.config.maxTurns) {
-      return { 
-        ended: true, 
-        outcome: 'time_limit', 
-        reason: `Reached ${this.config.maxTurns} days` 
-      };
+      return { ended: true, outcome: 'time_limit',
+               reason: `Day ${this.config.maxTurns} reached` };
     }
-
     return { ended: false };
   }
 
-  /**
-   * Extract final state metrics
-   */
+  // ── Final state snapshot ───────────────────────────────────────────────────
+
   extractFinalState(G) {
+    const water = G.aquaponicsSystem?.tank?.water || {};
+    const tank  = G.aquaponicsSystem?.tank  || {};
     return {
-      money: Number(G.money.toFixed(2)),
-      gameTime: G.gameTime,
-      fishCount: G.fish ? G.fish.length : 0,
-      plantCount: G.plants ? G.plants.length : 0,
-      equipment: G.equipment || {},
-      billsAccrued: G.billsAccrued || { electricity: 0, water: 0 },
-      activeEvent: G.activeEvent ? G.activeEvent.name : null,
-      tankWaterLevel: G.aquaponicsSystem?.tank?.currentWaterLevel || 0
+      money:               Number(Number(G.money || 0).toFixed(2)),
+      gameDays:            G.gameTime,
+      fishCount:           (G.fish   || []).length,
+      plantCount:          (G.plants || []).length,
+      biofilterEfficiency: Number(Number(tank.biofilterEfficiency || 0.8).toFixed(3)),
+      ammonia:             Number(Number(water.ammonia        || 0).toFixed(3)),
+      nitrate:             Number(Number(water.nitrate        || 0).toFixed(1)),
+      dissolvedOxygen:     Number(Number(water.dissolvedOxygen|| 0).toFixed(2)),
+      fishFood:                Number(G.fishFood || 0),
+      highestMilestoneMoney:   G.highestMilestoneMoney || 0,
+      stableEcosystemDays:     G.stableEcosystemDays   || 0,
+      equipment:               G.equipment || {},
     };
   }
 
-  /**
-   * Run multiple games in batch
-   * @param {number} count - Number of games to run
-   * @param {string|Array} strategies - Strategy name(s)
-   * @returns {Array} Results from all games
-   */
+  // ── Batch runner ───────────────────────────────────────────────────────────
+
   async runBatch(count = 10, strategies = 'balanced') {
-    console.log(`\n🎮 Starting batch simulation: ${count} games`);
-    console.log(`   Strategies: ${Array.isArray(strategies) ? strategies.join(', ') : strategies}`);
-    console.log(`   Max turns per game: ${this.config.maxTurns} days\n`);
+    const stratList = Array.isArray(strategies) ? strategies : [strategies];
+    const log = (...args) => { if (!this.config.silent) console.log(...args); };
+    const tick = (msg)    => { if (!this.config.silent) process.stdout.write(msg); };
 
-    const strategyList = Array.isArray(strategies) ? strategies : [strategies];
+    log(
+      `\n🎮  ${count} games · strategies: ${stratList.join(', ')} · ` +
+      `max ${this.config.maxTurns} days/game · success at $${this.config.successThreshold}\n`
+    );
+
     this.results = [];
-
-    const batchSize = this.config.batchSize;
     let completed = 0;
 
-    // Process in batches for memory management
-    for (let i = 0; i < count; i += batchSize) {
-      const batchCount = Math.min(batchSize, count - i);
-      const batchPromises = [];
+    for (let i = 0; i < count; i += this.config.batchSize) {
+      const chunk    = Math.min(this.config.batchSize, count - i);
+      const promises = Array.from({ length: chunk }, (_, j) => {
+        const strat = stratList[(i + j) % stratList.length];
+        return this.runSingleGame(strat);
+      });
 
-      for (let j = 0; j < batchCount; j++) {
-        const strategy = strategyList[(i + j) % strategyList.length];
-        batchPromises.push(this.runSingleGame(strategy));
-      }
-
-      // Run batch in parallel
-      const batchResults = await Promise.all(batchPromises);
-      this.results.push(...batchResults);
-      
-      completed += batchCount;
-      console.log(`   Progress: ${completed}/${count} games completed (${(completed/count*100).toFixed(1)}%)`);
+      const chunkResults = await Promise.all(promises);
+      this.results.push(...chunkResults);
+      completed += chunk;
+      tick(`   ${completed}/${count} (${Math.round(completed/count*100)}%)\r`);
     }
 
-    console.log(`\n✅ Batch complete! ${this.results.length} games finished\n`);
+    log(`\n\n✅  Batch complete — ${this.results.length} games finished\n`);
     return this.results;
   }
 
-  /**
-   * Get aggregated statistics from all results
-   */
+  // ── Aggregate statistics ───────────────────────────────────────────────────
+
   getAggregateStats() {
-    if (this.results.length === 0) {
-      return { error: 'No results available' };
-    }
+    if (this.results.length === 0) return { error: 'No results yet' };
 
-    const byStrategy = {};
-    const outcomes = {};
+    const outcomes    = {};
+    const byStrategy  = {};
 
-    this.results.forEach(result => {
-      // By strategy
-      if (!byStrategy[result.strategy]) {
-        byStrategy[result.strategy] = {
-          count: 0,
-          outcomes: {},
-          totalDays: 0,
-          totalMoney: 0,
-          avgDays: 0,
-          avgMoney: 0
+    for (const r of this.results) {
+      outcomes[r.outcome] = (outcomes[r.outcome] || 0) + 1;
+
+      if (!byStrategy[r.strategy]) {
+        byStrategy[r.strategy] = {
+          count: 0, outcomes: {},
+          _days: 0, _money: 0,
+          _fishDeaths: 0, _plantDeaths: 0,
+          _revenue: 0, _repairCosts: 0,
+          _peakAmmonias: [], _firstHarvestDays: [],
+          _eventsEncountered: 0, _eventsRepaired: 0,
+          _biofiltersBought: 0,
+          _milestones: { 0: 0, 1500: 0, 2500: 0, 5000: 0 },
         };
       }
-      const stratStats = byStrategy[result.strategy];
-      stratStats.count++;
-      stratStats.outcomes[result.outcome] = (stratStats.outcomes[result.outcome] || 0) + 1;
-      stratStats.totalDays += result.duration;
-      stratStats.totalMoney += result.finalState.money;
+      const s = byStrategy[r.strategy];
+      s.count++;
+      s.outcomes[r.outcome] = (s.outcomes[r.outcome] || 0) + 1;
+      s._days         += r.gameDays;
+      s._money        += r.finalState.money;
+      s._fishDeaths   += r.analytics.totals.fishDeaths      || 0;
+      s._plantDeaths  += r.analytics.totals.plantDeaths     || 0;
+      s._revenue      += r.analytics.transactions.totalRevenue  || 0;
+      s._repairCosts  += r.analytics.transactions.repairCosts   || 0;
+      s._biofiltersBought += r.analytics.transactions.biofiltersBought || 0;
+      s._eventsEncountered += r.analytics.totals.eventsEncountered || 0;
+      s._eventsRepaired    += r.analytics.totals.eventsRepaired   || 0;
+      const tier = r.finalState.highestMilestoneMoney || 0;
+      const key  = [5000, 2500, 1500].find(t => tier >= t) || 0;
+      s._milestones[key] = (s._milestones[key] || 0) + 1;
+      if (r.analytics.totals.peakAmmonia != null) {
+        s._peakAmmonias.push(r.analytics.totals.peakAmmonia);
+      }
+      if (r.analytics.totals.firstHarvestDay) {
+        s._firstHarvestDays.push(r.analytics.totals.firstHarvestDay);
+      }
+    }
 
-      // Overall outcomes
-      outcomes[result.outcome] = (outcomes[result.outcome] || 0) + 1;
-    });
+    // Compute per-strategy averages — all numeric fields stored as raw numbers
+    // so the sensitivity script can do arithmetic on them directly.
+    // The CLI printer in run-simulations.js handles formatting.
+    for (const [, s] of Object.entries(byStrategy)) {
+      const n = s.count;
+      s.successRatePct     = Math.round((s.outcomes.success || 0) / n * 100);
+      s.survivalRatePct    = Math.round((n - (s.outcomes.bankruptcy||0) - (s.outcomes.fish_death||0)) / n * 100);
+      s.avgDays            = Math.round(s._days  / n * 10) / 10;
+      s.avgFinalMoney      = Math.round(s._money / n * 100) / 100;
+      s.avgRevenue         = Math.round(s._revenue    / n * 100) / 100;
+      s.avgRepairCosts     = Math.round(s._repairCosts / n * 100) / 100;
+      s.avgFishDeaths      = Math.round(s._fishDeaths  / n * 10) / 10;
+      s.avgPlantDeaths     = Math.round(s._plantDeaths / n * 10) / 10;
+      s.avgBiofiltersBought= Math.round(s._biofiltersBought / n * 10) / 10;
+      s.avgPeakAmmonia     = s._peakAmmonias.length
+        ? Math.round(s._peakAmmonias.reduce((a, b) => a + b, 0) / s._peakAmmonias.length * 1000) / 1000
+        : null;
+      // null = no events encountered (so "N/A" rather than 0%)
+      s.eventRepairRatePct = s._eventsEncountered > 0
+        ? Math.round(s._eventsRepaired / s._eventsEncountered * 100)
+        : null;
+      s.avgFirstHarvestDay = s._firstHarvestDays.length
+        ? Math.round(s._firstHarvestDays.reduce((a, b) => a + b, 0) / s._firstHarvestDays.length * 10) / 10
+        : null;
+      const gamesN = s.count;
+      s.milestonePct = {
+        none:        Math.round((s._milestones[0]    || 0) / gamesN * 100),
+        established: Math.round((s._milestones[1500] || 0) / gamesN * 100),
+        profitable:  Math.round((s._milestones[2500] || 0) / gamesN * 100),
+        thriving:    Math.round((s._milestones[5000] || 0) / gamesN * 100),
+      };
+    }
 
-    // Calculate averages
-    Object.keys(byStrategy).forEach(strategy => {
-      const stats = byStrategy[strategy];
-      stats.avgDays = (stats.totalDays / stats.count).toFixed(1);
-      stats.avgMoney = (stats.totalMoney / stats.count).toFixed(2);
-    });
+    const avgMs = this.results.reduce((s, r) => s + r.executionTimeMs, 0) / this.results.length;
 
     return {
       totalGames: this.results.length,
       outcomes,
       byStrategy,
-      avgExecutionTimeMs: (this.results.reduce((sum, r) => sum + r.executionTimeMs, 0) / this.results.length).toFixed(0)
+      avgExecutionTimeMs: avgMs.toFixed(0),
     };
   }
 
-  /**
-   * Export results to JSON
-   */
+  // ── Export ─────────────────────────────────────────────────────────────────
+
   exportResults(filename = null) {
     const data = {
-      config: this.config,
-      timestamp: new Date().toISOString(),
-      totalGames: this.results.length,
+      config:         this.config,
+      timestamp:      new Date().toISOString(),
+      totalGames:     this.results.length,
       aggregateStats: this.getAggregateStats(),
-      results: this.results
+      results:        this.results,
     };
-
     if (filename) {
-      const fs = require('fs');
-      fs.writeFileSync(filename, JSON.stringify(data, null, 2));
-      console.log(`📁 Results exported to ${filename}`);
+      require('fs').writeFileSync(filename, JSON.stringify(data, null, 2));
+      console.log(`📁  Results saved to ${filename}`);
     }
-
     return data;
   }
 }

@@ -63,24 +63,24 @@ Usage: node scripts/run-simulations.js [options]
 Options:
   -c, --count <number>          Number of games to simulate (default: 10)
   -s, --strategies <list>       Comma-separated list of strategies (default: balanced)
-                                Available: conservative, aggressive, balanced, random
+                                Available: conservative, aggressive, balanced, reactive
   -t, --max-turns <number>      Maximum days per game (default: 365)
   -v, --verbose                 Enable verbose output
   -o, --output <filename>       Output file for results (JSON format)
   -h, --help                    Show this help message
 
 Examples:
-  # Run 10 balanced games
-  node scripts/run-simulations.js
+  # 20-game quick sanity check (all 4 strategies, 60-day cap)
+  npm run simulate:quick
 
-  # Run 100 games with all strategies
-  node scripts/run-simulations.js -c 100 -s conservative,aggressive,balanced,random
+  # 100-game full analysis, results saved to JSON
+  npm run simulate:full
 
-  # Run 1000 games and save results
-  node scripts/run-simulations.js -c 1000 -s balanced,aggressive -o results.json
+  # Custom run
+  node scripts/run-simulations.js -c 50 -s conservative,balanced -t 100 -o results.json
 
-  # Verbose mode for debugging
-  node scripts/run-simulations.js -c 5 -v
+  # Verbose single-strategy debug
+  node scripts/run-simulations.js -c 3 -s aggressive -v
   `);
 }
 
@@ -128,22 +128,46 @@ async function main() {
   console.log(`Avg Time per Game: ${(totalTime / stats.totalGames).toFixed(2)}s`);
   console.log(`Avg Execution Time: ${stats.avgExecutionTimeMs}ms\n`);
 
-  console.log('Outcomes:');
+  console.log('Overall outcomes:');
   Object.entries(stats.outcomes).forEach(([outcome, count]) => {
-    const percentage = ((count / stats.totalGames) * 100).toFixed(1);
-    console.log(`  ${outcome.padEnd(15)}: ${count.toString().padStart(4)} (${percentage}%)`);
+    const pct = ((count / stats.totalGames) * 100).toFixed(1);
+    console.log(`  ${outcome.padEnd(15)}: ${String(count).padStart(4)} (${pct}%)`);
   });
 
+  const fmt = {
+    money:   (v) => v != null ? `$${Number(v).toFixed(2)}` : 'N/A',
+    pct:     (v) => v != null ? `${v}%` : 'N/A',
+    num:     (v) => v != null ? String(v) : 'N/A',
+    ppm:     (v) => v != null ? `${Number(v).toFixed(3)} ppm` : 'N/A',
+    day:     (v) => v != null ? String(v) : 'N/A',
+  };
+
   console.log('\nBy Strategy:');
-  Object.entries(stats.byStrategy).forEach(([strategy, data]) => {
-    console.log(`\n  ${strategy.toUpperCase()}:`);
-    console.log(`    Games: ${data.count}`);
-    console.log(`    Avg Days: ${data.avgDays}`);
-    console.log(`    Avg Money: $${data.avgMoney}`);
+  Object.entries(stats.byStrategy).forEach(([strategy, s]) => {
+    console.log(`\n  ${strategy.toUpperCase()} (n=${s.count}):`);
+    console.log(`    Success rate     : ${fmt.pct(s.successRatePct)}`);
+    console.log(`    Survival rate    : ${fmt.pct(s.survivalRatePct)}`);
+    console.log(`    Avg days         : ${fmt.num(s.avgDays)}`);
+    console.log(`    Avg final money  : ${fmt.money(s.avgFinalMoney)}`);
+    console.log(`    Avg revenue      : ${fmt.money(s.avgRevenue)}`);
+    console.log(`    Avg repair costs : ${fmt.money(s.avgRepairCosts)}`);
+    console.log(`    Avg fish deaths  : ${fmt.num(s.avgFishDeaths)}`);
+    console.log(`    Avg plant deaths : ${fmt.num(s.avgPlantDeaths)}`);
+    console.log(`    Avg peak ammonia : ${fmt.ppm(s.avgPeakAmmonia)}`);
+    console.log(`    Event repair rate: ${fmt.pct(s.eventRepairRatePct)}`);
+    console.log(`    Biofilters bought: ${fmt.num(s.avgBiofiltersBought)}`);
+    console.log(`    First harvest day: ${fmt.day(s.avgFirstHarvestDay)}`);
+    if (s.milestonePct) {
+      console.log(`    Milestone tiers reached:`);
+      console.log(`      None (< $1500)       : ${s.milestonePct.none}%`);
+      console.log(`      Established (≥ $1500): ${s.milestonePct.established}%`);
+      console.log(`      Profitable  (≥ $2500): ${s.milestonePct.profitable}%`);
+      console.log(`      Thriving    (≥ $5000): ${s.milestonePct.thriving}%`);
+    }
     console.log(`    Outcomes:`);
-    Object.entries(data.outcomes).forEach(([outcome, count]) => {
-      const percentage = ((count / data.count) * 100).toFixed(1);
-      console.log(`      ${outcome.padEnd(13)}: ${count.toString().padStart(3)} (${percentage}%)`);
+    Object.entries(s.outcomes).forEach(([outcome, count]) => {
+      const pct = ((count / s.count) * 100).toFixed(1);
+      console.log(`      ${outcome.padEnd(13)}: ${String(count).padStart(3)} (${pct}%)`);
     });
   });
 

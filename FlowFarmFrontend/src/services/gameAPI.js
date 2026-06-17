@@ -160,7 +160,8 @@ class GameAPI {
   applyConsumable(equipmentType) { return this.makeMove('applyConsumable', [equipmentType]); }
   progressTurn() { return this.makeMove('progressTurn', []); }
   progressMultipleTurns(count = 3) { return this.makeMove('progressMultipleTurns', [count]); }
-  repairSystem() { return this.makeMove('repairSystem', []); }
+  repairSystem()      { return this.makeMove('repairSystem', []); }
+  quickRepairSystem() { return this.makeMove('quickRepairSystem', []); }
   setAutoFeed(enabled) { return this.makeMove('setAutoFeed', [Boolean(enabled)]); }
 
   disconnect() {

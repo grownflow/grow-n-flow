@@ -14,6 +14,10 @@ const createInitialSystemState = () => ({
     currentVolume: 1000,
     foodInTank: 0,
     sediment: 0,
+    // Biofilter starts at 55%: reflects a partially seeded system (common in real
+    // aquaponics where starter media from an established system is used).
+    // runOneTurn auto-increments this toward 80% over the first 14 game days.
+    biofilterEfficiency: 0.55,
     water: {
       temperature: 25,
       pH: 7.0,
@@ -78,7 +82,12 @@ const AquaponicsGame = {
       electricity: 0, // Accumulated electricity costs
       water: 0        // Accumulated water costs
     },
-    lastBillPaid: 0   // Game day of last bill payment
+    lastBillPaid: 0,  // Game day of last bill payment
+
+    // Ecosystem quality tracking
+    stableEcosystemDays:    0,     // consecutive days with optimal water chemistry
+    stableEcosystemRewarded: false, // true once the one-time $100 stable ecosystem reward has been paid
+    highestMilestoneMoney:  0,     // highest success milestone ($1500/$2500/$5000) reached
   }),
 
   // Import all moves from the modular move files

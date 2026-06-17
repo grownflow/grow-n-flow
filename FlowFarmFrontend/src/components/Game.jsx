@@ -333,6 +333,10 @@ function Game({ onTitleClick }) {
     gameAPI.repairSystem();
   };
 
+  const handleQuickRepairSystem = () => {
+    gameAPI.quickRepairSystem();
+  };
+
   const handleSetAutoFeed = (enabled) => {
     gameAPI.setAutoFeed(enabled);
   };
@@ -429,6 +433,21 @@ function Game({ onTitleClick }) {
       soundManager.play('eventAlert');
     }
 
+    // Milestone achievement notification
+    if (action?.milestoneReached) {
+      const { name, description, threshold } = action.milestoneReached;
+      messages.push(`🏆 Milestone: ${name} — ${description} ($${threshold.toLocaleString()} reached)`);
+      soundManager.play('harvest');
+    }
+
+    // Ecosystem bonus unlock notification
+    if (action?.ecosystemBonus && !action?.milestoneReached) {
+      const days = action.stableEcosystemDays;
+      if (days === 10) {
+        messages.push(`🌿 Stable Ecosystem unlocked! Water has been optimal for 10 days — fish grow 15% faster, plants mature 10% faster, and you earned a $100 bonus!`);
+      }
+    }
+
     // First-time repair discovery: tell the player about the Events tab when a
     // damage event (pump failure, water leak, filter clog) activates.
     const activeEv = gameState?.G?.activeEvent;
@@ -447,6 +466,20 @@ function Game({ onTitleClick }) {
       setLastTurnAlerted(gameDay);
     }
   }, [gameState?.G?.gameTime, gameState?.G?.lastAction, lastTurnAlerted]);
+
+  // Bulk harvest bonus notification — fires when harvestAllMaturePlants reports bulkBonus.
+  const lastBulkHarvestKeyRef = useRef(null);
+  useEffect(() => {
+    const action = gameState?.G?.lastAction;
+    if (action?.type !== 'harvestAllMaturePlants' || !action?.bulkBonus) return;
+    const key = `${gameState?.G?.gameTime}-${action.harvestedCount}`;
+    if (key === lastBulkHarvestKeyRef.current) return;
+    lastBulkHarvestKeyRef.current = key;
+    setTurnNotification({
+      messages: [`🌾 Bulk Harvest Bonus! ${action.harvestedCount} plants harvested — 15% market premium applied to this batch.`],
+      turn: null,
+    });
+  }, [gameState?.G?.lastAction, gameState?.G?.gameTime]);
 
   useEffect(() => {
     if (!tutorialStep || !gameState?.G) return;
@@ -529,6 +562,17 @@ function Game({ onTitleClick }) {
 
   const activeEvent = gameState?.G?.activeEvent;
   const pendingEvent = gameState?.G?.pendingEvent;
+
+  // Auto-switch to Events tab when a new technical event is detected so the
+  // player immediately sees the warning card and knows what action to take.
+  const prevPendingEventId = useRef(null);
+  useEffect(() => {
+    const currentId = pendingEvent?.id ?? null;
+    if (currentId && currentId !== prevPendingEventId.current) {
+      switchTab('events');
+    }
+    prevPendingEventId.current = currentId;
+  }, [pendingEvent?.id]);
   const dayNumber = gameState?.G?.gameTime ?? gameState?.ctx?.turn ?? null;
   const money = gameState?.G?.money ?? null;
 
@@ -827,18 +871,26 @@ function Game({ onTitleClick }) {
       <aside className={`ui-panel ${panelOpen ? 'open' : 'closed'}`} aria-label="Side panel">
         <div className="ui-panel-header">
           <div className="ui-tabs" role="tablist" aria-label="UI tabs">
-            {tabs.map((t) => (
-              <button
-                key={t.id}
-                className={`ui-tab ${activeTab === t.id ? 'active' : ''}`}
-                role="tab"
-                aria-selected={activeTab === t.id}
-                onClick={() => switchTab(t.id)}
-                type="button"
-              >
-                {t.label}
-              </button>
-            ))}
+            {tabs.map((t) => {
+              const isEventTab = t.id === 'events';
+              const eventAlert = isEventTab && (activeEvent || pendingEvent);
+              const badgeClass = isEventTab && activeEvent ? 'tab-badge tab-badge-danger'
+                : isEventTab && pendingEvent ? 'tab-badge tab-badge-warn'
+                : null;
+              return (
+                <button
+                  key={t.id}
+                  className={`ui-tab ${activeTab === t.id ? 'active' : ''}`}
+                  role="tab"
+                  aria-selected={activeTab === t.id}
+                  onClick={() => switchTab(t.id)}
+                  type="button"
+                >
+                  {t.label}
+                  {badgeClass && <span className={badgeClass} aria-hidden="true" />}
+                </button>
+              );
+            })}
           </div>
           <button className="ui-close" onClick={() => setPanelOpen(false)} aria-label="Close side panel" type="button">
             ×
@@ -900,7 +952,7 @@ function Game({ onTitleClick }) {
           )}
 
           {activeTab === 'events' && gameState && (
-            <EventsPanel gameState={gameState} onRepair={handleRepairSystem} />
+            <EventsPanel gameState={gameState} onRepair={handleRepairSystem} onQuickRepair={handleQuickRepairSystem} />
           )}
         </div>
       </aside>
