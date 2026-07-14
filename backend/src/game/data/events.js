@@ -22,6 +22,22 @@ const EVENTS = {
     severity: 'low'
   },
 
+  // Reward for clean water management: only fires when ammonia < 0.5 ppm
+  schoolTour: {
+    id: 'schoolTour',
+    type: EVENT_TYPES.SOCIAL,
+    name: 'School Tour',
+    description: 'A local school visits your aquaponics farm! The students are impressed by your crystal-clear water and healthy fish.',
+    cause: 'Community outreach — your clean, well-managed system earned the invitation',
+    effects: {
+      moneyBonus: 400      // absorbs the former zero-mortality billing bonus; only clean systems qualify
+    },
+    duration: 1,
+    probability: 0.020,    // ~1-in-50 days; gated by ammoniaThreshold so only clean systems earn it
+    severity: 'low',
+    ammoniaThreshold: 0.5  // EventManager skips this event when ammonia >= threshold
+  },
+
   // Technical Events - reflect aquaponics failure modes and key parameters
   // Probabilities are tuned so average players face ~2-3 events per 30-day cycle.
   ammoniaSpike: {

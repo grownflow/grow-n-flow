@@ -1,5 +1,12 @@
 Done:
 
+[2026-06-24] Sustainability tunings (Round 5) — target ranking: Balanced > Conservative > Reactive > Aggressive
+  - Zero-mortality bonus $150/30-day billing period (fishDeathsThisPeriod counter in systemMoves.js + game.js)
+  - Ammonia-contingent mechanical events: pumpFailure/filterClog/waterLeak at 50% prob when NH₃ < 0.5 ppm (EventManager.js)
+  - School Tour social event: $250, probability 0.015, ammoniaThreshold: 0.5 (events.js)
+  - Stable ecosystem bonus thresholds widened: NH₃ < 1.2 ppm, DO > 6.0, pH 6.5–7.5 (systemMoves.js)
+  - 100k simulation baseline run: Aggressive $2,044 > Conservative $1,580 > Balanced $1,548 > Reactive $1,308 (pre-tuning)
+  - All READMEs updated to reflect new mechanics and target ranking.
 
 Make sure that inventory and money are updated after every move.
 
@@ -190,3 +197,31 @@ Let's consider the flow of game play: there is an issue where Alarms go off but 
 
 
 QBU2a3Ai7nLz!b3
+
+
+
+Spec
+Plan
+Implement
+Review
+Test
+
+
+
+Here are the highlights from the computed data:
+
+Standout findings:
+
+Balanced vs Conservative gap is razor-thin — just $48 mean difference, and Balanced only wins 52.9% of head-to-head matchups. The ordering is statistically fragile.
+
+Aggressive's σ = $1,100 vs everyone else's $485–500. With 48.1% final-money CV vs ~21% for the stable strategies, Aggressive is a high-variance gamble — 11.7% of games end below the $1,000 starting money, and P5 is $623.
+
+Revenue distributions are striking: Balanced's gross revenue range is $2,190–$2,698 (σ = $65, CV = 2.5%) — nearly deterministic. Aggressive spans $644–$4,247 (CV = 32.9%). Same starting conditions, wildly different outcomes.
+
+Aggressive fish deaths distribution: median = 0, P75 = 27, P95 = 60, max = 120. More than half of Aggressive games have zero fish deaths — the penalty only hits the unlucky games hard.
+
+Conservative plant deaths: despite "zero deaths" reputation, 25.6% of Conservative games see at least one plant death (plant disease outbreak events don't respect clean water). Mean is 4.5 ± 15.8 — very skewed.
+
+Stable ecosystem streak: only Balanced records non-zero at end of game (mean 1.9 days at day 100) — indicating its ammonia rides right near the 1.2 ppm boundary.
+
+Aggressive repair rate 51.7% vs Conservative 32.7% — Aggressive encounters the most events AND repairs more of them proportionally, yet still runs highest average costs ($250 vs $133).

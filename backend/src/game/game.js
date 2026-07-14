@@ -88,6 +88,7 @@ const AquaponicsGame = {
     stableEcosystemDays:    0,     // consecutive days with optimal water chemistry
     stableEcosystemRewarded: false, // true once the one-time $100 stable ecosystem reward has been paid
     highestMilestoneMoney:  0,     // highest success milestone ($1500/$2500/$5000) reached
+    fishDeathsThisPeriod:   0,     // fish deaths in the current 30-day billing window (reset each cycle)
   }),
 
   // Import all moves from the modular move files

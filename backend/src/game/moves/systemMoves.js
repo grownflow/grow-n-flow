@@ -186,10 +186,10 @@ function createSystemAlerts({ water, tank, G }) {
     }
   }
 
-  if (nitrate <= 1.0) {
-    alerts.push('Nitrate is near zero, which can mean ammonia is accumulating dangerously fast. Increase fish feeding gradually or reduce plant biomass to rebalance.');
+  if (nitrate < 3.0 && G && Array.isArray(G.plants) && G.plants.length > 0) {
+    alerts.push(`Nitrate is ${nitrate.toFixed(1)} ppm — plants are losing health now (damage starts below 3 ppm). Add more fish to boost nitrogen production, or harvest any mature plants to reduce uptake.`);
   } else if (nitrate < 5.0) {
-    alerts.push('Nitrate is unusually low; increase fish waste output or reduce plant nutrient demand.');
+    alerts.push('Nitrate is below 5 ppm. Plants thrive above 5 ppm — add more fish or reduce plant count before it drops further.');
   }
 
   if (pH < 6.5) {
@@ -205,7 +205,7 @@ function createSystemAlerts({ water, tank, G }) {
   }
 
   if (G && Array.isArray(G.fish) && G.fish.length === 0 && water.nitrate < 5.0) {
-    alerts.push('Low nitrate with no fish present indicates insufficient nutrient production or too much plant biomass.');
+    alerts.push('No fish in tank — without fish waste, nitrate will keep depleting. Add fish to restore nitrogen production for your plants.');
   }
 
   // Biofilter capacity check — warn before ammonia starts to build.
@@ -722,7 +722,7 @@ function runOneTurn(G, { skipPromotion = false } = {}) {
 
     // ── Fix 5: Biofilter maturation curve ────────────────────────────────────
     // A new biofilter colony takes ~14 days to establish.  Efficiency rises
-    // automatically from 40% (start) to 80% (mature) over this period.
+    // automatically from 55% (start) to 80% (mature) over this period.
     // Manual biofilter unit applications still add +5% on top at any time.
     if (G.gameTime <= 14) {
       const dailyMaturation = (0.80 - 0.55) / 14; // ≈ 0.0179/day from 55% to 80%
@@ -776,6 +776,9 @@ function runOneTurn(G, { skipPromotion = false } = {}) {
     // Fish eat from tank food pool. Leftovers remain in the tank.
     const dailyFeeding = applyDailyFishFeedingFromTank({ G, tank, water });
 
+    // Tuning 2: accumulate fish deaths in the current 30-day billing period
+    G.fishDeathsThisPeriod = (G.fishDeathsThisPeriod || 0) + (dailyFeeding.fishDeaths?.length || 0);
+
     // --- Water chemistry (nitrification cycle) ---
     // Ammonia from daily feeding is applied inside applyDailyFishFeedingFromTank.
     // Keep this value for UI/telemetry.
@@ -808,16 +811,17 @@ function runOneTurn(G, { skipPromotion = false } = {}) {
     const uptake = applyPlantNitrateUptake({ G, water, lightsAvailable });
 
     // ── Fix 6: Stable-ecosystem productivity bonus ────────────────────────────
-    // 10 consecutive days with ammonia < 0.8 ppm, DO > 6.5 mg/L, and pH 6.8–7.2
+    // 10 consecutive days with ammonia < 1.2 ppm, DO > 6.0 mg/L, and pH 6.5–7.5
     // unlock a +15% fish / +10% plant growth bonus.  Any single out-of-range day
     // resets the counter.  Reflects the real productivity uplift of a mature,
-    // well-maintained system.  Threshold is 0.8 ppm (not 0.3) so that a well-run
-    // balanced system can realistically earn the bonus.
+    // well-maintained system.  Thresholds are set at "healthy" (not pristine) levels
+    // so that the Balanced strategy (mixed species, higher fish load) can earn the
+    // bonus alongside Conservative and Reactive.
     {
       const isOptimal =
-        Number(water.ammonia)         < 0.8 &&
-        Number(water.dissolvedOxygen) > 6.5 &&
-        Number(water.pH)             >= 6.8 && Number(water.pH) <= 7.2;
+        Number(water.ammonia)         < 1.2 &&
+        Number(water.dissolvedOxygen) > 6.0 &&
+        Number(water.pH)             >= 6.5 && Number(water.pH) <= 7.5;
 
       G.stableEcosystemDays = isOptimal ? (G.stableEcosystemDays || 0) + 1 : 0;
 
@@ -841,7 +845,7 @@ function runOneTurn(G, { skipPromotion = false } = {}) {
     if (G.plants && G.plants.length > 0) {
       // ── Fix 2: Nitrate-proportional plant growth ─────────────────────────
       // Nitrate is the primary nitrogen source for plants.  Higher nitrate
-      // means more fertiliser → faster maturation (0.7× at 5 ppm, 1.3× at
+      // means more fertiliser → faster maturation (0.85× at 5 ppm, 1.15× at
       // ≥ 80 ppm — the full safe range).  This creates the virtuous cycle
       // where fish biomass directly accelerates plant revenue.
       const nitrateForPlants  = Number(water.nitrate ?? 0);
@@ -867,6 +871,26 @@ function runOneTurn(G, { skipPromotion = false } = {}) {
 
       const mortality = applyPlantHealthAndMortality({ G, water, lightsAvailable });
       plantDeaths = mortality.plantDeaths || [];
+    }
+
+    // Ammonia toxicity drain: above 1.5 ppm, elevated ammonia directly damages fish
+    // and plant root health each day, beyond what the standard stress model captures.
+    // Thresholds are above the ecosystem bonus ceiling (1.2 ppm) so Conservative and
+    // Balanced are unaffected; Aggressive (avg 2.4 ppm peak) bears the full cost.
+    {
+      const excessAmmonia = Math.max(0, Number(water.ammonia) - 1.5);
+      if (excessAmmonia > 0) {
+        if (Array.isArray(G.fish)) {
+          G.fish.forEach(fish => {
+            if (fish) fish.health = Math.max(0, Number(fish.health ?? 0) - excessAmmonia * 0.2);
+          });
+        }
+        if (Array.isArray(G.plants)) {
+          G.plants.forEach(plant => {
+            if (plant) plant.health = Math.max(0, Number(plant.health ?? 0) - excessAmmonia * 0.15);
+          });
+        }
+      }
     }
 
     // Calculate daily utility costs
@@ -905,6 +929,23 @@ function runOneTurn(G, { skipPromotion = false } = {}) {
       billPayment.paid = unpaid <= 0;
       if (unpaid > 0) {
         billPayment.debt = Number(unpaid.toFixed(2));
+      }
+
+      // Reset the per-period fish-death counter at each billing boundary.
+      // (Zero-mortality reward is now delivered via the School Tour event, not here.)
+      G.fishDeathsThisPeriod = 0;
+
+      // Healthy-population bonus: any farm with fish in clean water earns $5/fish
+      // at each billing cycle.  Rewards the "sweet spot" of high stocking density
+      // with responsible water management.  Blocked above 1.5 ppm ammonia so
+      // Aggressive (avg 2.4 ppm) receives nothing; Conservative and Reactive (5 fish)
+      // earn $25/period; Balanced (10 fish) earns $50/period.
+      const ammoniaNow = Number(G.aquaponicsSystem?.tank?.water?.ammonia ?? 0);
+      const fishNow    = Array.isArray(G.fish) ? G.fish.length : 0;
+      if (ammoniaNow < 1.5 && fishNow > 0) {
+        const healthyPopBonus = fishNow * 5;
+        G.money = parseFloat(((Number(G.money) || 0) + healthyPopBonus).toFixed(2));
+        if (billPayment) billPayment.healthyPopBonus = healthyPopBonus;
       }
     }
     
@@ -1015,8 +1056,9 @@ function runOneTurn(G, { skipPromotion = false } = {}) {
     }
     
     lastAction.systemAlerts        = Array.isArray(G.systemAlerts) ? G.systemAlerts : [];
-    lastAction.stableEcosystemDays = G.stableEcosystemDays || 0;
-    lastAction.ecosystemBonus      = Boolean(G.systemModifiers?.ecosystemBonus);
+    lastAction.stableEcosystemDays  = G.stableEcosystemDays || 0;
+    lastAction.ecosystemBonus       = Boolean(G.systemModifiers?.ecosystemBonus);
+    lastAction.fishDeathsThisPeriod = G.fishDeathsThisPeriod || 0;
     if (milestoneReached) {
       lastAction.milestoneReached = {
         threshold:   milestoneReached.threshold,
@@ -1192,10 +1234,16 @@ const systemMoves = {
         if (dayFishDeaths.length > 0) {
           stopReasons.push(`${dayFishDeaths.length} fish died`);
         }
+        if (dayPlantDeaths.length > 0) {
+          stopReasons.push(`${dayPlantDeaths.length} plant${dayPlantDeaths.length > 1 ? 's' : ''} died`);
+        }
         if (w) {
           if (Number(w.ammonia)         >= 2.0) stopReasons.push('critical ammonia');
           if (Number(w.nitrite)         >= 1.0) stopReasons.push('critical nitrite');
           if (Number(w.dissolvedOxygen) <= 4.0) stopReasons.push('critical low oxygen');
+          if (Number(w.nitrate)         <  3.0 && Array.isArray(G.plants) && G.plants.length > 0) {
+            stopReasons.push('critically low nitrate — plants losing health');
+          }
         }
         // A permanent-damage event (pump failure, water leak, filter clog) just activated.
         if (G.activeEvent?.repairCost && G.activeEvent.triggeredAt === G.gameTime) {
@@ -1428,7 +1476,13 @@ function calculateDailyUtilityCosts(G) {
   if (G.activeEvent && G.activeEvent.effects && G.activeEvent.effects.waterLossPerTurn) {
     waterCost += 2; // Leak penalty (reduced from 15)
   }
-  
+
+  // Water cost scales with fish population: larger stocking densities require more
+  // water management (oxygenation, partial changes, filtration turnover).
+  // Aggressive (15-20 fish) pays ~$1.20-1.60/day extra; Conservative (5 fish) ~$0.40/day.
+  const fishCount = Array.isArray(G.fish) ? G.fish.length : 0;
+  waterCost += fishCount * 0.08;
+
   return { electricity: electricityCost, water: waterCost };
 }
 

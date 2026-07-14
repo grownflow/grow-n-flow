@@ -163,6 +163,7 @@ class GameAPI {
   repairSystem()      { return this.makeMove('repairSystem', []); }
   quickRepairSystem() { return this.makeMove('quickRepairSystem', []); }
   setAutoFeed(enabled) { return this.makeMove('setAutoFeed', [Boolean(enabled)]); }
+  stopFeeding()        { return this.makeMove('stopFeeding', []); }
 
   disconnect() {
     this.stopPolling();

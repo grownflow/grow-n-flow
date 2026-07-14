@@ -9,8 +9,8 @@ const EVENT_ACTION_GUIDE = {
   ammoniaSpike:        'Buy a Buffering Solution or Biofilter from the Market. Performing a Partial Water Change now will dilute the incoming spike.',
   nitriteSpike:        'Apply a Biofilter unit from your Inventory to boost processing. A Partial Water Change also helps.',
   lowDissolvedOxygen:  'Apply Aeration Stones from your Inventory, or buy them from the Market ($25/pack). Stop feeding until oxygen recovers.',
-  fishDiseaseOutbreak: 'Stop feeding immediately to reduce ammonia. Perform a Partial Water Change to lower stress. Remove any dead fish.',
-  plantDiseaseOutbreak:'Check nitrate and iron levels — add Chelated Iron if iron < 1 ppm. Harvesting mature plants now reduces disease spread.',
+  fishDiseaseOutbreak: 'Go to the Fish tab and click "Stop Feeding Now" to clear tank food and disable auto-feed. Perform a Partial Water Change to dilute ammonia. Dead fish are removed automatically — focus on keeping survivors healthy.',
+  plantDiseaseOutbreak:'Disease depletes nitrate (−2 ppm/day) and iron (−0.5 ppm/day) for 3 days. Go to the Water tab and apply Chelated Iron if iron < 1 ppm. Harvest any mature plants now — fewer plants means less nitrate drain until the disease clears.',
   pHCrash:             'Apply a Buffering Solution (Calcium Carbonate or Potassium Carbonate) from your Inventory to raise pH before the drop hits.',
 };
 

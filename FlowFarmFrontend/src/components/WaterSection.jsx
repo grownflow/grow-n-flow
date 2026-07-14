@@ -25,6 +25,7 @@ const WaterSection = ({gameState, loading}) => {
     const [historyError, setHistoryError] = useState(null);
     const [fixingDO, setFixingDO] = useState(false);
     const [fixingN, setFixingN] = useState(false);
+    const [fixingPH, setFixingPH] = useState(false);
 
     if (!gameState) {
         return;
@@ -95,6 +96,14 @@ const WaterSection = ({gameState, loading}) => {
         || G.activeEvent?.id === 'ammoniaSpike' || G.activeEvent?.id === 'nitriteSpike'
         || G.activeEvent?.id === 'fishDiseaseOutbreak';
     const highNDanger = Number(water.ammonia) > 1.0 || Number(water.nitrite) > 0.5;
+    const plantCount = Array.isArray(G.plants) ? G.plants.length : 0;
+    const lowNitrateActive = plantCount > 0 && Number(water.nitrate) < 5;
+    const lowNitrateDanger = plantCount > 0 && Number(water.nitrate) < 3;
+    const lowpHActive = Number(water.pH) < 6.5 || G.activeEvent?.id === 'pHCrash' || G.pendingEvent?.id === 'pHCrash';
+    const lowpHDanger = Number(water.pH) < 6.2;
+    const calBufferStock = Number(equipment.bufferingSolutionCalciumCarbonate) || 0;
+    const potBufferStock = Number(equipment.bufferingSolutionPotassiumCarbonate) || 0;
+    const anyBufferStock = calBufferStock + potBufferStock;
 
     const handleFixDO = async () => {
         if (fixingDO) return;
@@ -121,6 +130,21 @@ const WaterSection = ({gameState, loading}) => {
             soundManager.play('consumable');
         } finally {
             setFixingN(false);
+        }
+    };
+
+    const handleFixPH = async () => {
+        if (fixingPH) return;
+        setFixingPH(true);
+        try {
+            const key = calBufferStock > 0 ? 'bufferingSolutionCalciumCarbonate' : 'bufferingSolutionPotassiumCarbonate';
+            if (anyBufferStock === 0) {
+                await gameAPI.buyEquipment('bufferingSolutionCalciumCarbonate', 1);
+            }
+            await gameAPI.applyConsumable(key === 'bufferingSolutionPotassiumCarbonate' && calBufferStock === 0 && potBufferStock === 0 ? 'bufferingSolutionCalciumCarbonate' : key);
+            soundManager.play('consumable');
+        } finally {
+            setFixingPH(false);
         }
     };
 
@@ -262,7 +286,7 @@ const WaterSection = ({gameState, loading}) => {
                         unit="ppm"
                         decimals={2}
                         rangeWarning={{ low: 5, high: 80 }}
-                        rangeDanger={{ low: 1 }}
+                        rangeDanger={{ low: 3 }}
                         idealLabel="5–80"
                     />
                 </div>
@@ -291,6 +315,24 @@ const WaterSection = ({gameState, loading}) => {
                                         ? 'Buy Biofilter & Apply ($120)'
                                         : 'Need $120 or a biofilter'}
                         </button>
+                    </div>
+                )}
+
+                {/* Low Nitrate Warning */}
+                {lowNitrateActive && (
+                    <div className={`high-n-alert ${lowNitrateDanger ? 'danger' : 'warning'}`}>
+                        <div className="high-n-text">
+                            <strong>{lowNitrateDanger ? '🚨 Nitrate Deficiency — Plants Dying' : '⚠️ Low Nitrate'}</strong>
+                            <span>
+                                NO₃ {Number(water.nitrate).toFixed(2)} ppm
+                                {lowNitrateDanger
+                                    ? ' — below 3 ppm, plants lose health every day'
+                                    : ' — below 5 ppm, plants grow slower'}
+                            </span>
+                            <span style={{ fontSize: 11, opacity: 0.85 }}>
+                                To raise nitrate: add more fish (more waste → more nitrification) or harvest mature plants to reduce uptake.
+                            </span>
+                        </div>
                     </div>
                 )}
 
@@ -346,6 +388,39 @@ const WaterSection = ({gameState, loading}) => {
                                     : money >= 25
                                         ? 'Buy Pack & Apply ($25)'
                                         : `Need $25 or stones`}
+                        </button>
+                    </div>
+                )}
+
+                {/* Low pH Quick Fix */}
+                {lowpHActive && (
+                    <div className={`high-n-alert ${lowpHDanger ? 'danger' : 'warning'}`}>
+                        <div className="high-n-text">
+                            <strong>{lowpHDanger ? '🚨 pH Critical — Fish & Plants at Risk' : '⚠️ Low pH'}</strong>
+                            <span>
+                                pH {Number(water.pH).toFixed(1)}
+                                {lowpHDanger
+                                    ? ' — below 6.2, fish and plants lose health every day'
+                                    : ' — below 6.5, approaching damage zone'}
+                            </span>
+                            <span style={{ fontSize: 11, opacity: 0.85 }}>
+                                Apply a Buffering Solution to raise pH. Nitrification is acid-forming — pH drifts down over time with active fish.
+                            </span>
+                        </div>
+                        <button
+                            type="button"
+                            className="btn-fix-n"
+                            disabled={loading || fixingPH || (anyBufferStock === 0 && money < 15)}
+                            onClick={handleFixPH}
+                            title={anyBufferStock > 0 ? `Apply buffering solution (${anyBufferStock} in stock)` : `Buy one for $15, then apply`}
+                        >
+                            {fixingPH
+                                ? 'Applying…'
+                                : anyBufferStock > 0
+                                    ? `Apply Buffer (${anyBufferStock} left)`
+                                    : money >= 15
+                                        ? 'Buy Buffer & Apply ($15)'
+                                        : 'Need $15 or buffer'}
                         </button>
                     </div>
                 )}

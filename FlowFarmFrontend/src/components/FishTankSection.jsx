@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-const FishTankSection = ({gameState, loading, handleAddFish, handleSellFish, handleFeedFish, feedFishStatus, handleSetAutoFeed}) => {
+const FishTankSection = ({gameState, loading, handleAddFish, handleSellFish, handleFeedFish, feedFishStatus, handleSetAutoFeed, handleStopFeeding}) => {
 
     const [feedAmount, setFeedAmount] = useState(10);
 
@@ -99,6 +99,24 @@ const FishTankSection = ({gameState, loading, handleAddFish, handleSellFish, han
                         <strong>Active event:</strong> {activeEvent.name} ({activeEvent.turnsRemaining}d left)
                     </p>
                     {activeEvent.cause && <p style={{ margin: 0 }}>Cause: {activeEvent.cause}</p>}
+                </div>
+            )}
+
+            {activeEvent?.id === 'fishDiseaseOutbreak' && (
+                <div className="high-n-alert warning" style={{ marginTop: 8 }}>
+                    <div className="high-n-text">
+                        <strong>Stop feeding to reduce ammonia stress</strong>
+                        <span>Disease raises ammonia each day. Clearing tank food and disabling auto-feed cuts additional ammonia load while fish recover.</span>
+                    </div>
+                    <button
+                        type="button"
+                        className="btn-fix-n"
+                        disabled={loading}
+                        onClick={handleStopFeeding}
+                        title="Clears food in the tank and turns off auto-feed"
+                    >
+                        Stop Feeding Now
+                    </button>
                 </div>
             )}
 

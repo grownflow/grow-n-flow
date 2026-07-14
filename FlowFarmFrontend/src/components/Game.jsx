@@ -341,6 +341,11 @@ function Game({ onTitleClick }) {
     gameAPI.setAutoFeed(enabled);
   };
 
+  const handleStopFeeding = () => {
+    gameAPI.stopFeeding();
+    gameAPI.setAutoFeed(false);
+  };
+
   const tabs = [
     { id: 'market', label: 'Market' },
     { id: 'water', label: 'Water' },
@@ -944,6 +949,7 @@ function Game({ onTitleClick }) {
               handleFeedFish={handleFeedFish}
               feedFishStatus={feedFishStatus}
               handleSetAutoFeed={handleSetAutoFeed}
+              handleStopFeeding={handleStopFeeding}
             />
           )}
 

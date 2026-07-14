@@ -21,6 +21,21 @@ class EventManager {
     const hasFish   = Array.isArray(G.fish)   && G.fish.length   > 0;
     const hasPlants = Array.isArray(G.plants) && G.plants.length > 0;
 
+    // Tuning 3: proactive maintenance reward — strategies keeping ammonia below 0.5 ppm
+    // face half the probability of mechanical failures (pump, filter, leak).
+    // Biological and chemical events are unaffected; the nitrogen-cycle model already
+    // naturally suppresses them under low-ammonia conditions.
+    const ammonia = Number(G.aquaponicsSystem?.tank?.water?.ammonia ?? 0);
+    const lowAmmoniaFactor = ammonia < 0.5 ? 0.5 : 1.0;
+    const MECHANICAL_EVENTS = new Set(['pumpFailure', 'filterClog', 'waterLeak']);
+
+    // Biofilter load factor: each fish above the baseline of 5 adds 20% more clog risk,
+    // capped at 3×. Conservative (~5 fish) → 1.0×; Balanced (~10) → 2.0×;
+    // Aggressive (~15) → 3.0×. Applies to filterClog only — pumps and seals don't
+    // wear faster with more fish, but organic load directly drives filter fouling.
+    const fishCount = Array.isArray(G.fish) ? G.fish.length : 0;
+    const highLoadFactor = fishCount <= 5 ? 1.0 : Math.min(3.0, 1.0 + (fishCount - 5) * 0.2);
+
     // Roll for each possible event. Shuffle first so no event is systematically
     // preempted by earlier entries.
     const eventKeys = Object.keys(EVENTS).sort(() => Math.random() - 0.5);
@@ -31,7 +46,13 @@ class EventManager {
       if (event.requiresFish   && !hasFish)   continue;
       if (event.requiresPlants && !hasPlants) continue;
 
-      if (Math.random() < event.probability) {
+      // Skip water-quality-gated events (e.g. schoolTour) when ammonia is too high.
+      if (event.ammoniaThreshold != null && ammonia >= event.ammoniaThreshold) continue;
+
+      const effectiveProb = event.probability
+        * (MECHANICAL_EVENTS.has(key) ? lowAmmoniaFactor : 1.0)
+        * (key === 'filterClog' ? highLoadFactor : 1.0);
+      if (Math.random() < effectiveProb) {
         // Return the raw event definition — the caller decides whether to store
         // it as pending (TECHNICAL) or trigger it immediately (SOCIAL).
         return event;
@@ -108,9 +129,12 @@ class EventManager {
         Number(G.aquaponicsSystem?.tank?.circulationEfficiency ?? 1.0);
     }
 
-    // Add repairCost if it exists
+    // Add repair costs if they exist (both needed by the frontend UI)
     if (event.repairCost !== undefined) {
       G.activeEvent.repairCost = Number(event.repairCost);
+    }
+    if (event.quickRepairCost !== undefined) {
+      G.activeEvent.quickRepairCost = Number(event.quickRepairCost);
     }
 
     // Initialize event history if needed

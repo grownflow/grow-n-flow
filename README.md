@@ -19,7 +19,7 @@ An average player can achieve a first **plant harvest and fish harvest in exactl
 | 7 | **Sell Fish** | All 5 tilapia ≥ 480 g (80% threshold) → harvestable at full market value |
 
 > A **step-by-step tutorial banner** appears at the bottom of the screen for new players and guides you through moves 1–3.
-> You also start with **1 free Biofilter unit** in inventory — apply it from the Water tab to reach 85% efficiency before adding more fish.
+> You also start with **1 free Biofilter unit** in inventory — apply it from the Water tab to jump from 55% → 60% efficiency immediately, accelerating the 14-day maturation curve.
 
 **Water chemistry at day 6** (5 tilapia, 80% default biofilter): ammonia ≈ 0 ppm (near zero within capacity), nitrite ≈ 0 ppm, nitrate rising, pH 7.0. No intervention needed.
 
@@ -38,8 +38,10 @@ After day 7 the grace period ends and normal event probabilities apply — see t
 | **Free starter biofilter** | Inventory | Every new game begins with 1 Biofilter unit; the Market tab explains when to buy more |
 | **Quick Repair** | Events tab | Emergency patch at ~50% cost for pump failure, filter clog, and water leak |
 | **Success milestones** | Turn banner | Notifications at Established ($1,500), Profitable ($2,500), and Thriving ($5,000) |
-| **Stable Ecosystem bonus** | Water tab + turn banner | Streak counter shows progress toward the 10-day goal; bonus announced on unlock with $100 cash reward |
+| **Stable Ecosystem bonus** | Water tab + turn banner | Streak counter shows progress toward the 10-day goal; bonus announced on unlock with $100 cash reward (NH₃ < 1.2 ppm, DO > 6.0, pH 6.5–7.5) |
+| **Healthy-population billing bonus** | Turn banner (billing day) | $5 per fish per 30-day billing cycle when ammonia < 1.5 ppm — rewards clean, well-stocked systems |
 | **Bulk Harvest Bonus** | Turn banner | Harvesting 15+ plants in one action earns a 15% market premium on that batch |
+| **School Tour event** | Events panel | +$400 social event that only fires when ammonia < 0.5 ppm — clean water earns the invitation |
 | **Event auto-navigation** | Events tab | When a new technical event is detected, the panel automatically switches to the Events tab and shows a specific "Act now" action guide for that event |
 | **Events tab badge** | Tab header | Amber dot = pending event (prepare now); red dot = active event (repair needed) |
 
@@ -128,11 +130,19 @@ nitrite removed per day = min(nitrite, capacity)
 
 With 5 tilapia fully fed, total daily ammonia production is roughly **0.77 ppm** — within the 1.375 ppm/day starting capacity, so **ammonia stays near zero from day 1**. Nitrate starts at **5 mg/L** and builds steadily as the nitrogen cycle matures. Pump failure reduces throughput to 15% of normal; nitrification is suppressed when dissolved oxygen drops below 5.0 mg/L.
 
-**Ammonia-suppressed growth** — even below the danger threshold, elevated ammonia slows fish growth (`factor = clamp(1 − NH₃ × 0.22, 0.10, 1.0)`). At 0.5 ppm fish grow 11% slower; at 2.0 ppm they grow 56% slower. Clean water directly accelerates harvest timing and revenue — not just fish survival.
+**Ammonia-suppressed growth** — even below the danger threshold, elevated ammonia slows fish growth (`factor = clamp(1 − NH₃ × 0.22, 0.10, 1.0)`). At 0.5 ppm fish grow 11% slower; at 2.0 ppm they grow at 56% of their base rate (~44% slower). Clean water directly accelerates harvest timing and revenue — not just fish survival.
 
 **Nitrate-proportional plant growth** — plant maturation speed scales with available nitrate (`clamp(0.85 + (NO₃ − 5)/75 × 0.30, 0.85, 1.15)`). At 5 ppm: 85% speed. At 80 ppm: 115% speed. More fish → more nitrate → faster plants — this is the core virtuous cycle of a productive aquaponics system.
 
-**Stable ecosystem bonus** — maintaining NH₃ < 0.8 ppm, DO > 6.5 mg/L, and pH 6.8–7.2 for 10 consecutive days unlocks +15% fish growth, +10% plant growth, and a one-time **$100 cash reward**. The notification banner announces when this is achieved. A streak counter in the Water tab shows current progress toward the 10-day goal.
+**Nitrate deficiency** — when nitrate drops below **3 ppm**, plants actively lose health: `penalty = (3.0 − nitrate) × 0.4` per plant per day (up to −1.2/day at 0 ppm). A plant at full health (10) dies in ~8 days at zero nitrate. The Water tab shows a Low Nitrate Warning banner below 5 ppm and turns the nitrate indicator red below 3 ppm. To raise nitrate: add more fish (more ammonia → more nitrification → more nitrate) or harvest mature plants to reduce uptake.
+
+**Stable ecosystem bonus** — maintaining NH₃ < 1.2 ppm, DO > 6.0 mg/L, and pH 6.5–7.5 for 10 consecutive days unlocks +15% fish growth, +10% plant growth, and a one-time **$100 cash reward**. Thresholds are set at "healthy" (not pristine) levels so both Conservative and Balanced strategies can earn the bonus. The notification banner announces when this is achieved. A streak counter in the Water tab shows current progress toward the 10-day goal.
+
+**Healthy-population billing bonus** — at each 30-day billing cycle, the farm earns **$5 per fish** when tank ammonia is below 1.5 ppm. Conservative and Reactive (5 fish, clean water) earn $25/cycle ($75/game). Balanced (10 fish, moderate ammonia) earns $50/cycle ($150/game). Aggressive (15+ fish, ammonia averaging 2.4 ppm) earns nothing. This rewards the "sweet spot" of high stocking density with responsible water management.
+
+**Ammonia toxicity drain** — above 1.5 ppm, each excess ppm directly reduces fish health by 0.2/day and plant health by 0.15/day, compounding the nitrogen-cycle stress model. Systems with chronic high ammonia (Aggressive, avg 2.4 ppm) accumulate health damage that shortens fish lifespans and reduces plant yield beyond what growth suppression alone captures.
+
+**Biofilter load scaling** — filter clog probability scales with fish count: each fish above 5 adds 20% extra clog risk, capped at 3×. Conservative and Reactive (5 fish) see baseline clog rates; Balanced (10 fish) faces 2× clog probability; Aggressive (15 fish) faces 3×. Each clog cascades: biofilter efficiency halves → ammonia climbs → ammonia drain fires → fish die faster.
 
 ### Tracked Water Parameters
 
@@ -171,7 +181,7 @@ Fish health is reduced each day proportional to overall stress. A fish with heal
 
 ### System Hardware Parameters
 
-- **Biofilter efficiency** (0–1.0): Scales the daily nitrification capacity. **Starts at 55%** (1.375 ppm/day); auto-matures to 80% (2.0 ppm/day) over 14 days. Permanently increased by +5% per applied Biofilter unit (max 100% → 2.5 ppm/day). Apply the free starter unit on day 1 to reach 85% immediately. Reduced to 50% of its current value by Filter Clog; requires repair ($50 full / $25 quick) to restore.
+- **Biofilter efficiency** (0–1.0): Scales the daily nitrification capacity. **Starts at 55%** (1.375 ppm/day); auto-matures to 80% (2.0 ppm/day) over 14 days. Permanently increased by +5% per applied Biofilter unit (max 100% → 2.5 ppm/day). Apply the free starter unit on day 1 to jump to 60% immediately (natural maturation still caps at 80%; a second unit applied after day 14 then reaches 85%). Reduced to 50% of its current value by Filter Clog; requires repair ($50 full / $25 quick) to restore.
 - **Circulation efficiency** (0.5–2.0): Governs dissolved oxygen replenishment. Each turn, circulation pulls DO toward 8 mg/L at `25% of deficit × circEff`. Pump Failure halts replenishment entirely (also drops nitrification to 15%); requires repair ($100 full / $50 quick). The Low DO event temporarily reduces circulation; it restores automatically on expiry.
 - **Water level** (0–1000 L): Water Leak drains 50 L per turn until repaired. Full repair ($75) refills the tank and dilutes all dissolved pollutants. Quick repair ($37) stops the leak but does not refill.
 - **Temperature** (18–32 °C): Drifts daily via an Ornstein-Uhlenbeck process (±0.5 °C/day, reverting toward 25 °C). Purchasing a **Heater/Chiller** unit ($150) tightens the swing to ±0.15 °C and triples the reversion speed. Temperature directly affects fish stress scores and nitrification rate.
@@ -269,6 +279,13 @@ These directly affect water chemistry or hardware. Left unaddressed, most will k
 - **Cause**: Local festival draws extra buyers to the farmers market
 - **Response**: No action needed — spend the windfall on consumables or fingerlings before the next event hits
 
+#### School Tour
+- **Probability**: 2.0% per turn | **Duration**: 1 turn | **Severity**: Low
+- **Gate**: Only fires when ammonia < 0.5 ppm — dirty water cancels the invitation
+- **Effects**: +$400 cash
+- **Cause**: Community outreach — your clean, well-managed system earned the invitation from a local school
+- **Response**: No action needed — maintaining clean water is the only requirement to stay eligible
+
 ---
 
 ## Player Actions
@@ -280,7 +297,7 @@ Every action the player can take is listed below. Actions take effect immediatel
 | Action | Button | Effect |
 |--------|--------|--------|
 | Progress 1 Day | Progress Day | Runs one full simulation day: auto-feeds fish from inventory (if auto-feed on), fish eat, chemistry updates, plants age, event rolls |
-| Progress 3 Days | Progress 3 Days | Runs up to 3 days; auto-feeds each day; stops early on critical conditions (fish deaths, danger-level chemistry, system damage event); turns amber ⚠ when a pending event is queued |
+| Progress 3 Days | Progress 3 Days | Runs up to 3 days; auto-feeds each day; stops early on: fish deaths, plant deaths, ammonia ≥ 2.0 mg/L, nitrite ≥ 1.0 mg/L, DO ≤ 4.0 mg/L, nitrate < 3.0 mg/L with plants present, or a system-damage event; turns amber ⚠ when a pending event is queued |
 
 **7-Move First-Harvest Path**: An average player can achieve a first plant harvest and first fish harvest in 7 moves. The 7-day grace period blocks all events, so no water-chemistry management is required on this path:
 
@@ -320,6 +337,7 @@ Every action the player can take is listed below. Actions take effect immediatel
 | Apply Consumable | Water Chemistry Panel | Uses one unit of the selected consumable from inventory and applies its chemical effect immediately. |
 | Quick Fix – Low DO | Water Chemistry Panel | One-click: buys and applies Aeration Stones when dissolved oxygen is below 5 mg/L. Appears automatically. |
 | Quick Fix – High Nitrogen | Water Chemistry Panel | One-click: buys and applies a Biofilter unit when ammonia or nitrite is dangerously elevated. Appears automatically. |
+| Low Nitrate Warning | Water Chemistry Panel | Informational banner when nitrate drops below 5 mg/L with plants in tank; turns danger-red below 3 mg/L (active plant health damage). Guides player to add fish or harvest mature plants. Appears automatically. |
 | Partial Water Change | Water Chemistry Panel | Replaces 20% of tank water with fresh water, diluting ammonia, nitrite, nitrate, and other parameters by ~20% and raising dissolved oxygen slightly. Incurs a small water cost. |
 | Increase Aeration | Water Chemistry Panel | Adds dissolved oxygen directly and raises circulation efficiency by 0.1. |
 | Stop Feeding | Water Chemistry Panel | Removes all food currently in the tank (prevents ammonia spike from uneaten food). |
@@ -489,13 +507,27 @@ npm run sensitivity           # ~10k games, ~55s
 npm run sensitivity:quick     # ~4k games, ~20s
 ```
 
-**10,000-game results (4 strategies × 2,500 games, 100-day cap) — current calibration:**
+**100,000-game results — Round 8 (4 strategies × 25,000 games, 100-day cap) — current tunings:**
 
-| Strategy | Final money | Revenue | Established (≥$1,500) | Profitable (≥$2,500) | Fish deaths | Peak ammonia |
-|----------|------------|---------|----------------------|---------------------|-------------|--------------|
-| **Conservative** | $1,538 | $1,364 | **66%** | 0% | 0 | 0.41 ppm |
-| **Aggressive** | $1,938 | $2,616 | 97% | **37%** | 15.6 | 2.65 ppm |
-| **Balanced** | $1,461 | $2,517 | 50% | 0% | 0 | 1.36 ppm |
-| **Reactive** | $1,262 | $957 | 6% | 0% | 0 | 0.39 ppm |
+| Rank | Strategy | Final money | Revenue | Repair costs | Fish deaths | Plant deaths | Peak NH₃ | Profitable |
+|------|----------|------------|---------|-------------|-------------|-------------|---------|---------|
+| 1 | **Balanced** | **$2,382** | $2,540 | $173 | 0 | 0 | 1.31 ppm | 37% |
+| 2 | **Conservative** | $2,334 | $1,374 | $133 | 0 | 4.5 | 0.36 ppm | 36% |
+| 3 | **Aggressive** | $2,287 | $2,472 | $250 | 14.8 | 455.7 | 2.54 ppm | 52% |
+| 4 | **Reactive** | $1,999 | $968 | $117 | 0 | 0.3 | 0.35 ppm | 15% |
 
-Milestones are now routinely achievable after three calibration steps: (1) market prices raised (tilapia $4→$5, barramundi $8.50→$13.00, catfish $6→$7.50; plants +25%); (2) a one-time **$100 Stable Ecosystem reward** when NH₃/DO/pH hold optimal for 10 days; (3) a **15% Bulk Harvest Bonus** when harvesting 15+ plants in one action. Fingerling costs were also reduced (tilapia $2.50→$2.10, catfish $3.50→$3.00, barramundi $6.00→$5.10) to improve restocking margins. Conservative reaches Established in 66% of games; Aggressive reaches Profitable in 37% — a realistic goal for scaled play. The Reactive bot underperforms due to insufficient proactive farming, not a biology issue.
+Target ranking achieved: **Balanced > Conservative > Aggressive > Reactive** ✓
+
+**Pre-sustainability baseline (same harness, no tunings):** Aggressive $2,044 · Conservative $1,580 · Balanced $1,548 · Reactive $1,308
+
+Seven sustainability mechanics bridge the revenue gap between sustainable and unsustainable play:
+
+1. **Ammonia-contingent mechanical events** — pump failure, filter clog, and water leak fire at half probability when ammonia < 0.5 ppm. Conservative and Reactive see ~50% fewer hardware failures.
+2. **School Tour event ($400, 2.0%/day)** — gated to clean-water systems (ammonia < 0.5 ppm). Rewards Conservative and Reactive for clean water management.
+3. **Stable Ecosystem bonus thresholds widened** — NH₃ < 1.2 ppm (was < 0.8), DO > 6.0, pH 6.5–7.5, allowing Balanced to earn the +15%/+10% growth multipliers and $100 cash reward alongside Conservative.
+4. **Ammonia toxicity drain** — fish health −0.2/day and plant health −0.15/day per excess ppm above 1.5 ppm. Directly penalises Aggressive (avg 2.54 ppm) through biology.
+5. **Fish-count water cost** — $0.08 per fish per day added to utility billing. Aggressive (15 fish) pays ~$1.20/day extra; Conservative (5 fish) ~$0.40/day.
+6. **Healthy-population billing bonus** — $5/fish at each 30-day billing cycle when ammonia < 1.5 ppm. Balanced (10 fish) earns $150/game; Conservative and Reactive (5 fish) earn $75/game; Aggressive earns $0 (blocked by chronic high ammonia).
+7. **Biofilter load scaling** — filterClog probability multiplied by up to 3× at 15 fish. Cascades into higher ammonia and more fish deaths for Aggressive (455.7 avg plant deaths/game).
+
+Run `node scripts/run-100k.js` from the `backend/` folder to regenerate with any parameter changes (~10 min).

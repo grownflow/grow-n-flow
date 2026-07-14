@@ -67,6 +67,9 @@ npm run simulate:quick
 # 100 games × 4 strategies × 100 days → simulation-results.json (~2s)
 npm run simulate:full
 
+# 100,000 games (25k per strategy) → 4 output files: JSON aggregate + 3 CSVs (~12min)
+node scripts/run-100k.js
+
 # Full sensitivity analysis: sweeps each event probability ±10 pp in 2-point steps
 # 9 events × 11 steps × 100 games = 9,900 games → sensitivity-results.json + .csv (~15s)
 npm run sensitivity
@@ -74,6 +77,12 @@ npm run sensitivity
 # Quick sensitivity: 40 games/config instead of 100, noisier but faster (~6s)
 npm run sensitivity:quick
 ```
+
+100k outputs (all in `backend/`):
+- `simulation-results-100k.json` — aggregate stats per strategy (compact)
+- `simulation-results-100k.csv` — aggregate stats (4 rows)
+- `simulation-games-100k.csv` — per-game summary (100k rows)
+- `simulation-snapshots-100k.csv` — 10-day snapshots per game (~1M rows)
 
 #### Custom simulation runs
 
@@ -115,10 +124,10 @@ Outputs: <stem>.json (full per-config data) + <stem>.csv (one row per event × d
 
 | Strategy | Behaviour | Typical outcome |
 |----------|-----------|-----------------|
-| `conservative` | 5 tilapia, buys fish food, minimal spending | Low revenue, zero deaths, reliably reaches Established |
-| `aggressive` | Max fish, max plants, bulk harvests | High revenue ceiling, significant fish/plant deaths |
-| `balanced` | Mixed species, biofilter management, scales up mid-game | Highest gross revenue, good water chemistry |
-| `reactive` | Minimal proactive farming, responds to alerts | Under-performs; useful as a baseline for alarm-response logic |
+| `balanced` | 8 tilapia + 3 barramundi, 30 plants, mixed species, proactive water management | **Target: 1st** — high revenue + healthy-pop billing bonus ($150/game) + ecosystem bonus; ~0 deaths |
+| `conservative` | 5 tilapia, 20 plants, $200 cash buffer, immediate repairs, proactive biofilter | **Target: 2nd** — school tour ($400/2%/day) + ammonia-gated event reduction + healthy-pop bonus ($75/game); 0 deaths |
+| `aggressive` | 15 fish (barramundi + tilapia), 60 Basil plants, $50 buffer, reactive chemistry | **Target: 3rd** — highest gross revenue but ~14 deaths/game; ammonia health drain + 3× filter clog rate + no billing bonuses |
+| `reactive` | 5 tilapia max, 10 plants, delays purchases, repairs only when critical | **Target: 4th** — clean water but slow stocking limits revenue below $1,000; healthy-pop bonus ($75/game) insufficient to compete |
 
 #### Simulation files
 
@@ -283,7 +292,15 @@ nitrateGrowthMult = clamp(0.85 + (nitrate − 5) / 75 × 0.30, 0.85, 1.15)
 
 At 5 ppm nitrate: 85% growth rate. At 80 ppm: 115% growth rate. This links fish biomass directly to plant revenue, rewarding the right stocking density rather than either under- or over-stocking.
 
-**Stable ecosystem bonus** — maintaining ammonia < 0.8 ppm, DO > 6.5 mg/L, and pH 6.8–7.2 for 10 consecutive days unlocks a permanent +15% fish growth / +10% plant growth multiplier (`G.systemModifiers.ecosystemBonus = true`) and pays a one-time **$100 cash reward** (`G.stableEcosystemRewarded = true` prevents double-payment). Resets on any single day outside the thresholds. Progress is stored in `G.stableEcosystemDays` and displayed as a streak counter in the Water tab.
+**Stable ecosystem bonus** — maintaining ammonia < 1.2 ppm, DO > 6.0 mg/L, and pH 6.5–7.5 for 10 consecutive days unlocks a permanent +15% fish growth / +10% plant growth multiplier (`G.systemModifiers.ecosystemBonus = true`) and pays a one-time **$100 cash reward** (`G.stableEcosystemRewarded = true` prevents double-payment). Thresholds are set at "healthy" (not pristine) levels so that both Conservative and Balanced strategies can earn the bonus. Resets on any single day outside the thresholds. Progress is stored in `G.stableEcosystemDays` and displayed as a streak counter in the Water tab.
+
+**Healthy-population billing bonus** — at each 30-day billing cycle, the farm earns **$5 per fish** when tank ammonia is below 1.5 ppm. Balanced (10 fish, ~1.3 ppm) earns $50/cycle ($150/game); Conservative and Reactive (5 fish, clean water) earn $25/cycle ($75/game); Aggressive (15 fish, avg 2.4 ppm) earns nothing.
+
+**Ammonia toxicity drain** — above 1.5 ppm, each excess ppm reduces fish health by 0.2/day and plant health by 0.15/day. Applied after the standard stress model each turn. Aggressive (avg 2.4 ppm) bears the full cost; Conservative and Reactive (avg < 0.4 ppm) are unaffected.
+
+**Fish-count water cost** — `$0.08 × fishCount` per day is added to `calculateDailyUtilityCosts`. Aggressive (15 fish) pays ~$1.20/day extra; Conservative (5 fish) ~$0.40/day.
+
+**Biofilter load scaling** — `filterClog` probability is multiplied by `min(3.0, 1.0 + (fishCount − 5) × 0.2)`. At 5 fish: 1×; at 10 fish: 2×; at 15 fish: 3×. Each clog halves biofilter efficiency, cascading into higher ammonia and more health drain.
 
 **Safe target ranges:**
 
@@ -291,7 +308,7 @@ At 5 ppm nitrate: 85% growth rate. At 80 ppm: 115% growth rate. This links fish 
 |------------------|-------------------|------------------|
 | Ammonia          | < 1.0 mg/L        | ≥ 2.0 mg/L       |
 | Nitrite          | < 0.5 mg/L        | ≥ 1.0 mg/L       |
-| Nitrate          | 5–80 mg/L         | < 1.0 mg/L       |
+| Nitrate          | 5–80 mg/L         | < 3.0 mg/L (plant health damage starts) |
 | pH               | 6.5–7.5           | < 6.5 or > 7.5   |
 | Dissolved Oxygen | ≥ 5.0 mg/L        | < 4.0 mg/L       |
 | Iron             | ≥ 1.0 mg/L        | < 1.0 mg/L       |
@@ -328,6 +345,8 @@ Plants consume nitrate each day (provided lights are on) and are harvested when 
 
 Plant health (0–10) recovers +0.15/day under good conditions and declines when nitrate, iron, pH, or lighting is out of range. Dead plants (health = 0) are removed from the system and the 3D scene; surviving plants are never affected.
 
+**Nitrate deficiency** — below 3 ppm nitrate, plants take active health damage each day: `penalty = (3.0 − nitrate) × 0.4`. At 0 ppm this is −1.2/day; a fully healthy plant (10) dies in ~8 days. The alert system fires at < 3 ppm (damage active) and < 5 ppm (early warning). Progress 3 Days stops early when nitrate < 3 ppm with plants in the tank. To raise nitrate: add more fish (more ammonia → more nitrification) or harvest mature plants to reduce uptake.
+
 **Bulk Harvest Bonus** — when `harvestAllMaturePlants` collects 15 or more plants in a single call, all harvested `unitPrice` values are multiplied by 1.15 before being stored in inventory. This rewards players who scale their grow beds and batch their harvests rather than picking a few plants at a time.
 
 ---
@@ -338,11 +357,16 @@ A **7-day grace period** prevents any events from firing while the system is est
 
 **Technical events** are announced one day in advance as a **Pending Event**. The player sees the warning and can take defensive action (buy supplies, do a water change, save for repair) before effects apply on the next Progress Day. Fish-specific events (`requiresFish: true`) and plant-specific events (`requiresPlants: true`) are automatically cancelled if the relevant entities are gone by the time the event would activate — preventing disease alerts on empty systems.
 
+**Ammonia-gated events** use an `ammoniaThreshold` field: `EventManager.checkForRandomEvent` skips the event entirely when `ammonia ≥ threshold`. Used by School Tour to reward clean-water management.
+
+**Ammonia-contingent mechanical probabilities** — pump failure, filter clog, and water leak fire at 50% of their base probability when tank ammonia < 0.5 ppm. This rewards proactive water management: Conservative and Reactive strategies (avg ~0.40 ppm) face roughly half as many hardware failures as Aggressive (avg 2.53 ppm).
+
 #### Social Events
 
-| Event            | Probability | Effect           | Duration |
-|------------------|-------------|------------------|----------|
-| Market Day Bonus | 2%/day      | +$50             | 1 day    |
+| Event            | Probability | Gate              | Effect | Duration |
+|------------------|-------------|-------------------|--------|----------|
+| Market Day Bonus | 2%/day      | None              | +$50   | 1 day    |
+| School Tour      | 2.0%/day    | ammonia < 0.5 ppm | +$400  | 1 day    |
 
 #### Technical Events — Water Quality
 
@@ -392,7 +416,7 @@ Items are purchased from the Market and stored in inventory. Consumables are app
 | Action                  | Description                                                                 |
 |-------------------------|-----------------------------------------------------------------------------|
 | Progress Day            | Advances simulation by 1 day; runs the full nitrogen/growth/event cycle. Auto-feeds fish from inventory if auto-feed is enabled. |
-| Progress 3 Days         | Advances up to 3 days with early-exit on critical conditions; auto-feeds each day when auto-feed is on |
+| Progress 3 Days         | Advances up to 3 days with early-exit on critical conditions (fish deaths, plant deaths, ammonia ≥ 2.0, nitrite ≥ 1.0, DO ≤ 4.0, nitrate < 3.0 with plants, system damage events); auto-feeds each day when auto-feed is on |
 | Set Auto-Feed           | Toggles `G.autoFeed` (default `true`). When on, draws one day's food from inventory before each simulated day if the tank is empty |
 | Stop Feeding            | Removes all food from tank; eliminates feeding-based ammonia immediately    |
 | Partial Water Change    | Dilutes water chemistry; primary tool for reducing ammonia and nitrite       |
@@ -487,41 +511,46 @@ The game tracks progressive financial milestones stored in `G.highestMilestoneMo
 
 ---
 
-### Simulation Results — 10,000 Games (n = 2,500 per strategy)
+### Simulation Results — 100,000 Games (n = 25,000 per strategy)
 
-Three calibration rounds were applied after the initial biology fixes to make milestones reachable in 100-day games. Current results reflect all three.
+Eight calibration rounds have been applied. Target ranking achieved as of Round 8 (2026-06-24).
 
-#### Current calibration (post price-bump + bonus mechanics, 2026-06-17)
+**Target strategy ranking (final money): Balanced > Conservative > Aggressive > Reactive** ✓
 
-| Strategy | Final money | Revenue | Fish deaths | Peak ammonia | Established | Profitable |
-|----------|------------|---------|-------------|--------------|-------------|------------|
-| **Conservative** | $1,538 | $1,364 | 0 | 0.41 ppm | **66%** | 0% |
-| **Aggressive** | $1,938 | $2,616 | 15.6 | 2.65 ppm | 97% | **37%** |
-| **Balanced** | $1,461 | $2,517 | 0 | 1.36 ppm | 50% | 0% |
-| **Reactive** | $1,262 | $957 | 0 | 0.39 ppm | 6% | 0% |
+#### Round 8 results — current (2026-06-24, n = 25,000 per strategy)
 
-**Key findings:**
+| Rank | Strategy | Final money | Revenue | Repair costs | Fish deaths | Plant deaths | Peak NH₃ | Profitable |
+|------|----------|------------|---------|-------------|-------------|-------------|---------|---------|
+| 1 | **Balanced** | **$2,382** | $2,540 | $173 | 0 | 0 | 1.31 ppm | 37% |
+| 2 | **Conservative** | $2,334 | $1,374 | $133 | 0 | 4.5 | 0.36 ppm | 36% |
+| 3 | **Aggressive** | $2,287 | $2,472 | $250 | 14.8 | 455.7 | 2.54 ppm | 52% |
+| 4 | **Reactive** | $1,999 | $968 | $117 | 0 | 0.3 | 0.35 ppm | 15% |
 
-1. **Established ($1,500) is now a realistic goal.** Conservative reaches it 66% of the time; Balanced 50%. Both run with zero animal deaths.
+Milestone breakdown: Balanced (none 1%, established 62%, profitable 37%, thriving 0%) · Conservative (1/64/36/0) · Aggressive (1/46/52/1) · Reactive (16/70/15/0)
 
-2. **Profitable ($2,500) is achievable for scaled play.** Aggressive reaches it in 37% of games by running large plant batches and triggering the Bulk Harvest Bonus repeatedly.
+#### 100k pre-sustainability baseline (2026-06-23)
 
-3. **Balanced earns the most revenue ($2,517) but ends lower than Aggressive** — it spends more on equipment and restocking. Over 150–200 days Balanced would pull ahead as the high-nitrate system accelerates plant harvests compoundly.
-
-4. **Reactive is under-tuned.** Only $957 in revenue despite survivng 100 days — the bot is not farming proactively enough. This is a bot issue, not a balance issue.
-
-5. **Aggressive plant deaths (401 avg) remain high** — the bot over-stocks and stresses the chemistry. A human player using Aggressive principles but managing water would do better.
+| Strategy | Final money | Revenue | Fish deaths | Peak ammonia | Profitable |
+|----------|------------|---------|-------------|--------------|------------|
+| **Aggressive** | **$2,044** | $2,634 | ~14 | 2.53 ppm | **41%** |
+| **Conservative** | $1,580 | $1,362 | 0 | 0.40 ppm | 0% |
+| **Balanced** | $1,548 | $2,517 | 0 | 1.35 ppm | 0% |
+| **Reactive** | $1,308 | $956 | 0 | 0.39 ppm | 0% |
 
 #### Calibration history
 
-| Round | Change | Established rate (Conservative) |
-|-------|--------|---------------------------------|
-| v1 (no biology fixes) | — | ~1% |
-| vFinal (7 biology fixes) | Ammonia suppression, nitrate growth, events rebalanced | 1% |
-| +price bump | All species +~25% | 41% |
-| +bonus mechanics | Stable ecosystem $100 reward + 15% Bulk Harvest Bonus | **66%** |
+| Round | Change | Key result |
+|-------|--------|-----------|
+| v1 (no biology fixes) | — | Aggressive dominated ($1,742) |
+| vFinal (7 biology fixes) | Ammonia suppression, nitrate growth, events rebalanced | Aggressive collapsed to $369 |
+| +price bump | All species +~25% | Conservative Established 1% → 41% |
+| +bonus mechanics | Stable ecosystem $100 + 15% Bulk Harvest Bonus | Aggressive Profitable 15% → 37% |
+| Round 5 | Zero-mortality $150, ammonia-gated events, School Tour ($250/1.5%), wider ecosystem threshold | Balanced/Conservative/Reactive pulled up; Aggressive still #1 |
+| Round 6 | Removed zero-mortality; School Tour $400/2.0%; ammonia health drain (>1.5 ppm); fish-count water cost ($0.08/fish/day) | Aggressive $2,389 still #1 by $123 |
+| Round 7 | Biofilter load factor (filterClog ×3 at 15 fish) | Aggressive $2,155 · Balanced $2,217 · Conservative $2,255 — Conservative briefly #1 |
+| Round 8 | Healthy-population billing bonus ($5/fish/cycle, ammonia < 1.5 ppm) | **Balanced $2,382 · Conservative $2,334 · Aggressive $2,287 · Reactive $1,999 — target ranking achieved** |
 
-To re-run with current prices: see [Bot Simulation Testing](#bot-simulation-testing) for the full command reference. `npm run simulate:full` is the quickest starting point.
+Run `node scripts/run-100k.js` from this directory to regenerate (~10 min). See [Bot Simulation Testing](#bot-simulation-testing) for the full command reference.
 
 ---
 
