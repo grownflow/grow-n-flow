@@ -1,5 +1,7 @@
 // REST-based game API client using backend HTTP routes and polling.
-const API_BASE = 'http://localhost:4000/api/games/aquaponics';
+// Relative URL: same origin as the page. In dev, vite proxies /api to the
+// backend; in production, the reverse proxy routes /api to the backend.
+const API_BASE = '/api/games/aquaponics';
 
 class GameAPI {
   constructor() {
@@ -51,7 +53,7 @@ class GameAPI {
       console.log('[gameAPI] matchID:', this.matchID);
 
       // Dev convenience: expose matchID in browser console.
-      // Allows: fetch(`http://localhost:4000/api/games/aquaponics/${window.__matchID}/water-history`)
+      // Allows: fetch(`/api/games/aquaponics/${window.__matchID}/water-history`)
       try {
         if (typeof window !== 'undefined') {
           window.__matchID = this.matchID;

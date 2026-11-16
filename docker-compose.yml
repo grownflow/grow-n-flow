@@ -1,8 +1,9 @@
 services:
   mongo:
     image: mongo:7
-    ports:
-      - "27017:27017"
+    restart: unless-stopped
+    # No host port: only the backend needs Mongo, over the internal network.
+    # For local inspection with a GUI, temporarily add "127.0.0.1:27017:27017".
     volumes:
       - mongo_data:/data/db
     healthcheck:
@@ -14,9 +15,11 @@ services:
   backend:
     build:
       context: ./backend
+    restart: unless-stopped
     ports:
-      - "8000:8000"
-      - "4000:4000"
+      # Loopback only: reach it through vite's /api proxy or a reverse proxy.
+      # The boardgame.io server on 8000 is not used by the frontend.
+      - "127.0.0.1:4000:4000"
     env_file:
       - .env
     environment:
@@ -31,11 +34,13 @@ services:
   frontend:
     build:
       context: ./FlowFarmFrontend
+    restart: unless-stopped
     command: ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
     ports:
-      - "5173:5173"
+      - "127.0.0.1:5173:5173"
     environment:
       - NODE_ENV=development
+      - API_PROXY_TARGET=http://backend:4000
       - CHOKIDAR_USEPOLLING=true
       - CHOKIDAR_INTERVAL=1000
     volumes:

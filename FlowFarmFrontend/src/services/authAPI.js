@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:4000/api/auth';
+const API_BASE = '/api/auth';
 
 async function jsonFetch(url, options = {}) {
   const res = await fetch(url, {
@@ -18,10 +18,10 @@ async function jsonFetch(url, options = {}) {
   return body;
 }
 
-export async function register({ email, username, password }) {
+export async function register({ email, username, password, signupCode }) {
   return jsonFetch(`${API_BASE}/register`, {
     method: 'POST',
-    body: JSON.stringify({ email, username, password }),
+    body: JSON.stringify({ email, username, password, signupCode }),
   });
 }
 

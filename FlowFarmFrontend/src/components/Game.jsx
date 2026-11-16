@@ -119,7 +119,7 @@ function Game({ onTitleClick }) {
     setStoredMatchesLoading(true);
     setStoredMatchesError(null);
     try {
-      const res = await fetch('http://localhost:4000/api/games/aquaponics/matches?limit=200', {
+      const res = await fetch('/api/games/aquaponics/matches?limit=200', {
         credentials: 'include',
       });
       const body = await res.json().catch(() => ({}));

@@ -433,8 +433,12 @@ docker-compose up --build
 | Service  | URL |
 |----------|-----|
 | Game UI  | http://localhost:5173 |
-| Backend API | http://localhost:8000 |
-| MongoDB  | localhost:27017 |
+| Backend API | http://localhost:4000 (also reachable via http://localhost:5173/api) |
+| MongoDB  | not published to the host; only the backend connects to it |
+
+Copy `.env.example` to `.env` first; compose reads it.
+
+To put the game on a public server, see [HOSTING.md](HOSTING.md).
 
 ### Manual (local development)
 

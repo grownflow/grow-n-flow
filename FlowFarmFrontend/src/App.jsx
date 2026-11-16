@@ -15,6 +15,7 @@ function App() {
   const [email, setEmail] = useState('')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [signupCode, setSignupCode] = useState('')
 
   useEffect(() => {
     let cancelled = false
@@ -38,7 +39,7 @@ function App() {
     setError(null)
     try {
       if (mode === 'register') {
-        const res = await register({ email, username, password })
+        const res = await register({ email, username, password, signupCode })
         setUser(res.user)
       } else {
         const res = await login({ identifier, password })
@@ -87,6 +88,10 @@ function App() {
                 <label style={{ display: 'block', marginBottom: 8 }}>
                   Username (optional)
                   <input value={username} onChange={(e) => setUsername(e.target.value)} style={{ width: '100%' }} />
+                </label>
+                <label style={{ display: 'block', marginBottom: 8 }}>
+                  Signup Code
+                  <input value={signupCode} onChange={(e) => setSignupCode(e.target.value)} style={{ width: '100%' }} />
                 </label>
               </>
             ) : (

@@ -9,8 +9,17 @@ const { AquaponicsGame } = require("./game/game");
 const app = express();
 app.disable('x-powered-by');
 
-// Basic middleware
-app.use(express.json());
+// Behind a TLS-terminating reverse proxy (nginx, Caddy, a PaaS router), set
+// TRUST_PROXY=1 so Express reads X-Forwarded-Proto. Without it, req.secure is
+// false and express-session will not send the Secure session cookie in
+// production, so logins silently fail. Leave unset when not behind a proxy.
+if (process.env.TRUST_PROXY) {
+  const tp = process.env.TRUST_PROXY;
+  app.set('trust proxy', /^\d+$/.test(tp) ? Number(tp) : tp);
+}
+
+// Basic middleware. Move payloads are a few KB; cap bodies to reject abuse early.
+app.use(express.json({ limit: '64kb' }));
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');

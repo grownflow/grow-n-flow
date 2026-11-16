@@ -12,6 +12,11 @@ function normalizeUsername(username) {
 
 router.post('/register', async (req, res) => {
   try {
+    const signupSecret = process.env.SIGNUP_SECRET;
+    if (signupSecret && req.body?.signupCode !== signupSecret) {
+      return res.status(403).json({ error: 'Invalid signup code' });
+    }
+
     const email = normalizeEmail(req.body?.email);
     const usernameRaw = req.body?.username;
     const username = usernameRaw ? normalizeUsername(usernameRaw) : null;

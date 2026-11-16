@@ -1,1 +1,7 @@
 .env
+
+# Database dumps and exports (contain or derive from user data)
+*.gz
+*.redacted.json
+*.analysis.txt
+gnf-dumps/
